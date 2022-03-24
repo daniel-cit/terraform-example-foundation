@@ -22,10 +22,10 @@ module "monitoring_project" {
   source                      = "terraform-google-modules/project-factory/google"
   version                     = "~> 10.1"
   random_project_id           = "true"
-  impersonate_service_account = var.terraform_service_account
-  name                        = "${var.project_prefix}-${var.environment_code}-monitoring"
-  org_id                      = var.org_id
-  billing_account             = var.billing_account
+  impersonate_service_account = local.terraform_service_account
+  name                        = "${local.project_prefix}-${var.environment_code}-monitoring"
+  org_id                      = local.org_id
+  billing_account             = local.billing_account
   folder_id                   = google_folder.env.id
   disable_services_on_destroy = false
   activate_apis = [

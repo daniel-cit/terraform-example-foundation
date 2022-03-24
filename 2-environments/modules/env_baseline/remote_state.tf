@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-variable "monitoring_workspace_users" {
-  description = "Google Workspace or Cloud Identity group that have access to Monitoring Workspaces."
-  type        = string
+data "terraform_remote_state" "bootstrap" {
+  backend = "gcs"
+
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/bootstrap/state"
+  }
 }
