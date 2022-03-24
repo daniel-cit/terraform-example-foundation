@@ -15,7 +15,7 @@
  */
 
 module "shared_base_vpn" {
-  source = "../../modules/vpn-ha"
+  source = "../vpn-ha"
 
   project_id           = local.base_project_id
   default_region1      = var.default_region1
@@ -25,11 +25,12 @@ module "shared_base_vpn" {
   region1_router2_name = module.base_shared_vpc.region1_router2.router.name
   region2_router1_name = module.base_shared_vpc.region2_router1.router.name
   region2_router2_name = module.base_shared_vpc.region2_router2.router.name
-  environment          = "production"
-  parent_folder        = var.parent_folder
-  org_id               = var.org_id
+  environment          = local.env
+  parent_folder        = local.parent_folder
+  org_id               = local.org_id
   vpn_psk_secret_name  = "<VPN_PRIVATE_PSK_SECRET_NAME>"
-  folder_prefix        = var.folder_prefix
+  folder_prefix        = local.folder_prefix
+
 
   on_prem_router_ip_address1 = "<8.8.8.8>" # on-prem router ip address 1
   on_prem_router_ip_address2 = "<8.8.8.8>" # on-prem router ip address 2
@@ -61,7 +62,7 @@ module "shared_base_vpn" {
 }
 
 module "shared_restricted_vpn" {
-  source = "../../modules/vpn-ha"
+  source = "../vpn-ha"
 
   project_id           = local.restricted_project_id
   default_region1      = var.default_region1
@@ -71,11 +72,11 @@ module "shared_restricted_vpn" {
   region1_router2_name = module.restricted_shared_vpc.region1_router2.router.name
   region2_router1_name = module.restricted_shared_vpc.region2_router1.router.name
   region2_router2_name = module.restricted_shared_vpc.region2_router2.router.name
-  environment          = "production"
-  parent_folder        = var.parent_folder
-  org_id               = var.org_id
+  environment          = local.env
+  parent_folder        = local.parent_folder
+  org_id               = local.org_id
   vpn_psk_secret_name  = "<VPN_RESTRICTED_PSK_SECRET_NAME>"
-  folder_prefix        = var.folder_prefix
+  folder_prefix        = local.folder_prefix
 
   on_prem_router_ip_address1 = "<8.8.8.8>" # on-prem router ip address 1
   on_prem_router_ip_address2 = "<8.8.8.8>" # on-prem router ip address 2

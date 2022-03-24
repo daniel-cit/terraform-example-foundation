@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-locals {
-  tf_sa = local.terraform_service_account
-}
-
-
-/******************************************
-  Provider credential configuration
- *****************************************/
-provider "google" {
-  impersonate_service_account = local.tf_sa
-  request_timeout             = "60s"
-}
-
-provider "google-beta" {
-  impersonate_service_account = local.tf_sa
-  request_timeout             = "60s"
+terraform {
+  required_version = ">= 0.13"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 3.50"
+    }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 3.50"
+    }
+  }
 }

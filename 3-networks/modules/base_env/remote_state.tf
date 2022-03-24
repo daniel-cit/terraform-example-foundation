@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-locals {
-  tf_sa = local.terraform_service_account
+data "terraform_remote_state" "bootstrap" {
+  backend = "gcs"
+
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/bootstrap/state"
+  }
 }
 
+data "terraform_remote_state" "network_shared" {
+  backend = "gcs"
 
-/******************************************
-  Provider credential configuration
- *****************************************/
-provider "google" {
-  impersonate_service_account = local.tf_sa
-  request_timeout             = "60s"
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/networks/envs/shared"
+  }
 }
 
-provider "google-beta" {
-  impersonate_service_account = local.tf_sa
-  request_timeout             = "60s"
+data "terraform_remote_state" "environments_env" {
+  backend = "gcs"
+
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/environments/${local.env}"
+  }
 }
