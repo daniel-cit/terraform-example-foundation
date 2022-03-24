@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-// Must include the domain of the organization you are deploying the foundation.
-domains_to_allow = ["example.com"]
+data "terraform_remote_state" "bootstrap" {
+  backend = "gcs"
 
-billing_data_users = "gcp-billing-admins@example.com"
-
-audit_data_users = "gcp-security-admins@example.com"
-
-scc_notification_name = "scc-notify"
-
-//scc_notification_filter = "state=\\\"ACTIVE\\\""
-
-//create_access_context_manager_access_policy = false
-
-//enable_hub_and_spoke = true
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/bootstrap/state"
+  }
+}
