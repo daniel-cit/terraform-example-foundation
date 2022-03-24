@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-
-
-data "google_active_folder" "env" {
-  display_name = "${var.folder_prefix}-non-production"
-  parent       = var.parent_folder != "" ? "folders/${var.parent_folder}" : "organizations/${var.org_id}"
+locals {
+  business_unit           = "business_unit_1"
+  environment             = "non-production"
+  project_service_account = "project-service-account@${data.terraform_remote_state.projects_env.outputs.base_shared_vpc_project}.iam.gserviceaccount.com"
 }
 
 module "base_shared_gce_instance" {
   source         = "../../modules/env_base"
-  environment    = "non-production"
-  vpc_type       = "base"
-  num_instances  = 1
-  machine_type   = "f1-micro"
-  folder_id      = data.google_active_folder.env.name
+  environment    = local.environment
   business_code  = "bu1"
+  business_unit  = local.business_unit
   project_suffix = "sample-base"
   region         = var.instance_region
 }

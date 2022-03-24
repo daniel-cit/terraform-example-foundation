@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-locals {
-  business_unit           = "business_unit_1"
-  environment             = "development"
-  project_service_account = "project-service-account@${data.terraform_remote_state.projects_env.outputs.base_shared_vpc_project}.iam.gserviceaccount.com"
-}
+data "terraform_remote_state" "projects_env" {
+  backend = "gcs"
 
-module "base_shared_gce_instance" {
-  source         = "../../modules/env_base"
-  environment    = local.environment
-  business_code  = "bu1"
-  business_unit  = local.business_unit
-  project_suffix = "sample-base"
-  region         = var.instance_region
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/projects/${local.business_unit}/${local.environment}"
+  }
 }
