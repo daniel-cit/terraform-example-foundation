@@ -66,6 +66,16 @@ resource "google_storage_bucket" "cloudbuild_artifacts" {
   }
 }
 
+# testing
+resource "google_storage_bucket" "cloudbuild_bucket" {
+  name     = "${var.cloudbuild_project_id}_cloudbuild"
+  location = var.bucket_region
+  project  = var.cloudbuild_project_id
+
+  force_destroy               = true
+  uniform_bucket_level_access = true
+}
+
 # IAM for Cloud Build SA to access cloudbuild_artifacts and tfstate buckets
 resource "google_storage_bucket_iam_member" "cloudbuild_artifacts_iam" {
   for_each   = merge(local.artifact_buckets, local.state_buckets)
@@ -163,7 +173,8 @@ resource "null_resource" "cloudbuild_terraform_builder" {
   EOT
   }
   depends_on = [
-    google_artifact_registry_repository_iam_member.terraform-image-iam
+    google_artifact_registry_repository_iam_member.terraform-image-iam,
+    google_storage_bucket.cloudbuild_bucket
   ]
 }
 

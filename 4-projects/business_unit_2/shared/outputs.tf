@@ -25,7 +25,7 @@ output "tf_runner_artifact_repo" {
 }
 
 output "cloudbuild_project_id" {
-  value = module.app_infra_cloudbuild_project.project_id
+  value = module.infra_pipelines.cloudbuild_project_id
 }
 
 output "cloudbuild_sa" {

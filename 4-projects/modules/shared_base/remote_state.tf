@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-variable "default_region" {
-  description = "Default region to create resources where applicable."
-  type        = string
-  default     = "us-central1"
+data "terraform_remote_state" "bootstrap" {
+  backend = "gcs"
+
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/bootstrap/state"
+  }
+}
+
+data "terraform_remote_state" "org" {
+  backend = "gcs"
+
+  config = {
+    bucket = "UPDATE_ME"
+    prefix = "terraform/org/state"
+  }
 }

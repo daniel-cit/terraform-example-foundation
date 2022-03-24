@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-variable "default_region" {
-  description = "Default region to create resources where applicable."
-  type        = string
-  default     = "us-central1"
+locals {
+  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+}
+
+module "infra_pipelines" {
+  source = "../../modules/shared_base"
+
+  default_region = var.default_region
+  business_code  = "bu2"
 }
