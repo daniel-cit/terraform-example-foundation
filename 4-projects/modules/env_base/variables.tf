@@ -117,3 +117,8 @@ variable "gcs_bucket_prefix" {
   type        = string
   default     = "cmek-encrypted-bucket"
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

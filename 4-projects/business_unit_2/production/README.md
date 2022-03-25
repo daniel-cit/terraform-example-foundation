@@ -1,7 +1,9 @@
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Inputs
 
-No input.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| backend\_bucket | Backend bucket to load remote state information from previous steps. | `string` | n/a | yes |
 
 ## Outputs
 

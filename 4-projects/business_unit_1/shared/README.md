@@ -3,6 +3,7 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| backend\_bucket | Backend bucket to load remote state information from previous steps. | `string` | n/a | yes |
 | default\_region | Default region to create resources where applicable. | `string` | `"us-central1"` | no |
 
 ## Outputs

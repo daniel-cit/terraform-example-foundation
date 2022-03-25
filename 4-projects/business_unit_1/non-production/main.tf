@@ -21,8 +21,9 @@ locals {
 module "env" {
   source = "../../modules/env_base"
 
-  env_code      = "n"
-  env           = "non-production"
-  business_code = "bu1"
-  business_unit = "business_unit_1"
+  env_code       = "n"
+  env            = "non-production"
+  business_code  = "bu1"
+  business_unit  = "business_unit_1"
+  backend_bucket = var.backend_bucket
 }

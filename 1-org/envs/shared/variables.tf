@@ -307,3 +307,8 @@ variable "gcp_billing_admin_user" {
   type        = string
   default     = null
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

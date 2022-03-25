@@ -23,6 +23,8 @@ audit_data_users = "gcp-security-admins@example.com"
 
 scc_notification_name = "scc-notify"
 
+backend_bucket = "UPDATE_ME"
+
 //scc_notification_filter = "state=\\\"ACTIVE\\\""
 
 //create_access_context_manager_access_policy = false

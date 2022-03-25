@@ -16,6 +16,7 @@ The purpose of this step is to set up base and restricted shared VPCs with defau
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | access\_context\_manager\_policy\_id | The id of the default Access Context Manager policy created in step `1-org`. Can be obtained by running `gcloud access-context-manager policies list --organization YOUR_ORGANIZATION_ID --format="value(name)"`. | `number` | n/a | yes |
+| backend\_bucket | Backend bucket to load remote state information from previous steps. | `string` | n/a | yes |
 | base\_private\_service\_cidr | Base network private service CIDR range. | `string` | n/a | yes |
 | base\_subnet\_primary\_ranges | Base network primary subnet ranges. | `map(string)` | n/a | yes |
 | base\_subnet\_secondary\_ranges | Base network secondary subnet ranges. | `map(list(map(string)))` | n/a | yes |

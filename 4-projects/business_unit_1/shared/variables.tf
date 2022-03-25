@@ -19,3 +19,8 @@ variable "default_region" {
   type        = string
   default     = "us-central1"
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

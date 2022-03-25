@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-# variable "terraform_service_account" {
-#   description = "Service account email of the account to impersonate to run Terraform."
-#   type        = string
-# }
-
 variable "monitoring_workspace_users" {
   description = "Google Workspace or Cloud Identity group that have access to Monitoring Workspaces."
   type        = string
 }
 
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

@@ -18,7 +18,7 @@ data "terraform_remote_state" "bootstrap" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/bootstrap/state"
   }
 }
@@ -27,7 +27,7 @@ data "terraform_remote_state" "network_env" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/networks/${var.environment}"
   }
 }
@@ -36,7 +36,7 @@ data "terraform_remote_state" "projects_env" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/projects/${var.business_unit}/${var.environment}"
   }
 }

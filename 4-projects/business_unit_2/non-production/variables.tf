@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-default_region1 = "us-central1"
-
-default_region2 = "us-west1"
-
-// The DNS name of peering managed zone. Must end with a period.
-domain = "example.com."
-
-backend_bucket = "UPDATE_ME"
-
-//enable_hub_and_spoke = true
-
-//enable_hub_and_spoke_transitivity = true
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

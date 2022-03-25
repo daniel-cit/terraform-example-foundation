@@ -25,4 +25,6 @@ module "env" {
   environment_code = "p"
 
   monitoring_workspace_users = var.monitoring_workspace_users
+
+  backend_bucket = var.backend_bucket
 }

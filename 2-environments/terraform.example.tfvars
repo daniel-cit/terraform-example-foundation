@@ -15,3 +15,4 @@
  */
 
 monitoring_workspace_users = "gcp-monitoring-admins@example.com"
+backend_bucket             = "UPDATE_ME"

@@ -109,3 +109,8 @@ variable "restricted_subnet_secondary_ranges" {
   description = "Restricted network secondary subnet ranges."
   type        = map(list(map(string)))
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

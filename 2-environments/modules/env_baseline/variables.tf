@@ -100,3 +100,8 @@ variable "secret_project_budget_amount" {
   type        = number
   default     = 1000
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

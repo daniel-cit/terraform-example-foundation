@@ -18,7 +18,7 @@ data "terraform_remote_state" "bootstrap" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/bootstrap/state"
   }
 }
@@ -27,7 +27,7 @@ data "terraform_remote_state" "org" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/org/state"
   }
 }

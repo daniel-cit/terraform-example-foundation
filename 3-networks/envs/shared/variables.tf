@@ -182,3 +182,8 @@ variable "preactivate_partner_interconnect" {
   type        = bool
   default     = false
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

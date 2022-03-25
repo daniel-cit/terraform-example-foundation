@@ -74,4 +74,6 @@ module "base_env" {
 
   enable_hub_and_spoke              = var.enable_hub_and_spoke
   enable_hub_and_spoke_transitivity = var.enable_hub_and_spoke_transitivity
+
+  backend_bucket = var.backend_bucket
 }

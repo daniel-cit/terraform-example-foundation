@@ -27,4 +27,5 @@ module "base_shared_gce_instance" {
   business_unit  = local.business_unit
   project_suffix = "sample-base"
   region         = var.instance_region
+  backend_bucket = var.backend_bucket
 }

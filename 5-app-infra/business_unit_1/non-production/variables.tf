@@ -18,3 +18,8 @@ variable "instance_region" {
   description = "The region where compute instance will be created. A subnetwork must exists in the instance region."
   type        = string
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

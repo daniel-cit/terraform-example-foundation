@@ -73,3 +73,8 @@ variable "project_suffix" {
   type        = string
   default     = "sample-base"
 }
+
+variable "backend_bucket" {
+  description = "Backend bucket to load remote state information from previous steps."
+  type        = string
+}

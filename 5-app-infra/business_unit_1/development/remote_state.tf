@@ -18,7 +18,7 @@ data "terraform_remote_state" "projects_env" {
   backend = "gcs"
 
   config = {
-    bucket = "UPDATE_ME"
+    bucket = "${var.backend_bucket}"
     prefix = "terraform/projects/${local.business_unit}/${local.environment}"
   }
 }
