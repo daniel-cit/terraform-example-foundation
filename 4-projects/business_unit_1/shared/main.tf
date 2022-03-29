@@ -23,4 +23,5 @@ module "infra_pipelines" {
 
   default_region = var.default_region
   business_code  = "bu1"
+  backend_bucket = var.backend_bucket
 }
