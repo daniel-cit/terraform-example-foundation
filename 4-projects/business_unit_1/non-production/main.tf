@@ -26,4 +26,6 @@ module "env" {
   business_code  = "bu1"
   business_unit  = "business_unit_1"
   backend_bucket = var.backend_bucket
+  location_kms   = var.location_kms
+  location_gcs   = var.location_gcs
 }

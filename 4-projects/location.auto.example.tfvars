@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,5 @@
  * limitations under the License.
  */
 
-locals {
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
-}
-
-module "env" {
-  source = "../../modules/env_base"
-
-  env_code       = "p"
-  env            = "production"
-  business_code  = "bu2"
-  business_unit  = "business_unit_2"
-  backend_bucket = var.backend_bucket
-  location_kms   = var.location_kms
-  location_gcs   = var.location_gcs
-}
+location_kms = "us"
+location_gcs = "US"
