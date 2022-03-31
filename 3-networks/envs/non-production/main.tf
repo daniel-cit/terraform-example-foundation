@@ -15,7 +15,7 @@
  */
 
 locals {
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+  terraform_service_account = var.terraform_service_account
   environment_code          = "n"
 
   base_private_service_cidr = "10.16.128.0/21"
@@ -75,5 +75,6 @@ module "base_env" {
   enable_hub_and_spoke              = var.enable_hub_and_spoke
   enable_hub_and_spoke_transitivity = var.enable_hub_and_spoke_transitivity
 
-  backend_bucket = var.backend_bucket
+  backend_bucket            = var.backend_bucket
+  terraform_service_account = local.terraform_service_account
 }

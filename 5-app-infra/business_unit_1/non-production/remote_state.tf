@@ -20,5 +20,7 @@ data "terraform_remote_state" "projects_env" {
   config = {
     bucket = "${var.backend_bucket}"
     prefix = "terraform/projects/${local.business_unit}/${local.environment}"
+
+    impersonate_service_account = local.terraform_service_account
   }
 }

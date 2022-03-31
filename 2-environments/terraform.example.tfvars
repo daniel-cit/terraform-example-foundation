@@ -15,4 +15,5 @@
  */
 
 monitoring_workspace_users = "gcp-monitoring-admins@example.com"
-backend_bucket             = "UPDATE_ME"
+backend_bucket             = "<TERRAFORM-STATE-BUCKET>"
+terraform_service_account  = "org-terraform@example-project-2334.iam.gserviceaccount.com"

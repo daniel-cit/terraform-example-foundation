@@ -15,16 +15,15 @@
  */
 
 locals {
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+  terraform_service_account = var.terraform_service_account
 }
 
 module "env" {
   source = "../../modules/env_baseline"
 
-  env              = "development"
-  environment_code = "d"
-
+  env                        = "development"
+  environment_code           = "d"
   monitoring_workspace_users = var.monitoring_workspace_users
-
-  backend_bucket = var.backend_bucket
+  backend_bucket             = var.backend_bucket
+  terraform_service_account  = local.terraform_service_account
 }

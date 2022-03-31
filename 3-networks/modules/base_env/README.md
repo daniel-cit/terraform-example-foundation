@@ -34,6 +34,7 @@ The purpose of this step is to set up base and restricted shared VPCs with defau
 | restricted\_subnet\_primary\_ranges | Restricted network primary subnet ranges. | `map(string)` | n/a | yes |
 | restricted\_subnet\_secondary\_ranges | Restricted network secondary subnet ranges. | `map(list(map(string)))` | n/a | yes |
 | subnetworks\_enable\_logging | Toggle subnetworks flow logging for VPC Subnetworks. | `bool` | `true` | no |
+| terraform\_service\_account | Service account email of the account to impersonate to run Terraform. | `string` | n/a | yes |
 
 ## Outputs
 

@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+variable "terraform_service_account" {
+  description = "Service account email of the account to impersonate to run Terraform."
+  type        = string
+}
+
 variable "enable_hub_and_spoke" {
   description = "Enable Hub-and-Spoke architecture."
   type        = bool

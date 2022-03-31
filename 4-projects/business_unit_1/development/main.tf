@@ -15,17 +15,18 @@
  */
 
 locals {
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+  terraform_service_account = var.terraform_service_account
 }
 
 module "env" {
   source = "../../modules/env_base"
 
-  env_code       = "d"
-  env            = "development"
-  business_code  = "bu1"
-  business_unit  = "business_unit_1"
-  backend_bucket = var.backend_bucket
-  location_kms   = var.location_kms
-  location_gcs   = var.location_gcs
+  env_code                  = "d"
+  env                       = "development"
+  business_code             = "bu1"
+  business_unit             = "business_unit_1"
+  backend_bucket            = var.backend_bucket
+  location_kms              = var.location_kms
+  location_gcs              = var.location_gcs
+  terraform_service_account = local.terraform_service_account
 }

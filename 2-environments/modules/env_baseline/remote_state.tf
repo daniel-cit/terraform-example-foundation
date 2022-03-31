@@ -20,5 +20,7 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     bucket = "${var.backend_bucket}"
     prefix = "terraform/bootstrap/state"
+
+    impersonate_service_account = local.terraform_service_account
   }
 }

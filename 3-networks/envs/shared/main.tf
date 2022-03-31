@@ -29,7 +29,7 @@ locals {
   folder_prefix             = data.terraform_remote_state.bootstrap.outputs.common_config.folder_prefix
   parent_id                 = data.terraform_remote_state.bootstrap.outputs.common_config.parent_id
   bootstrap_folder_name     = data.terraform_remote_state.bootstrap.outputs.common_config.bootstrap_folder_name
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+  terraform_service_account = var.terraform_service_account
 
   common_folder_name         = data.terraform_remote_state.org.outputs.common_folder_name
   development_folder_name    = data.terraform_remote_state.env_development.outputs.env_folder

@@ -22,5 +22,5 @@ locals {
   project_prefix            = data.terraform_remote_state.bootstrap.outputs.common_config.project_prefix
   folder_prefix             = data.terraform_remote_state.bootstrap.outputs.common_config.folder_prefix
   parent                    = data.terraform_remote_state.bootstrap.outputs.common_config.parent_id
-  terraform_service_account = data.terraform_remote_state.bootstrap.outputs.terraform_service_account
+  terraform_service_account = var.terraform_service_account
 }

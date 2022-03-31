@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+variable "terraform_service_account" {
+  description = "Service account email of the account to impersonate to run Terraform"
+  type        = string
+}
+
 variable "instance_region" {
   description = "The region where compute instance will be created. A subnetwork must exists in the instance region."
   type        = string

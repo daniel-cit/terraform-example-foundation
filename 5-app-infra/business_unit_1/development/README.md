@@ -5,6 +5,7 @@
 |------|-------------|------|---------|:--------:|
 | backend\_bucket | Backend bucket to load remote state information from previous steps. | `string` | n/a | yes |
 | instance\_region | The region where compute instance will be created. A subnetwork must exists in the instance region. | `string` | n/a | yes |
+| terraform\_service\_account | Service account email of the account to impersonate to run Terraform | `string` | n/a | yes |
 
 ## Outputs
 

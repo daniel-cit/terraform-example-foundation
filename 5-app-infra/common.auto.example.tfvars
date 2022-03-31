@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+terraform_service_account = "org-terraform@prj-b-seed-2334.iam.gserviceaccount.com"
+
 instance_region = "us-central1" // should be one of the regions used to create network on step 3-networks
 
-backend_bucket = "UPDATE_ME"
+backend_bucket = "<TERRAFORM-STATE-BUCKET>"
