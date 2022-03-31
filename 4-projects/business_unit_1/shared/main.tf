@@ -19,7 +19,7 @@ locals {
 }
 
 module "infra_pipelines" {
-  source = "../../modules/shared_base"
+  source = "../../modules/env_shared"
 
   default_region = var.default_region
   business_code  = "bu1"
