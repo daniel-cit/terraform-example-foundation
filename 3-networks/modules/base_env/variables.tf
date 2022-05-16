@@ -113,3 +113,13 @@ variable "restricted_subnet_secondary_ranges" {
   type        = map(list(map(string)))
   description = "The base subnet secondary IPTs ranges to the Restricted Shared Vpc"
 }
+
+variable "members" {
+  type        = list(string)
+  description = "An allowed list of members (users, service accounts) in the VPC-SC. The signed-in identity originating the request must be a part of one of the provided members. If not specified, a request may come from any user (logged in/not logged in, etc.). Formats: user:{emailid}, serviceAccount:{emailid}"
+}
+
+variable "restricted_services" {
+  type        = list(string)
+  description = "List of services to restrict in the VPC-SC."
+}

@@ -72,6 +72,8 @@ module "base_env" {
   default_region1                    = local.default_region1
   default_region2                    = local.default_region2
   domain                             = var.domain
+  restricted_services                = ["bigquery.googleapis.com", "storage.googleapis.com"]
+  members                            = ["serviceAccount:${var.terraform_service_account}"]
   parent_folder                      = var.parent_folder
   enable_hub_and_spoke               = var.enable_hub_and_spoke
   enable_partner_interconnect        = false
