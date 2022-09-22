@@ -266,7 +266,7 @@ commands. The `-T` flag is needed for Linux, but causes problems for MacOS.
    ```
    export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
    echo "backend_bucket = ${backend_bucket}"
-   sed -i "s/TERRAFORM_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
+   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
    ```
 1. Also update `backend.tf` with your backend bucket from 0-bootstrap output.
    ```

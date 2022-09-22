@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-backend_bucket = "TERRAFORM_STATE_BUCKET"
+backend_bucket = "REMOTE_STATE_BUCKET"
