@@ -73,7 +73,7 @@ module "peering" {
  *****************************************/
 
 resource "google_compute_firewall" "deny_all_egress" {
-  name      = "fw-${local.env_code}-peering-base-65530-e-d-all-all-tcp-udp"
+  name      = "fw-${local.env_code}-peering-base-65530-e-d-all-all-all"
   network   = module.peering_network.network_name
   project   = module.peering_project.project_id
   direction = "EGRESS"
@@ -90,11 +90,7 @@ resource "google_compute_firewall" "deny_all_egress" {
   }
 
   deny {
-    protocol = "tcp"
-  }
-
-  deny {
-    protocol = "udp"
+    protocol = "all"
   }
 
   destination_ranges = ["0.0.0.0/0"]
