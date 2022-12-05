@@ -79,27 +79,52 @@ module "firewall_rules" {
   project_id   = var.project_id
   network_name = local.peered_network_id
 
-  rules = [{
-    name                    = "fw-b-peer-100-i-a-all-all-all-service-networking"
-    description             = "allow ingres from the IPs configured for service networking"
-    direction               = "INGRESS"
-    priority                = 100
-    source_tags             = null
-    source_service_accounts = null
-    target_tags             = null
-    target_service_accounts = null
+  rules = [
+    {
+      name                    = "fw-b-peer-100-i-a-all-all-all-service-networking"
+      description             = "allow ingres from the IPs configured for service networking"
+      direction               = "INGRESS"
+      priority                = 100
+      source_tags             = null
+      source_service_accounts = null
+      target_tags             = null
+      target_service_accounts = null
 
-    ranges = [local.peered_ip_range]
+      ranges = [local.peered_ip_range]
 
-    allow = [{
-      protocol = "all"
-      ports    = null
-    }]
+      allow = [{
+        protocol = "all"
+        ports    = null
+      }]
 
-    deny = []
+      deny = []
 
-    log_config = {
-      metadata = "INCLUDE_ALL_METADATA"
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
+    },
+    {
+      name                    = "fw-b-cbpools-65530-e-d-all-all-all"
+      description             = "deny all egress"
+      direction               = "EGRESS"
+      priority                = 65530
+      source_tags             = null
+      source_service_accounts = null
+      target_tags             = null
+      target_service_accounts = null
+
+      ranges = ["0.0.0.0/0"]
+
+      deny = [{
+        protocol = "all"
+        ports    = null
+      }]
+
+      allow = []
+
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
     }
-  }]
+  ]
 }
