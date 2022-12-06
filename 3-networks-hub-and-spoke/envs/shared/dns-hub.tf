@@ -51,6 +51,92 @@ module "dns_hub_vpc" {
   }]
 }
 
+module "firewall_rules" {
+  source  = "terraform-google-modules/network/google//modules/firewall-rules"
+  version = "~> 5.2"
+
+  project_id   = local.dns_hub_project_id
+  network_name = module.dns_hub_vpc.network_id
+
+  rules = [
+    {
+      name                    = "fw-c-dns-hub-1000-e-a-all-all-tcp-443-private-api"
+      description             = "allow egress to allow private google api access"
+      direction               = "EGRESS"
+      priority                = 1000
+      source_tags             = null
+      source_service_accounts = null
+      target_tags             = null
+      target_service_accounts = null
+
+      ranges = ["199.36.153.8/30"]
+
+      allow = [{
+        protocol = "tcp"
+        ports    = ["443"]
+      }]
+
+      deny = []
+
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
+    },
+    {
+      name                    = "fw-c-dns-hub-1000-e-a-all-all-tcp-53-udp-53-dns-proxy"
+      description             = "allow egress to DNS proxy."
+      direction               = "EGRESS"
+      priority                = 1000
+      source_tags             = null
+      source_service_accounts = null
+      target_tags             = null
+      target_service_accounts = null
+
+      ranges = ["35.199.192.0/19"]
+
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["53"]
+        },
+        {
+          protocol = "udp"
+          ports    = ["53"]
+        }
+      ]
+
+      deny = []
+
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
+    },
+    {
+      name                    = "fw-c-dns-hub-65530-e-d-all-all-all"
+      description             = "deny all egress"
+      direction               = "EGRESS"
+      priority                = 65530
+      source_tags             = null
+      source_service_accounts = null
+      target_tags             = null
+      target_service_accounts = null
+
+      ranges = ["0.0.0.0/0"]
+
+      deny = [{
+        protocol = "all"
+        ports    = null
+      }]
+
+      allow = []
+
+      log_config = {
+        metadata = "INCLUDE_ALL_METADATA"
+      }
+    }
+  ]
+}
+
 /******************************************
   Default DNS Policy
  *****************************************/
