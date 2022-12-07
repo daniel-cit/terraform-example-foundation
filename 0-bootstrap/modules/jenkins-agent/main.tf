@@ -107,6 +107,25 @@ resource "google_compute_instance" "jenkins_agent_gce_instance" {
   Jenkins Agent GCE Network and Firewall rules
 *******************************************/
 
+resource "google_compute_firewall" "deny_all_egress" {
+  project     = module.cicd_project.project_id
+  name        = "fw-${google_compute_network.jenkins_agents.name}-65530-e-d-all-all-all"
+  description = "deny all egress"
+  network     = google_compute_network.jenkins_agents.name
+  direction   = "EGRESS"
+  priority    = 65530
+
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+
+  deny {
+    protocol = "all"
+  }
+
+  destination_ranges = ["0.0.0.0/0"]
+}
+
 resource "google_compute_firewall" "fw_allow_ssh_into_jenkins_agent" {
   project       = module.cicd_project.project_id
   name          = "fw-${google_compute_network.jenkins_agents.name}-1000-i-a-all-all-tcp-22"
