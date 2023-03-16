@@ -39,6 +39,7 @@ func main() {
 
 	flag.Parse()
 
+	// load tfvars
 	if *tfvarsFile == "" {
 		fmt.Println("stopping execution, tfvars file is required.")
 		os.Exit(1)
@@ -48,17 +49,15 @@ func main() {
 		fmt.Println("stopping execution, tfvars file", *tfvarsFile, "does not exits")
 		os.Exit(2)
 	}
-
 	var globalTfvars utils.GlobalTfvars
 	err = utils.ReadTfvars(*tfvarsFile, &globalTfvars)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// TODO: warn destroy flag not set
 
+	// init infra
 	foundationCodePath := globalTfvars.FoundationCodePath
 	codeCheckoutPath := globalTfvars.CodeCheckoutPath
-
 	logger := logger.Default
 	bootstrapOptions := &terraform.Options{
 		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
@@ -75,6 +74,7 @@ func main() {
 		os.Exit(3)
 	}
 
+	// deploy foundation
 	utils.RunStep(e, "gcp-bootstrap", func() error {
 		return utils.DeployBootstrapStep(t, e, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})
@@ -88,5 +88,4 @@ func main() {
 	utils.RunStep(e, "gcp-environments", func() error {
 		return utils.DeployEnvStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
-
 }
