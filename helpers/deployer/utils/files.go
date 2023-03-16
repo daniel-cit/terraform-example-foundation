@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func CopyFile(src string, dest string) error {
@@ -52,9 +53,11 @@ func CopyDirectory(src string, dest string) error {
 				}
 			}
 		} else {
-			err := CopyFile(filepath.Join(src, file.Name()), filepath.Join(dest, file.Name()))
-			if err != nil {
-				return err
+			if file.Name() != ".terraform.lock.hcl" {
+				err := CopyFile(filepath.Join(src, file.Name()), filepath.Join(dest, file.Name()))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -72,7 +75,7 @@ func ReplaceStringInFile(file, old, new string) error {
 func FindFiles(dir, filename string) ([]string, error) {
 	found := []string{}
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if d.Name() == filename {
+		if d.Name() == filename && !strings.Contains(path, ".terraform") {
 			found = append(found, path)
 		}
 		return nil

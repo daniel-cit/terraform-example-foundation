@@ -26,9 +26,8 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/test/integration/testutils"
 )
 
-
 func GetRunningBuild(t testing.TB, projectID string, region string, filter string) string {
-	time.Sleep(20*time.Second)
+	time.Sleep(20 * time.Second)
 	builds := GetBuilds(t, projectID, region, filter)
 	for _, build := range builds {
 		status := build.Get("status").String()
@@ -43,9 +42,9 @@ func GetTerminalState(t testing.TB, projectID string, region string, buildID str
 	var status string
 	fmt.Printf("waiting for build %s execution.\n", buildID)
 	status = GetBuildState(t, projectID, region, buildID)
-	for status!= "SUCCESS" && status != "FAILURE" {
+	for status != "SUCCESS" && status != "FAILURE" && status != "CANCELLED" {
 		fmt.Printf("build status is %s\n", status)
-		time.Sleep(20*time.Second)
+		time.Sleep(20 * time.Second)
 		status = GetBuildState(t, projectID, region, buildID)
 	}
 	fmt.Printf("final build status is %s\n", status)
@@ -67,5 +66,5 @@ func GetBuilds(t testing.TB, projectID, region, filter string) []gjson.Result {
 
 func GetBuildState(t testing.TB, projectID, region, buildID string) string {
 	gcOps := gcloud.WithCommonArgs([]string{buildID, "--project", projectID, "--region", region, "--format", "json(status)"})
-	return  gcloud.Run(t, "builds describe", gcOps).Get("status").String()
+	return gcloud.Run(t, "builds describe", gcOps).Get("status").String()
 }

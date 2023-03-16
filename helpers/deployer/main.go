@@ -15,8 +15,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -56,7 +56,6 @@ func main() {
 	}
 	// TODO: warn destroy flag not set
 
-
 	foundationCodePath := globalTfvars.FoundationCodePath
 	codeCheckoutPath := globalTfvars.CodeCheckoutPath
 
@@ -70,9 +69,24 @@ func main() {
 	gotest.Init()
 	t := &testing.RuntimeT{}
 
-	bootstrapOutputs := utils.DeployBootstrapStep(t, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
+	e, err := utils.LoadState(".state.json")
+	if err != nil {
+		fmt.Println("failed to load state file")
+		os.Exit(3)
+	}
 
-	utils.DeployOrgStep(t, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	utils.RunStep(e, "gcp-bootstrap", func() error {
+		return utils.DeployBootstrapStep(t, e, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
+	})
 
-	utils.DeployEnvStep(t, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	bootstrapOutputs := utils.GetBootstrapStepOutputs(t, bootstrapOptions)
+
+	utils.RunStep(e, "gcp-org", func() error {
+		return utils.DeployOrgStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	})
+
+	utils.RunStep(e, "gcp-environments", func() error {
+		return utils.DeployEnvStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	})
+
 }
