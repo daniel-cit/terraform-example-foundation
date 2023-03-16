@@ -1,0 +1,110 @@
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package utils
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/gcloud"
+	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/git"
+	"github.com/gruntwork-io/terratest/modules/logger"
+	"github.com/mitchellh/go-testing-interface"
+)
+
+
+func GetCurrentBranch(conf *git.CmdCfg) (string, error) {
+	o, err := conf.RunCmdE("branch", "-q", "--show-current")
+	if err != nil {
+		return "", err
+	}
+	return o, nil
+}
+
+func HasRemoteTRacking(conf *git.CmdCfg, branch string) (bool, error) {
+	o, err := conf.RunCmdE("status", "-sb")
+	if err != nil {
+		return false, err
+	}
+	if strings.Contains(o, fmt.Sprintf("## %s...origin/%s", branch, branch)) {
+		return true, nil
+	}
+	return false, nil
+}
+
+func PushBranch(conf *git.CmdCfg, branch string) error {
+	hasRemote, err := HasRemoteTRacking(conf, branch)
+	if err != nil {
+		return err
+	}
+	if !hasRemote {
+		_, err := conf.RunCmdE("push", "--set-upstream", "origin", branch)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := conf.RunCmdE("push")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func CheckoutBranch(conf *git.CmdCfg, branch string) error {
+	current, err := GetCurrentBranch(conf)
+	if err != nil {
+		return err
+	}
+	if current != branch {
+		_, err := conf.RunCmdE("checkout", "-b", branch)
+		if err != nil {
+			if strings.Contains(err.Error(), "already exists") {
+				_, err := conf.RunCmdE("checkout", branch)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func CommitFiles(conf *git.CmdCfg, msg string) error {
+	o, err := conf.RunCmdE("status", "-s")
+	if err != nil {
+		return err
+	}
+	if o != "" {
+		_, err = conf.RunCmdE("add", ".")
+		if err != nil {
+			return err
+		}
+		_, err = conf.RunCmdE("commit", "-m", fmt.Sprintf("'%s'", msg))
+		return err
+	}
+	return nil
+}
+
+func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		gcloud.Runf(t, "source repos clone %s %s --project %s", name, path, project)
+	}
+	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default))
+}
