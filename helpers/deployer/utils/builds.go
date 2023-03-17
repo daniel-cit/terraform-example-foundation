@@ -38,6 +38,12 @@ func GetRunningBuild(t testing.TB, projectID string, region string, filter strin
 	return ""
 }
 
+func GetLastBuildStatus(t testing.TB, projectID string, region string, filter string) string {
+	gcOps := gcloud.WithCommonArgs([]string{"--project", projectID, "--region", region, "--limit", "1", "--sort-by", "~createTime", "--filter", filter, "--format", "json"})
+	build := gcloud.Run(t, "builds list", gcOps).Array()[0]
+	return build.Get("status").String()
+}
+
 func GetTerminalState(t testing.TB, projectID string, region string, buildID string) string {
 	var status string
 	fmt.Printf("waiting for build %s execution.\n", buildID)

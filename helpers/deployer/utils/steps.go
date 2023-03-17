@@ -85,38 +85,47 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 	backendBucketProjects := terraform.Output(t, options, "projects_gcs_bucket_tfstate")
 
 	// replace backend and terraform init migrate
-	fmt.Println("## migrate state ##")
-
-	err = CopyFile(filepath.Join(options.TerraformDir, "backend.tf.example"), filepath.Join(options.TerraformDir, "backend.tf"))
+	err = RunStepE(e, "gcp-bootstrap.migrate-state", func() error {
+		options.MigrateState = true
+		err = CopyFile(filepath.Join(options.TerraformDir, "backend.tf.example"), filepath.Join(options.TerraformDir, "backend.tf"))
+		if err != nil {
+			return err
+		}
+		err = ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_ME", backendBucket)
+		if err != nil {
+			return err
+		}
+		migrate, err := terraform.InitE(t, options)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", migrate)
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	err = ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_ME", backendBucket)
-	if err != nil {
-		return err
-	}
-
-	options.MigrateState = true
-	migrate, err := terraform.InitE(t, options)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("%s\n", migrate)
 
 	// replace all backend files
-	files, err := FindFiles(foundationPath, "backend.tf")
+	err = RunStepE(e, "gcp-bootstrap.replace-backend-files", func() error {
+		files, err := FindFiles(foundationPath, "backend.tf")
+		if err != nil {
+			return err
+		}
+		for _, file := range files {
+			err = ReplaceStringInFile(file, "UPDATE_ME", backendBucket)
+			if err != nil {
+				return err
+			}
+			err = ReplaceStringInFile(file, "UPDATE_PROJECTS_BACKEND", backendBucketProjects)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return err
-	}
-	for _, file := range files {
-		err = ReplaceStringInFile(file, "UPDATE_ME", backendBucket)
-		if err != nil {
-			return err
-		}
-		err = ReplaceStringInFile(file, "UPDATE_PROJECTS_BACKEND", backendBucketProjects)
-		if err != nil {
-			return err
-		}
 	}
 
 	fmt.Println("Follow the Cloud Build execution in the following link:")
@@ -125,34 +134,35 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 	// TODO press enter to continue
 
 	// Check if image build was successful.
-	// Need to abort if not.
-	imageFilter := "source.repoSource.repoName:tf-cloudbuilder"
-	imageBuild := GetRunningBuild(t, cbProjectID, defaultRegion, imageFilter)
-	if imageBuild != "" {
-		status := GetTerminalState(t, cbProjectID, defaultRegion, imageBuild)
-		if status != "SUCCESS" {
-			fmt.Println("Terraform Image builder Build Failed.")
-			//TODO add error retrun
-		}
+	err = waitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.")
+	if err != nil {
+		return err
 	}
 
 	//prepare policies repo
 	gcpPoliciesPath := filepath.Join(checkoutPath, "gcp-policies")
 	policiesConf := CloneRepo(t, "gcp-policies", gcpPoliciesPath, cbProjectID)
 	policiesBranch := "main"
-	err = CheckoutBranch(policiesConf, policiesBranch)
-	if err != nil {
-		return err
-	}
-	err = CopyDirectory(filepath.Join(foundationPath, "policy-library"), gcpPoliciesPath)
-	if err != nil {
-		return err
-	}
-	err = CommitFiles(policiesConf, "Initialize policy library repo")
-	if err != nil {
-		return err
-	}
-	err = PushBranch(policiesConf, policiesBranch)
+
+	err = RunStepE(e, "gcp-bootstrap.gcp-policies", func() error {
+		err = CheckoutBranch(policiesConf, policiesBranch)
+		if err != nil {
+			return err
+		}
+		err = CopyDirectory(filepath.Join(foundationPath, "policy-library"), gcpPoliciesPath)
+		if err != nil {
+			return err
+		}
+		err = CommitFiles(policiesConf, "Initialize policy library repo")
+		if err != nil {
+			return err
+		}
+		err = PushBranch(policiesConf, policiesBranch)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return err
 	}
@@ -165,18 +175,23 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 		return err
 	}
 
-	fmt.Println("copy bootstrap files")
-	err = copyStepCode(t, bootstrapConf, foundationPath, checkoutPath, repo, step, "envs/shared")
+	err = RunStepE(e, "gcp-bootstrap.copy-code", func() error {
+		return copyStepCode(t, bootstrapConf, foundationPath, checkoutPath, repo, step, "envs/shared")
+	})
 	if err != nil {
 		return err
 	}
 
-	err = planStep(t, bootstrapConf, cbProjectID, defaultRegion, repo)
+	err = RunStepE(e, "gcp-bootstrap.plan", func() error {
+		return planStep(t, bootstrapConf, cbProjectID, defaultRegion, repo)
+	})
 	if err != nil {
 		return err
 	}
 
-	err = applyEnv(t, bootstrapConf, cbProjectID, defaultRegion, repo, "production")
+	err = RunStepE(e, "gcp-bootstrap.production", func() error {
+		return applyEnv(t, bootstrapConf, cbProjectID, defaultRegion, repo, "production")
+	})
 	if err != nil {
 		return err
 	}
@@ -214,17 +229,23 @@ func DeployOrgStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, fou
 		return err
 	}
 
-	err = copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
+	err = RunStepE(e, "gcp-org.copy-code", func() error {
+		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
+	})
 	if err != nil {
 		return err
 	}
 
-	err = planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
+	err = RunStepE(e, "gcp-org.plan", func() error {
+		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
+	})
 	if err != nil {
 		return err
 	}
 
-	err = applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
+	err = RunStepE(e, "gcp-org.production", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
+	})
 	if err != nil {
 		return err
 	}
@@ -334,9 +355,9 @@ func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) erro
 		return err
 	}
 
-	failed := waitBuild(t, conf, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo))
-	if failed {
-		return fmt.Errorf("plan build for repository %s failed", repo)
+	err = waitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo))
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -353,22 +374,26 @@ func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment
 		return err
 	}
 
-	failed := waitBuild(t, conf, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment))
-	if failed {
-		return fmt.Errorf("build for environment %s in repository %s failed", environment, repo)
+	err = waitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment))
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func waitBuild(t testing.TB, conf *git.CmdCfg, project, region, repo, failureMsg string) bool {
+func waitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
 	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
 	build := GetRunningBuild(t, project, region, filter)
 	if build != "" {
 		status := GetTerminalState(t, project, region, build)
 		if status != "SUCCESS" {
-			fmt.Println(failureMsg)
-			return true
+			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
+		}
+	} else {
+		status := GetLastBuildStatus(t, project, region, filter)
+		if status != "SUCCESS" {
+			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
 		}
 	}
-	return false
+	return nil
 }

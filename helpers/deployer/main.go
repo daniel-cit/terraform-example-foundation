@@ -31,7 +31,7 @@ import (
 
 var (
 	tfvarsFile = flag.String("tfvars", "", "Full path to the tfvars file with the complete configuration to be used")
-	verbose    = flag.Bool("verbose", false, "If true, additional output is logged.")
+	quiet      = flag.Bool("quiet", false, "If true, additional output is suppressed.")
 	help       = flag.Bool("help", false, "If true, prints help text and exits.")
 )
 
@@ -58,11 +58,14 @@ func main() {
 	// init infra
 	foundationCodePath := globalTfvars.FoundationCodePath
 	codeCheckoutPath := globalTfvars.CodeCheckoutPath
-	logger := logger.Default
+	vLogger := logger.Default
 	bootstrapOptions := &terraform.Options{
 		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
-		Logger:       logger,
+		Logger:       vLogger,
 		NoColor:      true,
+	}
+	if *quiet {
+		bootstrapOptions.Logger = logger.Discard
 	}
 
 	gotest.Init()
