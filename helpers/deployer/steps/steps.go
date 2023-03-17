@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package steps
 
 import (
 	"fmt"
@@ -20,6 +20,8 @@ import (
 
 	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/git"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 
 	"github.com/mitchellh/go-testing-interface"
 )
@@ -31,6 +33,63 @@ type BootstrapOutputs struct {
 	DefaultRegion             string
 }
 
+type ServerAddress struct {
+	Ipv4Address    string `cty:"ipv4_address"`
+	ForwardingPath string `cty:"forwarding_path"`
+}
+
+type GlobalTfvars struct {
+	OrgID                     string           `hcl:"org_id"`
+	BillingAccount            string           `hcl:"billing_account"`
+	GroupOrgAdmins            string           `hcl:"group_org_admins"`
+	GroupBillingAdmins        string           `hcl:"group_billing_admins"`
+	BillingDataUsers          string           `hcl:"billing_data_users"`
+	MonitoringWorkspaceUsers  string           `hcl:"monitoring_workspace_users"`
+	AuditDataUsers            string           `hcl:"audit_data_users"`
+	DefaultRegion             string           `hcl:"default_region"`
+	ParentFolder              *string          `hcl:"parent_folder"`
+	DomainsToAllow            []string         `hcl:"domains_to_allow"`
+	EssentialContactsDomains  []string         `hcl:"essential_contacts_domains_to_allow"`
+	TargetNameServerAddresses *[]ServerAddress `hcl:"target_name_server_addresses"`
+	SccNotificationName       string           `hcl:"scc_notification_name"`
+	ProjectPrefix             *string          `hcl:"project_prefix"`
+	FolderPrefix              *string          `hcl:"folder_prefix"`
+	BucketForceDestroy        *bool            `hcl:"bucket_force_destroy"`
+	EnableHubAndSpoke         bool             `hcl:"enable_hub_and_spoke"`
+	CreateUniqueTagKey        bool             `hcl:"create_unique_tag_key"`
+	CodeCheckoutPath          string           `hcl:"code_checkout_path"`
+	FoundationCodePath        string           `hcl:"foundation_code_path"`
+}
+
+type BootstrapTfvars struct {
+	OrgID              string  `hcl:"org_id"`
+	BillingAccount     string  `hcl:"billing_account"`
+	GroupOrgAdmins     string  `hcl:"group_org_admins"`
+	GroupBillingAdmins string  `hcl:"group_billing_admins"`
+	DefaultRegion      string  `hcl:"default_region"`
+	ParentFolder       *string `hcl:"parent_folder"`
+	ProjectPrefix      *string `hcl:"project_prefix"`
+	FolderPrefix       *string `hcl:"folder_prefix"`
+	BucketForceDestroy *bool   `hcl:"bucket_force_destroy"`
+}
+
+type OrgTfvars struct {
+	DomainsToAllow           []string `hcl:"domains_to_allow"`
+	EssentialContactsDomains []string `hcl:"essential_contacts_domains_to_allow"`
+	BillingDataUsers         string   `hcl:"billing_data_users"`
+	AuditDataUsers           string   `hcl:"audit_data_users"`
+	SccNotificationName      string   `hcl:"scc_notification_name"`
+	RemoteStateBucket        string   `hcl:"remote_state_bucket"`
+	EnableHubAndSpoke        bool     `hcl:"enable_hub_and_spoke"`
+	CreateACMAPolicy         bool     `hcl:"create_access_context_manager_access_policy"`
+	CreateUniqueTagKey       bool     `hcl:"create_unique_tag_key"`
+}
+
+type EnvsTfvars struct {
+	MonitoringWorkspaceUsers string `hcl:"monitoring_workspace_users"`
+	RemoteStateBucket        string `hcl:"remote_state_bucket"`
+}
+
 func GetBootstrapStepOutputs(t testing.TB, options *terraform.Options) BootstrapOutputs {
 	return BootstrapOutputs{
 		CICDProject:               terraform.Output(t, options, "cloudbuild_project_id"),
@@ -40,7 +99,7 @@ func GetBootstrapStepOutputs(t testing.TB, options *terraform.Options) Bootstrap
 	}
 }
 
-func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string) error {
+func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string) error {
 	repo := "gcp-bootstrap"
 	step := "0-bootstrap"
 
@@ -56,7 +115,7 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 		BucketForceDestroy: tfvars.BucketForceDestroy,
 	}
 
-	err := WriteTfvars(filepath.Join(foundationPath, step, "terraform.tfvars"), bootstrapTfvars)
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "terraform.tfvars"), bootstrapTfvars)
 	if err != nil {
 		return err
 	}
@@ -85,13 +144,13 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 	backendBucketProjects := terraform.Output(t, options, "projects_gcs_bucket_tfstate")
 
 	// replace backend and terraform init migrate
-	err = RunStepE(e, "gcp-bootstrap.migrate-state", func() error {
+	err = utils.RunStepE(e, "gcp-bootstrap.migrate-state", func() error {
 		options.MigrateState = true
-		err = CopyFile(filepath.Join(options.TerraformDir, "backend.tf.example"), filepath.Join(options.TerraformDir, "backend.tf"))
+		err = utils.CopyFile(filepath.Join(options.TerraformDir, "backend.tf.example"), filepath.Join(options.TerraformDir, "backend.tf"))
 		if err != nil {
 			return err
 		}
-		err = ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_ME", backendBucket)
+		err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_ME", backendBucket)
 		if err != nil {
 			return err
 		}
@@ -107,17 +166,17 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 	}
 
 	// replace all backend files
-	err = RunStepE(e, "gcp-bootstrap.replace-backend-files", func() error {
-		files, err := FindFiles(foundationPath, "backend.tf")
+	err = utils.RunStepE(e, "gcp-bootstrap.replace-backend-files", func() error {
+		files, err := utils.FindFiles(foundationPath, "backend.tf")
 		if err != nil {
 			return err
 		}
 		for _, file := range files {
-			err = ReplaceStringInFile(file, "UPDATE_ME", backendBucket)
+			err = utils.ReplaceStringInFile(file, "UPDATE_ME", backendBucket)
 			if err != nil {
 				return err
 			}
-			err = ReplaceStringInFile(file, "UPDATE_PROJECTS_BACKEND", backendBucketProjects)
+			err = utils.ReplaceStringInFile(file, "UPDATE_PROJECTS_BACKEND", backendBucketProjects)
 			if err != nil {
 				return err
 			}
@@ -141,23 +200,23 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 
 	//prepare policies repo
 	gcpPoliciesPath := filepath.Join(checkoutPath, "gcp-policies")
-	policiesConf := CloneRepo(t, "gcp-policies", gcpPoliciesPath, cbProjectID)
+	policiesConf := utils.CloneRepo(t, "gcp-policies", gcpPoliciesPath, cbProjectID)
 	policiesBranch := "main"
 
-	err = RunStepE(e, "gcp-bootstrap.gcp-policies", func() error {
-		err = CheckoutBranch(policiesConf, policiesBranch)
+	err = utils.RunStepE(e, "gcp-bootstrap.gcp-policies", func() error {
+		err = utils.CheckoutBranch(policiesConf, policiesBranch)
 		if err != nil {
 			return err
 		}
-		err = CopyDirectory(filepath.Join(foundationPath, "policy-library"), gcpPoliciesPath)
+		err = utils.CopyDirectory(filepath.Join(foundationPath, "policy-library"), gcpPoliciesPath)
 		if err != nil {
 			return err
 		}
-		err = CommitFiles(policiesConf, "Initialize policy library repo")
+		err = utils.CommitFiles(policiesConf, "Initialize policy library repo")
 		if err != nil {
 			return err
 		}
-		err = PushBranch(policiesConf, policiesBranch)
+		err = utils.PushBranch(policiesConf, policiesBranch)
 		if err != nil {
 			return err
 		}
@@ -169,27 +228,27 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 
 	//prepare bootstrap repo
 	gcpBootstrapPath := filepath.Join(checkoutPath, "gcp-bootstrap")
-	bootstrapConf := CloneRepo(t, "gcp-bootstrap", gcpBootstrapPath, cbProjectID)
-	err = CheckoutBranch(bootstrapConf, "plan")
+	bootstrapConf := utils.CloneRepo(t, "gcp-bootstrap", gcpBootstrapPath, cbProjectID)
+	err = utils.CheckoutBranch(bootstrapConf, "plan")
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-bootstrap.copy-code", func() error {
+	err = utils.RunStepE(e, "gcp-bootstrap.copy-code", func() error {
 		return copyStepCode(t, bootstrapConf, foundationPath, checkoutPath, repo, step, "envs/shared")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-bootstrap.plan", func() error {
+	err = utils.RunStepE(e, "gcp-bootstrap.plan", func() error {
 		return planStep(t, bootstrapConf, cbProjectID, defaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-bootstrap.production", func() error {
+	err = utils.RunStepE(e, "gcp-bootstrap.production", func() error {
 		return applyEnv(t, bootstrapConf, cbProjectID, defaultRegion, repo, "production")
 	})
 	if err != nil {
@@ -201,7 +260,7 @@ func DeployBootstrapStep(t testing.TB, e State, tfvars GlobalTfvars, options *te
 	return nil
 }
 
-func DeployOrgStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployOrgStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
 	repo := "gcp-org"
 	step := "1-org"
 
@@ -217,33 +276,33 @@ func DeployOrgStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, fou
 		CreateUniqueTagKey:       tfvars.CreateUniqueTagKey,
 	}
 
-	err := WriteTfvars(filepath.Join(foundationPath, step, "envs", "shared", "terraform.tfvars"), orgTfvars)
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "envs", "shared", "terraform.tfvars"), orgTfvars)
 	if err != nil {
 		return err
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = CheckoutBranch(conf, "plan")
+	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
+	err = utils.CheckoutBranch(conf, "plan")
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-org.copy-code", func() error {
+	err = utils.RunStepE(e, "gcp-org.copy-code", func() error {
 		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-org.plan", func() error {
+	err = utils.RunStepE(e, "gcp-org.plan", func() error {
 		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-org.production", func() error {
+	err = utils.RunStepE(e, "gcp-org.production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
 	})
 	if err != nil {
@@ -254,7 +313,7 @@ func DeployOrgStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, fou
 	return nil
 }
 
-func DeployEnvStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployEnvStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
 	repo := "gcp-environments"
 	step := "2-environments"
 
@@ -263,47 +322,47 @@ func DeployEnvStep(t testing.TB, e State, tfvars GlobalTfvars, checkoutPath, fou
 		RemoteStateBucket:        outputs.RemoteStateBucket,
 	}
 
-	err := WriteTfvars(filepath.Join(foundationPath, step, "terraform.tfvars"), envsTfvars)
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "terraform.tfvars"), envsTfvars)
 	if err != nil {
 		return err
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = CheckoutBranch(conf, "plan")
+	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
+	err = utils.CheckoutBranch(conf, "plan")
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-environments.copy-code", func() error {
+	err = utils.RunStepE(e, "gcp-environments.copy-code", func() error {
 		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-environments.plan", func() error {
+	err = utils.RunStepE(e, "gcp-environments.plan", func() error {
 		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-environments.production", func() error {
+	err = utils.RunStepE(e, "gcp-environments.production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-environments.non-production", func() error {
+	err = utils.RunStepE(e, "gcp-environments.non-production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "non-production")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = RunStepE(e, "gcp-environments.development", func() error {
+	err = utils.RunStepE(e, "gcp-environments.development", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "development")
 	})
 	if err != nil {
@@ -320,22 +379,22 @@ func copyStepCode(t testing.TB, conf *git.CmdCfg, foundationPath, checkoutPath, 
 	if customPath != "" {
 		targetDir = filepath.Join(gcpPath, customPath)
 	}
-	err := CopyDirectory(filepath.Join(foundationPath, step), targetDir)
+	err := utils.CopyDirectory(filepath.Join(foundationPath, step), targetDir)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-apply.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-apply.yaml"))
+	err = utils.CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-apply.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-apply.yaml"))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-plan.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-plan.yaml"))
+	err = utils.CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-plan.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-plan.yaml"))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = CopyFile(filepath.Join(foundationPath, "build/tf-wrapper.sh"), filepath.Join(gcpPath, "tf-wrapper.sh"))
+	err = utils.CopyFile(filepath.Join(foundationPath, "build/tf-wrapper.sh"), filepath.Join(gcpPath, "tf-wrapper.sh"))
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -344,12 +403,12 @@ func copyStepCode(t testing.TB, conf *git.CmdCfg, foundationPath, checkoutPath, 
 }
 
 func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) error {
-	err := CommitFiles(conf, fmt.Sprintf("Initialize %s repo", repo))
+	err := utils.CommitFiles(conf, fmt.Sprintf("Initialize %s repo", repo))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = PushBranch(conf, "plan")
+	err = utils.PushBranch(conf, "plan")
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -363,12 +422,12 @@ func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) erro
 }
 
 func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment string) error {
-	err := CheckoutBranch(conf, environment)
+	err := utils.CheckoutBranch(conf, environment)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = PushBranch(conf, environment)
+	err = utils.PushBranch(conf, environment)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -383,14 +442,14 @@ func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment
 
 func waitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
 	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
-	build := GetRunningBuild(t, project, region, filter)
+	build := utils.GetRunningBuild(t, project, region, filter)
 	if build != "" {
-		status := GetTerminalState(t, project, region, build)
+		status := utils.GetTerminalState(t, project, region, build)
 		if status != "SUCCESS" {
 			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
 		}
 	} else {
-		status := GetLastBuildStatus(t, project, region, filter)
+		status := utils.GetLastBuildStatus(t, project, region, filter)
 		if status != "SUCCESS" {
 			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
 		}

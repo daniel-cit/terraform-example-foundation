@@ -23,63 +23,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 )
 
-type ServerAddress struct {
-	Ipv4Address    string `cty:"ipv4_address"`
-	ForwardingPath string `cty:"forwarding_path"`
-}
-
-type GlobalTfvars struct {
-	OrgID                     string           `hcl:"org_id"`
-	BillingAccount            string           `hcl:"billing_account"`
-	GroupOrgAdmins            string           `hcl:"group_org_admins"`
-	GroupBillingAdmins        string           `hcl:"group_billing_admins"`
-	BillingDataUsers          string           `hcl:"billing_data_users"`
-	MonitoringWorkspaceUsers  string           `hcl:"monitoring_workspace_users"`
-	AuditDataUsers            string           `hcl:"audit_data_users"`
-	DefaultRegion             string           `hcl:"default_region"`
-	ParentFolder              *string          `hcl:"parent_folder"`
-	DomainsToAllow            []string         `hcl:"domains_to_allow"`
-	EssentialContactsDomains  []string         `hcl:"essential_contacts_domains_to_allow"`
-	TargetNameServerAddresses *[]ServerAddress `hcl:"target_name_server_addresses"`
-	SccNotificationName       string           `hcl:"scc_notification_name"`
-	ProjectPrefix             *string          `hcl:"project_prefix"`
-	FolderPrefix              *string          `hcl:"folder_prefix"`
-	BucketForceDestroy        *bool            `hcl:"bucket_force_destroy"`
-	EnableHubAndSpoke         bool             `hcl:"enable_hub_and_spoke"`
-	CreateUniqueTagKey        bool             `hcl:"create_unique_tag_key"`
-	CodeCheckoutPath          string           `hcl:"code_checkout_path"`
-	FoundationCodePath        string           `hcl:"foundation_code_path"`
-}
-
-type BootstrapTfvars struct {
-	OrgID              string  `hcl:"org_id"`
-	BillingAccount     string  `hcl:"billing_account"`
-	GroupOrgAdmins     string  `hcl:"group_org_admins"`
-	GroupBillingAdmins string  `hcl:"group_billing_admins"`
-	DefaultRegion      string  `hcl:"default_region"`
-	ParentFolder       *string `hcl:"parent_folder"`
-	ProjectPrefix      *string `hcl:"project_prefix"`
-	FolderPrefix       *string `hcl:"folder_prefix"`
-	BucketForceDestroy *bool   `hcl:"bucket_force_destroy"`
-}
-
-type OrgTfvars struct {
-	DomainsToAllow           []string `hcl:"domains_to_allow"`
-	EssentialContactsDomains []string `hcl:"essential_contacts_domains_to_allow"`
-	BillingDataUsers         string   `hcl:"billing_data_users"`
-	AuditDataUsers           string   `hcl:"audit_data_users"`
-	SccNotificationName      string   `hcl:"scc_notification_name"`
-	RemoteStateBucket        string   `hcl:"remote_state_bucket"`
-	EnableHubAndSpoke        bool     `hcl:"enable_hub_and_spoke"`
-	CreateACMAPolicy         bool     `hcl:"create_access_context_manager_access_policy"`
-	CreateUniqueTagKey       bool     `hcl:"create_unique_tag_key"`
-}
-
-type EnvsTfvars struct {
-	MonitoringWorkspaceUsers string `hcl:"monitoring_workspace_users"`
-	RemoteStateBucket        string `hcl:"remote_state_bucket"`
-}
-
 func ReadTfvars(filename string, val interface{}) error {
 	data, diagnostic := hclparse.NewParser().ParseHCLFile(filename)
 	if diagnostic.HasErrors() {

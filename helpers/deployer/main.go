@@ -27,6 +27,7 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 )
 
 var (
@@ -49,7 +50,7 @@ func main() {
 		fmt.Println("stopping execution, tfvars file", *tfvarsFile, "does not exits")
 		os.Exit(2)
 	}
-	var globalTfvars utils.GlobalTfvars
+	var globalTfvars steps.GlobalTfvars
 	err = utils.ReadTfvars(*tfvarsFile, &globalTfvars)
 	if err != nil {
 		log.Fatal(err)
@@ -79,16 +80,16 @@ func main() {
 
 	// deploy foundation
 	utils.RunStep(e, "gcp-bootstrap", func() error {
-		return utils.DeployBootstrapStep(t, e, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
+		return steps.DeployBootstrapStep(t, e, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})
 
-	bootstrapOutputs := utils.GetBootstrapStepOutputs(t, bootstrapOptions)
+	bootstrapOutputs := steps.GetBootstrapStepOutputs(t, bootstrapOptions)
 
 	utils.RunStep(e, "gcp-org", func() error {
-		return utils.DeployOrgStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+		return steps.DeployOrgStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 
 	utils.RunStep(e, "gcp-environments", func() error {
-		return utils.DeployEnvStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+		return steps.DeployEnvStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 }
