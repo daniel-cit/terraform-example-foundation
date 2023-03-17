@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	gotest "testing"
@@ -26,70 +25,93 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
 
-var (
-	tfvarsFile = flag.String("tfvars", "", "Full path to the tfvars file with the complete configuration to be used")
-	quiet      = flag.Bool("quiet", false, "If true, additional output is suppressed.")
-	help       = flag.Bool("help", false, "If true, prints help text and exits.")
-)
+type depCfg struct {
+	tfvarsFile string
+	stateFile  string
+	quiet      bool
+	help       bool
+}
+
+func parseFlags() depCfg {
+	var d depCfg
+
+	flag.StringVar(&d.tfvarsFile, "tfvars_file", "", "Full path to the Terraform .tfvars `file` with the complete configuration to be used.")
+	flag.StringVar(&d.stateFile, "state_file", ".state.json", "Path to the state `file` to be used to save progress.")
+	flag.BoolVar(&d.quiet, "quiet", false, "If true, additional output is suppressed.")
+	flag.BoolVar(&d.help, "help", false, "Prints this help text and exits.")
+
+	flag.Parse()
+	return d
+}
 
 func main() {
 
-	flag.Parse()
+	cfg := parseFlags()
+
+	if cfg.help {
+		fmt.Println("Deploys the Terraform Example Foundation")
+		flag.PrintDefaults()
+		return
+	}
 
 	// load tfvars
-	if *tfvarsFile == "" {
+	if cfg.tfvarsFile == "" {
 		fmt.Println("stopping execution, tfvars file is required.")
 		os.Exit(1)
 	}
-	_, err := os.Stat(*tfvarsFile)
+	_, err := os.Stat(cfg.tfvarsFile)
 	if os.IsNotExist(err) {
-		fmt.Println("stopping execution, tfvars file", *tfvarsFile, "does not exits")
-		os.Exit(2)
+		fmt.Printf("stopping execution, tfvars file '%s' does not exits\n", cfg.tfvarsFile)
+		os.Exit(1)
 	}
 	var globalTfvars steps.GlobalTfvars
-	err = utils.ReadTfvars(*tfvarsFile, &globalTfvars)
+	err = utils.ReadTfvars(cfg.tfvarsFile, &globalTfvars)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("failed to load tfvars file %s. Error: %s\n", cfg.tfvarsFile, err.Error())
+		os.Exit(1)
 	}
 
 	// init infra
 	foundationCodePath := globalTfvars.FoundationCodePath
 	codeCheckoutPath := globalTfvars.CodeCheckoutPath
-	vLogger := logger.Default
+
+	var logg *logger.Logger
+	if cfg.quiet {
+		logg = logger.Discard
+	} else {
+		logg = logger.Default
+	}
 	bootstrapOptions := &terraform.Options{
 		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
-		Logger:       vLogger,
+		Logger:       logg,
 		NoColor:      true,
-	}
-	if *quiet {
-		bootstrapOptions.Logger = logger.Discard
 	}
 
 	gotest.Init()
 	t := &testing.RuntimeT{}
 
-	e, err := utils.LoadState(".state.json")
+	s, err := utils.LoadState(cfg.stateFile)
 	if err != nil {
-		fmt.Println("failed to load state file")
-		os.Exit(3)
+		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stateFile, err.Error())
+		os.Exit(2)
 	}
 
 	// deploy foundation
-	utils.RunStep(e, "gcp-bootstrap", func() error {
-		return steps.DeployBootstrapStep(t, e, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
+	utils.RunStep(s, "gcp-bootstrap", func() error {
+		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})
 
 	bootstrapOutputs := steps.GetBootstrapStepOutputs(t, bootstrapOptions)
 
-	utils.RunStep(e, "gcp-org", func() error {
-		return steps.DeployOrgStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	utils.RunStep(s, "gcp-org", func() error {
+		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 
-	utils.RunStep(e, "gcp-environments", func() error {
-		return steps.DeployEnvStep(t, e, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+	utils.RunStep(s, "gcp-environments", func() error {
+		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 }

@@ -44,17 +44,17 @@ func CopyDirectory(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	for _, file := range files {
-		if file.IsDir() {
-			if file.Name() != ".terraform" {
-				err := CopyDirectory(filepath.Join(src, file.Name()), filepath.Join(dest, file.Name()))
+	for _, f := range files {
+		if f.IsDir() {
+			if f.Name() != ".terraform" {
+				err := CopyDirectory(filepath.Join(src, f.Name()), filepath.Join(dest, f.Name()))
 				if err != nil {
 					return err
 				}
 			}
 		} else {
-			if file.Name() != ".terraform.lock.hcl" {
-				err := CopyFile(filepath.Join(src, file.Name()), filepath.Join(dest, file.Name()))
+			if f.Name() != ".terraform.lock.hcl" {
+				err := CopyFile(filepath.Join(src, f.Name()), filepath.Join(dest, f.Name()))
 				if err != nil {
 					return err
 				}

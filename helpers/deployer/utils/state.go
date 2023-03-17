@@ -38,96 +38,96 @@ type State struct {
 }
 
 func LoadState(file string) (State, error) {
-	var state State
+	var s State
 	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
 		fmt.Printf("creating new state file '%s'\n.", file)
-		state = State{
+		s = State{
 			File: file,
 		}
 	} else {
 		f, err := ioutil.ReadFile(file)
 		if err != nil {
-			return state, err
+			return s, err
 		}
-		err = json.Unmarshal(f, &state)
+		err = json.Unmarshal(f, &s)
 		if err != nil {
-			return state, err
+			return s, err
 		}
-		state.File = file
+		s.File = file
 	}
-	if state.Steps == nil {
-		state.Steps = map[string]Step{}
+	if s.Steps == nil {
+		s.Steps = map[string]Step{}
 	}
-	return state, nil
+	return s, nil
 }
 
-func (e State) SaveState() {
-	f, _ := json.Marshal(e)
-	os.WriteFile(e.File, f, 0644)
+ func (s State) SaveState() {
+	f, _ := json.Marshal(s)
+	os.WriteFile(s.File, f, 0644)
 }
 
-func (e State) CompleteStep(name string) {
-	e.Steps[name] = Step{
+ func (s State) CompleteStep(name string) {
+	s.Steps[name] = Step{
 		Name:   name,
 		Status: completeState,
 		Error:  "",
 	}
-	e.SaveState()
+	s.SaveState()
 	fmt.Printf("completing step '%s' execution\n", name)
 }
 
-func (e State) IsStepComplete(name string) bool {
-	val, ok := e.Steps[name]
+ func (s State) IsStepComplete(name string) bool {
+	v, ok := s.Steps[name]
 	if ok {
-		return val.Status == completeState
+		return v.Status == completeState
 	}
 	return false
 }
 
-func (e State) FailStep(name string, err string) {
-	e.Steps[name] = Step{
+ func (s State) FailStep(name string, err string) {
+	s.Steps[name] = Step{
 		Name:   name,
 		Status: errorState,
 		Error:  err,
 	}
-	e.SaveState()
+	s.SaveState()
 	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err)
 }
 
-func (e State) GetStepError(name string) string {
-	val, ok := e.Steps[name]
+ func (s State) GetStepError(name string) string {
+	v, ok := s.Steps[name]
 	if ok {
-		return val.Error
+		return v.Error
 	}
 	return ""
 }
 
-func RunStep(e State, step string, f func() (error)){
-	if e.IsStepComplete(step) {
+func RunStep(s State, step string, f func() (error)){
+	if s.IsStepComplete(step) {
 		fmt.Printf("skipping step '%s' execution\n", step)
 	} else {
 		fmt.Printf("starting step '%s' execution\n", step)
 		err := f()
 		if err != nil {
-			e.FailStep(step, err.Error())
+			s.FailStep(step, err.Error())
 			os.Exit(4)
 		}
-		e.CompleteStep(step)
+		s.CompleteStep(step)
 	}
 }
 
-func RunStepE(e State, step string, f func() (error)) error {
-	if e.IsStepComplete(step) {
+func RunStepE(s State, step string, f func() (error)) error {
+	if s.IsStepComplete(step) {
 		fmt.Printf("skipping step '%s' execution\n", step)
 	} else {
 		fmt.Printf("starting step '%s' execution\n", step)
 		err := f()
 		if err != nil {
-			e.FailStep(step, err.Error())
+			s.FailStep(step, err.Error())
 			return err
 		}
-		e.CompleteStep(step)
+		s.CompleteStep(step)
 	}
 	return nil
 }

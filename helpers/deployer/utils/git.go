@@ -27,19 +27,19 @@ import (
 
 
 func GetCurrentBranch(conf *git.CmdCfg) (string, error) {
-	o, err := conf.RunCmdE("branch", "-q", "--show-current")
+	b, err := conf.RunCmdE("branch", "-q", "--show-current")
 	if err != nil {
 		return "", err
 	}
-	return o, nil
+	return b, nil
 }
 
 func HasRemoteTRacking(conf *git.CmdCfg, branch string) (bool, error) {
-	o, err := conf.RunCmdE("status", "-sb")
+	s, err := conf.RunCmdE("status", "-sb")
 	if err != nil {
 		return false, err
 	}
-	if strings.Contains(o, fmt.Sprintf("## %s...origin/%s", branch, branch)) {
+	if strings.Contains(s, fmt.Sprintf("## %s...origin/%s", branch, branch)) {
 		return true, nil
 	}
 	return false, nil
@@ -65,11 +65,11 @@ func PushBranch(conf *git.CmdCfg, branch string) error {
 }
 
 func CheckoutBranch(conf *git.CmdCfg, branch string) error {
-	current, err := GetCurrentBranch(conf)
+	c, err := GetCurrentBranch(conf)
 	if err != nil {
 		return err
 	}
-	if current != branch {
+	if c != branch {
 		_, err := conf.RunCmdE("checkout", "-b", branch)
 		if err != nil {
 			if strings.Contains(err.Error(), "already exists") {
@@ -86,11 +86,11 @@ func CheckoutBranch(conf *git.CmdCfg, branch string) error {
 }
 
 func CommitFiles(conf *git.CmdCfg, msg string) error {
-	o, err := conf.RunCmdE("status", "-s")
+	s, err := conf.RunCmdE("status", "-s")
 	if err != nil {
 		return err
 	}
-	if o != "" {
+	if s != "" {
 		_, err = conf.RunCmdE("add", ".")
 		if err != nil {
 			return err
@@ -105,6 +105,6 @@ func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		gcloud.Runf(t, "source repos clone %s %s --project %s", name, path, project)
-	}
-	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default))
+	} // TODO should have return err on else?
+	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default)) // TODO must use the chosen logger
 }
