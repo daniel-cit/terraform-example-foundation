@@ -92,7 +92,7 @@ func LoadState(file string) (State, error) {
 		Error:  err,
 	}
 	s.SaveState()
-	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err)
+	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err) // TODO make message shorter
 }
 
  func (s State) GetStepError(name string) string {

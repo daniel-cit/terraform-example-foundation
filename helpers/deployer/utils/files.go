@@ -24,7 +24,7 @@ import (
 )
 
 func CopyFile(src string, dest string) error {
-	i, err := os.Stat(src)
+	s, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func CopyFile(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dest, buf, i.Mode())
+	return ioutil.WriteFile(dest, buf, s.Mode())
 }
 
 func CopyDirectory(src string, dest string) error {
@@ -64,12 +64,12 @@ func CopyDirectory(src string, dest string) error {
 	return nil
 }
 
-func ReplaceStringInFile(file, old, new string) error {
-	f, err := ioutil.ReadFile(file)
+func ReplaceStringInFile(filename, old, new string) error {
+	f, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(file, bytes.Replace(f, []byte(old), []byte(new), -1), 0644)
+	return ioutil.WriteFile(filename, bytes.Replace(f, []byte(old), []byte(new), -1), 0644)
 }
 
 func FindFiles(dir, filename string) ([]string, error) {

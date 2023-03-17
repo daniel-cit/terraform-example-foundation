@@ -24,13 +24,13 @@ import (
 )
 
 func ReadTfvars(filename string, val interface{}) error {
-	data, diagnostic := hclparse.NewParser().ParseHCLFile(filename)
-	if diagnostic.HasErrors() {
-		return errors.New(diagnostic.Error())
+	f, d := hclparse.NewParser().ParseHCLFile(filename)
+	if d.HasErrors() {
+		return errors.New(d.Error())
 	}
-	decoded := gohcl.DecodeBody(data.Body, nil, val)
-	if decoded.HasErrors() {
-		return errors.New(decoded.Error())
+	d = gohcl.DecodeBody(f.Body, nil, val)
+	if d.HasErrors() {
+		return errors.New(d.Error())
 	}
 	return nil
 }

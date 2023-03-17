@@ -48,10 +48,35 @@ func parseFlags() depCfg {
 	return d
 }
 
+func getLogger(c depCfg) *logger.Logger {
+	if c.quiet {
+		return logger.Discard
+	}
+	return logger.Default
+}
+
+func getTfvars(c depCfg) steps.GlobalTfvars {
+	if c.tfvarsFile == "" {
+		fmt.Println("stopping execution, tfvars file is required.")
+		os.Exit(1)
+	}
+	_, err := os.Stat(c.tfvarsFile)
+	if os.IsNotExist(err) {
+		fmt.Printf("stopping execution, tfvars file '%s' does not exits\n", c.tfvarsFile)
+		os.Exit(1)
+	}
+	var globalTfvars steps.GlobalTfvars
+	err = utils.ReadTfvars(c.tfvarsFile, &globalTfvars)
+	if err != nil {
+		fmt.Printf("failed to load tfvars file %s. Error: %s\n", c.tfvarsFile, err.Error())
+		os.Exit(1)
+	}
+	return globalTfvars
+}
+
 func main() {
 
 	cfg := parseFlags()
-
 	if cfg.help {
 		fmt.Println("Deploys the Terraform Example Foundation")
 		flag.PrintDefaults()
@@ -59,41 +84,16 @@ func main() {
 	}
 
 	// load tfvars
-	if cfg.tfvarsFile == "" {
-		fmt.Println("stopping execution, tfvars file is required.")
-		os.Exit(1)
-	}
-	_, err := os.Stat(cfg.tfvarsFile)
-	if os.IsNotExist(err) {
-		fmt.Printf("stopping execution, tfvars file '%s' does not exits\n", cfg.tfvarsFile)
-		os.Exit(1)
-	}
-	var globalTfvars steps.GlobalTfvars
-	err = utils.ReadTfvars(cfg.tfvarsFile, &globalTfvars)
-	if err != nil {
-		fmt.Printf("failed to load tfvars file %s. Error: %s\n", cfg.tfvarsFile, err.Error())
-		os.Exit(1)
-	}
+	globalTfvars := getTfvars(cfg)
 
 	// init infra
-	foundationCodePath := globalTfvars.FoundationCodePath
-	codeCheckoutPath := globalTfvars.CodeCheckoutPath
-
-	var logg *logger.Logger
-	if cfg.quiet {
-		logg = logger.Discard
-	} else {
-		logg = logger.Default
-	}
-	bootstrapOptions := &terraform.Options{
-		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
-		Logger:       logg,
-		NoColor:      true,
-	}
-
 	gotest.Init()
 	t := &testing.RuntimeT{}
+	foundationCodePath := globalTfvars.FoundationCodePath
+	codeCheckoutPath := globalTfvars.CodeCheckoutPath
+	logger := getLogger(cfg)
 
+	// load state
 	s, err := utils.LoadState(cfg.stateFile)
 	if err != nil {
 		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stateFile, err.Error())
@@ -101,6 +101,12 @@ func main() {
 	}
 
 	// deploy foundation
+	bootstrapOptions := &terraform.Options{
+		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
+		Logger:       logger,
+		NoColor:      true,
+	}
+
 	utils.RunStep(s, "gcp-bootstrap", func() error {
 		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})

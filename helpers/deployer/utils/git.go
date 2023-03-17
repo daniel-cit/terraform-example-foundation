@@ -25,6 +25,13 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 )
 
+func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		gcloud.Runf(t, "source repos clone %s %s --project %s", name, path, project)
+	} // TODO should have return err on else?
+	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default)) // TODO must use the chosen logger
+}
 
 func GetCurrentBranch(conf *git.CmdCfg) (string, error) {
 	b, err := conf.RunCmdE("branch", "-q", "--show-current")
@@ -46,11 +53,11 @@ func HasRemoteTRacking(conf *git.CmdCfg, branch string) (bool, error) {
 }
 
 func PushBranch(conf *git.CmdCfg, branch string) error {
-	hasRemote, err := HasRemoteTRacking(conf, branch)
+	exits, err := HasRemoteTRacking(conf, branch)
 	if err != nil {
 		return err
 	}
-	if !hasRemote {
+	if !exits {
 		_, err := conf.RunCmdE("push", "--set-upstream", "origin", branch)
 		if err != nil {
 			return err
@@ -99,12 +106,4 @@ func CommitFiles(conf *git.CmdCfg, msg string) error {
 		return err
 	}
 	return nil
-}
-
-func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		gcloud.Runf(t, "source repos clone %s %s --project %s", name, path, project)
-	} // TODO should have return err on else?
-	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default)) // TODO must use the chosen logger
 }

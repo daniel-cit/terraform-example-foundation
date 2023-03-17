@@ -444,6 +444,7 @@ func waitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) er
 	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
 	build := utils.GetRunningBuild(t, project, region, filter)
 	if build != "" {
+		// TODO add message to fully identify build
 		status := utils.GetTerminalState(t, project, region, build)
 		if status != "SUCCESS" {
 			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
