@@ -22,6 +22,8 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/state"
 
 	"github.com/mitchellh/go-testing-interface"
 )
@@ -99,7 +101,7 @@ func GetBootstrapStepOutputs(t testing.TB, options *terraform.Options) Bootstrap
 	}
 }
 
-func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string) error {
+func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string) error {
 	repo := "gcp-bootstrap"
 	step := "0-bootstrap"
 
@@ -144,7 +146,7 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 	backendBucketProjects := terraform.Output(t, options, "projects_gcs_bucket_tfstate")
 
 	// replace backend and terraform init migrate
-	err = utils.RunStepE(e, "gcp-bootstrap.migrate-state", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.migrate-state", func() error {
 		options.MigrateState = true
 		err = utils.CopyFile(filepath.Join(options.TerraformDir, "backend.tf.example"), filepath.Join(options.TerraformDir, "backend.tf"))
 		if err != nil {
@@ -166,7 +168,7 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 	}
 
 	// replace all backend files
-	err = utils.RunStepE(e, "gcp-bootstrap.replace-backend-files", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.replace-backend-files", func() error {
 		files, err := utils.FindFiles(foundationPath, "backend.tf")
 		if err != nil {
 			return err
@@ -193,7 +195,7 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 	// TODO press enter to continue
 
 	// Check if image build was successful.
-	err = waitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.")
+	err = gcp.WaitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.")
 	if err != nil {
 		return err
 	}
@@ -203,7 +205,7 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 	policiesConf := utils.CloneRepo(t, "gcp-policies", gcpPoliciesPath, cbProjectID)
 	policiesBranch := "main"
 
-	err = utils.RunStepE(e, "gcp-bootstrap.gcp-policies", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.gcp-policies", func() error {
 		err = utils.CheckoutBranch(policiesConf, policiesBranch)
 		if err != nil {
 			return err
@@ -234,21 +236,21 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-bootstrap.copy-code", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.copy-code", func() error {
 		return copyStepCode(t, bootstrapConf, foundationPath, checkoutPath, repo, step, "envs/shared")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-bootstrap.plan", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.plan", func() error {
 		return planStep(t, bootstrapConf, cbProjectID, defaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-bootstrap.production", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap.production", func() error {
 		return applyEnv(t, bootstrapConf, cbProjectID, defaultRegion, repo, "production")
 	})
 	if err != nil {
@@ -260,7 +262,7 @@ func DeployBootstrapStep(t testing.TB, e utils.State, tfvars GlobalTfvars, optio
 	return nil
 }
 
-func DeployOrgStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
 	repo := "gcp-org"
 	step := "1-org"
 
@@ -288,21 +290,21 @@ func DeployOrgStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPat
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-org.copy-code", func() error {
+	err = state.RunStepE(s, "gcp-org.copy-code", func() error {
 		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-org.plan", func() error {
+	err = state.RunStepE(s, "gcp-org.plan", func() error {
 		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-org.production", func() error {
+	err = state.RunStepE(s, "gcp-org.production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
 	})
 	if err != nil {
@@ -313,7 +315,7 @@ func DeployOrgStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPat
 	return nil
 }
 
-func DeployEnvStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployEnvStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
 	repo := "gcp-environments"
 	step := "2-environments"
 
@@ -334,35 +336,35 @@ func DeployEnvStep(t testing.TB, e utils.State, tfvars GlobalTfvars, checkoutPat
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-environments.copy-code", func() error {
+	err = state.RunStepE(s, "gcp-environments.copy-code", func() error {
 		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-environments.plan", func() error {
+	err = state.RunStepE(s, "gcp-environments.plan", func() error {
 		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-environments.production", func() error {
+	err = state.RunStepE(s, "gcp-environments.production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-environments.non-production", func() error {
+	err = state.RunStepE(s, "gcp-environments.non-production", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "non-production")
 	})
 	if err != nil {
 		return err
 	}
 
-	err = utils.RunStepE(e, "gcp-environments.development", func() error {
+	err = state.RunStepE(s, "gcp-environments.development", func() error {
 		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "development")
 	})
 	if err != nil {
@@ -414,7 +416,7 @@ func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) erro
 		return err
 	}
 
-	err = waitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo))
+	err = gcp.WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo))
 	if err != nil {
 		return err
 	}
@@ -433,27 +435,11 @@ func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment
 		return err
 	}
 
-	err = waitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment))
+	err = gcp.WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func waitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
-	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
-	build := utils.GetRunningBuild(t, project, region, filter)
-	if build != "" {
-		// TODO add message to fully identify build
-		status := utils.GetTerminalState(t, project, region, build)
-		if status != "SUCCESS" {
-			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
-		}
-	} else {
-		status := utils.GetLastBuildStatus(t, project, region, filter)
-		if status != "SUCCESS" {
-			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
-		}
-	}
-	return nil
-}
+

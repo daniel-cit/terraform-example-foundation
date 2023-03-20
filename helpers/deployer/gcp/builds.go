@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package gcp
 
 import (
 	"fmt"
@@ -73,4 +73,22 @@ func GetBuilds(t testing.TB, projectID, region, filter string) []gjson.Result {
 func GetBuildState(t testing.TB, projectID, region, buildID string) string {
 	gcOps := gcloud.WithCommonArgs([]string{buildID, "--project", projectID, "--region", region, "--format", "json(status)"})
 	return gcloud.Run(t, "builds describe", gcOps).Get("status").String()
+}
+
+func WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
+	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
+	build := GetRunningBuild(t, project, region, filter)
+	if build != "" {
+		// TODO add message to fully identify build
+		status := GetTerminalState(t, project, region, build)
+		if status != "SUCCESS" {
+			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
+		}
+	} else {
+		status := GetLastBuildStatus(t, project, region, filter)
+		if status != "SUCCESS" {
+			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
+		}
+	}
+	return nil
 }

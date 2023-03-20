@@ -25,6 +25,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/state"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
@@ -94,7 +95,7 @@ func main() {
 	logger := getLogger(cfg)
 
 	// load state
-	s, err := utils.LoadState(cfg.stateFile)
+	s, err := state.LoadState(cfg.stateFile)
 	if err != nil {
 		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stateFile, err.Error())
 		os.Exit(2)
@@ -107,17 +108,17 @@ func main() {
 		NoColor:      true,
 	}
 
-	utils.RunStep(s, "gcp-bootstrap", func() error {
+	state.RunStep(s, "gcp-bootstrap", func() error {
 		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})
 
 	bootstrapOutputs := steps.GetBootstrapStepOutputs(t, bootstrapOptions)
 
-	utils.RunStep(s, "gcp-org", func() error {
+	state.RunStep(s, "gcp-org", func() error {
 		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 
-	utils.RunStep(s, "gcp-environments", func() error {
+	state.RunStep(s, "gcp-environments", func() error {
 		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
 }
