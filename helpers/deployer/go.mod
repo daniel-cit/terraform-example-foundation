@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.16.1
 	github.com/mitchellh/go-testing-interface v1.14.2-0.20210217184823-a52172cd2f64
 	github.com/terraform-google-modules/terraform-example-foundation/test/integration v0.0.0-20230309005733-0c7830da8c3f
+	github.com/tidwall/gjson v1.14.4
 )
 
 require (
@@ -43,9 +44,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/ssoroka/slice v0.0.0-20220402005549-78f0cea3df8b // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
-	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect

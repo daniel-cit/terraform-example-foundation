@@ -29,7 +29,7 @@ func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		gcloud.Runf(t, "source repos clone %s %s --project %s", name, path, project)
-	} // TODO should have return err on else?
+	}
 	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default)) // TODO must use the chosen logger
 }
 

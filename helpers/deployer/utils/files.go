@@ -17,7 +17,6 @@ package utils
 import (
 	"bytes"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,11 +27,11 @@ func CopyFile(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	buf, err := ioutil.ReadFile(src)
+	buf, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(dest, buf, s.Mode())
+	return os.WriteFile(dest, buf, s.Mode())
 }
 
 func CopyDirectory(src string, dest string) error {
@@ -40,7 +39,7 @@ func CopyDirectory(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	files, err := ioutil.ReadDir(src)
+	files, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}
@@ -65,11 +64,11 @@ func CopyDirectory(src string, dest string) error {
 }
 
 func ReplaceStringInFile(filename, old, new string) error {
-	f, err := ioutil.ReadFile(filename)
+	f, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, bytes.Replace(f, []byte(old), []byte(new), -1), 0644)
+	return os.WriteFile(filename, bytes.Replace(f, []byte(old), []byte(new), -1), 0644)
 }
 
 func FindFiles(dir, filename string) ([]string, error) {

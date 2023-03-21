@@ -17,7 +17,6 @@ package state
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -46,7 +45,7 @@ func LoadState(file string) (State, error) {
 			File: file,
 		}
 	} else {
-		f, err := ioutil.ReadFile(file)
+		f, err := os.ReadFile(file)
 		if err != nil {
 			return s, err
 		}
