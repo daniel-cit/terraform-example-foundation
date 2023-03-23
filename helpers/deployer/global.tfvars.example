@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-org_id                              = "REPLACE_ME" # format "000000000000"
-billing_account                     = "REPLACE_ME" # format "000000-000000-000000"
-group_org_admins                    = "REPLACE_ME" # "gcp-organization-admins@example.com"
-group_billing_admins                = "REPLACE_ME" # "gcp-billing-admins@example.com"
-monitoring_workspace_users          = "REPLACE_ME" # "gcp-monitoring-admins@example.com"
-billing_data_users                  = "REPLACE_ME" # "gcp-billing-data-users@example.com"
-audit_data_users                    = "REPLACE_ME" # "gcp-security-admins@example.com"
-default_region                      = "us-central1"
-project_prefix                      = "prj"
-folder_prefix                       = "fldr"
-bucket_force_destroy                = false
-enable_hub_and_spoke                = false
-create_unique_tag_key               = false
-domains_to_allow                    = ["example.com"]
-essential_contacts_domains_to_allow = ["@example.com"]
-scc_notification_name               = "scc-notify"
-code_checkout_path                  = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
-foundation_code_path                = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOUNDATION_CODE_WAS_CHECKED_OUT"
+org_id          = "REPLACE_ME" # format "000000000000"
+billing_account = "REPLACE_ME" # format "000000-000000-000000"
+default_region  = "us-central1"
+project_prefix  = "prj"
+folder_prefix   = "fldr"
 
 // Optional - for an organization with existing projects or for development/validation.
 // Uncomment this variable to place all the example foundation resources under
@@ -40,3 +27,37 @@ foundation_code_path                = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOU
 // The folder must already exist.
 
 //parent_folder = "01234567890"
+
+group_org_admins           = "REPLACE_ME" # "gcp-organization-admins@example.com"
+group_billing_admins       = "REPLACE_ME" # "gcp-billing-admins@example.com"
+monitoring_workspace_users = "REPLACE_ME" # "gcp-monitoring-admins@example.com"
+billing_data_users         = "REPLACE_ME" # "gcp-billing-data-users@example.com"
+audit_data_users           = "REPLACE_ME" # "gcp-security-admins@example.com"
+
+bucket_force_destroy              = false
+enable_hub_and_spoke              = false
+enable_hub_and_spoke_transitivity = false
+create_unique_tag_key             = false
+scc_notification_name             = "scc-notify"
+
+domain                              = "example.com."
+domains_to_allow                    = ["example.com"]
+essential_contacts_domains_to_allow = ["@example.com"]
+perimeter_additional_members        = ["user:YOUR-USER-EMAIL@example.com"]
+
+target_name_server_addresses = [
+  {
+    ipv4_address    = "192.168.0.1",
+    forwarding_path = "default"
+  },
+  {
+    ipv4_address    = "192.168.0.2",
+    forwarding_path = "default"
+  }
+]
+
+projects_gcs_location = "US"
+projects_kms_location = "us"
+
+code_checkout_path  = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
+foundation_code_path = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOUNDATION_CODE_WAS_CHECKED_OUT"

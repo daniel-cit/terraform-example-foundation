@@ -22,6 +22,7 @@ import (
 	"strings"
 )
 
+// CopyFile copies a single file from the src path to the dest path
 func CopyFile(src string, dest string) error {
 	s, err := os.Stat(src)
 	if err != nil {
@@ -34,6 +35,7 @@ func CopyFile(src string, dest string) error {
 	return os.WriteFile(dest, buf, s.Mode())
 }
 
+// CopyDirectory copies a directory and the files and directories under it.
 func CopyDirectory(src string, dest string) error {
 	err := os.MkdirAll(dest, 0755)
 	if err != nil {
@@ -63,6 +65,7 @@ func CopyDirectory(src string, dest string) error {
 	return nil
 }
 
+// ReplaceStringInFile replaces a string in a file with a new value.
 func ReplaceStringInFile(filename, old, new string) error {
 	f, err := os.ReadFile(filename)
 	if err != nil {
@@ -71,6 +74,7 @@ func ReplaceStringInFile(filename, old, new string) error {
 	return os.WriteFile(filename, bytes.Replace(f, []byte(old), []byte(new), -1), 0644)
 }
 
+// FindFiles find files with the given filename under the directory.
 func FindFiles(dir, filename string) ([]string, error) {
 	found := []string{}
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {

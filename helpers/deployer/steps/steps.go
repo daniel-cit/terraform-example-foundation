@@ -16,14 +16,16 @@ package steps
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/git"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/state"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 
 	"github.com/mitchellh/go-testing-interface"
 )
@@ -33,6 +35,14 @@ type BootstrapOutputs struct {
 	RemoteStateBucketProjects string
 	CICDProject               string
 	DefaultRegion             string
+	NetworkSA                 string
+	ProjectsSA                string
+}
+
+type InfraPipelineOutputs struct {
+	RemoteStateBucket string
+	InfraPipeProj     string
+	DefaultRegion     string
 }
 
 type ServerAddress struct {
@@ -41,26 +51,31 @@ type ServerAddress struct {
 }
 
 type GlobalTfvars struct {
-	OrgID                     string           `hcl:"org_id"`
-	BillingAccount            string           `hcl:"billing_account"`
-	GroupOrgAdmins            string           `hcl:"group_org_admins"`
-	GroupBillingAdmins        string           `hcl:"group_billing_admins"`
-	BillingDataUsers          string           `hcl:"billing_data_users"`
-	MonitoringWorkspaceUsers  string           `hcl:"monitoring_workspace_users"`
-	AuditDataUsers            string           `hcl:"audit_data_users"`
-	DefaultRegion             string           `hcl:"default_region"`
-	ParentFolder              *string          `hcl:"parent_folder"`
-	DomainsToAllow            []string         `hcl:"domains_to_allow"`
-	EssentialContactsDomains  []string         `hcl:"essential_contacts_domains_to_allow"`
-	TargetNameServerAddresses *[]ServerAddress `hcl:"target_name_server_addresses"`
-	SccNotificationName       string           `hcl:"scc_notification_name"`
-	ProjectPrefix             *string          `hcl:"project_prefix"`
-	FolderPrefix              *string          `hcl:"folder_prefix"`
-	BucketForceDestroy        *bool            `hcl:"bucket_force_destroy"`
-	EnableHubAndSpoke         bool             `hcl:"enable_hub_and_spoke"`
-	CreateUniqueTagKey        bool             `hcl:"create_unique_tag_key"`
-	CodeCheckoutPath          string           `hcl:"code_checkout_path"`
-	FoundationCodePath        string           `hcl:"foundation_code_path"`
+	OrgID                         string          `hcl:"org_id"`
+	BillingAccount                string          `hcl:"billing_account"`
+	GroupOrgAdmins                string          `hcl:"group_org_admins"`
+	GroupBillingAdmins            string          `hcl:"group_billing_admins"`
+	BillingDataUsers              string          `hcl:"billing_data_users"`
+	MonitoringWorkspaceUsers      string          `hcl:"monitoring_workspace_users"`
+	AuditDataUsers                string          `hcl:"audit_data_users"`
+	DefaultRegion                 string          `hcl:"default_region"`
+	ParentFolder                  *string         `hcl:"parent_folder"`
+	Domain                        string          `hcl:"domain"`
+	DomainsToAllow                []string        `hcl:"domains_to_allow"`
+	EssentialContactsDomains      []string        `hcl:"essential_contacts_domains_to_allow"`
+	PerimeterAdditionalMembers    []string        `hcl:"perimeter_additional_members"`
+	TargetNameServerAddresses     []ServerAddress `hcl:"target_name_server_addresses"`
+	SccNotificationName           string          `hcl:"scc_notification_name"`
+	ProjectPrefix                 *string         `hcl:"project_prefix"`
+	FolderPrefix                  *string         `hcl:"folder_prefix"`
+	BucketForceDestroy            *bool           `hcl:"bucket_force_destroy"`
+	EnableHubAndSpoke             bool            `hcl:"enable_hub_and_spoke"`
+	EnableHubAndSpokeTransitivity bool            `hcl:"enable_hub_and_spoke_transitivity"`
+	CreateUniqueTagKey            bool            `hcl:"create_unique_tag_key"`
+	ProjectsKMSLocation           string          `hcl:"projects_kms_location"`
+	ProjectsGCSLocation           string          `hcl:"projects_gcs_location"`
+	CodeCheckoutPath              string          `hcl:"code_checkout_path"`
+	FoundationCodePath            string          `hcl:"foundation_code_path"`
 }
 
 type BootstrapTfvars struct {
@@ -92,12 +107,54 @@ type EnvsTfvars struct {
 	RemoteStateBucket        string `hcl:"remote_state_bucket"`
 }
 
+type NetCommonTfvars struct {
+	Domain                        string   `hcl:"domain"`
+	PerimeterAdditionalMembers    []string `hcl:"perimeter_additional_members"`
+	RemoteStateBucket             string   `hcl:"remote_state_bucket"`
+	EnableHubAndSpokeTransitivity *bool    `hcl:"enable_hub_and_spoke_transitivity"`
+}
+
+type NetSharedTfvars struct {
+	TargetNameServerAddresses []ServerAddress `hcl:"target_name_server_addresses"`
+}
+
+type NetAccessContextTfvars struct {
+	AccessContextManagerPolicyID string `hcl:"access_context_manager_policy_id"`
+}
+
+type ProjCommonTfvars struct {
+	RemoteStateBucket string `hcl:"remote_state_bucket"`
+}
+
+type ProjSharedTfvars struct {
+	DefaultRegion string `hcl:"default_region"`
+}
+
+type ProjEnvTfvars struct {
+	ProjectsKMSLocation string `hcl:"projects_kms_location"`
+	ProjectsGCSLocation string `hcl:"projects_gcs_location"`
+}
+
+type AppInfraCommonTfvars struct {
+	InstanceRegion    string `hcl:"instance_region"`
+	RemoteStateBucket string `hcl:"remote_state_bucket"`
+}
+
 func GetBootstrapStepOutputs(t testing.TB, options *terraform.Options) BootstrapOutputs {
 	return BootstrapOutputs{
 		CICDProject:               terraform.Output(t, options, "cloudbuild_project_id"),
 		RemoteStateBucket:         terraform.Output(t, options, "gcs_bucket_tfstate"),
 		RemoteStateBucketProjects: terraform.Output(t, options, "projects_gcs_bucket_tfstate"),
 		DefaultRegion:             terraform.OutputMap(t, options, "common_config")["default_region"],
+		NetworkSA:                 terraform.Output(t, options, "networks_step_terraform_service_account_email"),
+		ProjectsSA:                terraform.Output(t, options, "projects_step_terraform_service_account_email"),
+	}
+}
+
+func GetInfraPipelineOutputs(t testing.TB, options *terraform.Options, workspace string) InfraPipelineOutputs {
+	return InfraPipelineOutputs{
+		InfraPipeProj: terraform.Output(t, options, "cloudbuild_project_id"),
+		DefaultRegion: terraform.Output(t, options, "default_region"),
 	}
 }
 
@@ -265,6 +322,7 @@ func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, optio
 func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
 	repo := "gcp-org"
 	step := "1-org"
+	createACMAPolicy := gcp.GetAccessContextManagerPolicyID(t, tfvars.OrgID) == ""
 
 	orgTfvars := OrgTfvars{
 		DomainsToAllow:           tfvars.DomainsToAllow,
@@ -274,7 +332,7 @@ func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPat
 		SccNotificationName:      tfvars.SccNotificationName,
 		RemoteStateBucket:        outputs.RemoteStateBucket,
 		EnableHubAndSpoke:        tfvars.EnableHubAndSpoke,
-		CreateACMAPolicy:         false,
+		CreateACMAPolicy:         createACMAPolicy,
 		CreateUniqueTagKey:       tfvars.CreateUniqueTagKey,
 	}
 
@@ -375,6 +433,300 @@ func DeployEnvStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPat
 	return nil
 }
 
+func DeployNetworksStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs, logger *logger.Logger) error {
+	repo := "gcp-networks"
+	var step string
+	if tfvars.EnableHubAndSpoke {
+		step = "3-networks-hub-and-spoke"
+	} else {
+		step = "3-networks-dual-svpc"
+	}
+
+	// shared
+	sharedTfvars := NetSharedTfvars{
+		TargetNameServerAddresses: tfvars.TargetNameServerAddresses,
+	}
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "shared.auto.tfvars"), sharedTfvars)
+	if err != nil {
+		return err
+	}
+	// common
+	commonTfvars := NetCommonTfvars{
+		Domain:                     tfvars.Domain,
+		PerimeterAdditionalMembers: tfvars.PerimeterAdditionalMembers,
+		RemoteStateBucket:          outputs.RemoteStateBucket,
+	}
+	if tfvars.EnableHubAndSpoke {
+		commonTfvars.EnableHubAndSpokeTransitivity = &tfvars.EnableHubAndSpokeTransitivity
+	}
+	err = utils.WriteTfvars(filepath.Join(foundationPath, step, "common.auto.tfvars"), commonTfvars)
+	if err != nil {
+		return err
+	}
+	//access_context
+	accessContextTfvars := NetAccessContextTfvars{
+		AccessContextManagerPolicyID: gcp.GetAccessContextManagerPolicyID(t, tfvars.OrgID),
+	}
+	err = utils.WriteTfvars(filepath.Join(foundationPath, step, "access_context.auto.tfvars"), accessContextTfvars)
+	if err != nil {
+		return err
+	}
+
+	gcpPath := filepath.Join(checkoutPath, repo)
+	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
+	err = utils.CheckoutBranch(conf, "plan")
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-networks.copy-code", func() error {
+		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
+	})
+	if err != nil {
+		return err
+	}
+
+	// Apply shared
+	options := &terraform.Options{
+		TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
+		Logger:       logger,
+		NoColor:      true,
+	}
+
+	err = state.RunStepE(s, "gcp-networks.apply-shared", func() error {
+		return applyShared(t, options, outputs.NetworkSA)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-networks.plan", func() error {
+		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-networks.production", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-networks.non-production", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "non-production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-networks.development", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "development")
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("end of", step, "deploy")
+	return nil
+}
+
+func DeployProjectsStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs, logger *logger.Logger) error {
+	repo := "gcp-projects"
+	step := "4-projects"
+
+	// shared
+	sharedTfvars := ProjSharedTfvars{
+		DefaultRegion: tfvars.DefaultRegion,
+	}
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "shared.auto.tfvars"), sharedTfvars)
+	if err != nil {
+		return err
+	}
+	// common
+	commonTfvars := ProjCommonTfvars{
+		RemoteStateBucket: outputs.RemoteStateBucket,
+	}
+	err = utils.WriteTfvars(filepath.Join(foundationPath, step, "common.auto.tfvars"), commonTfvars)
+	if err != nil {
+		return err
+	}
+	//for each environment
+	envTfvars := ProjEnvTfvars{
+		ProjectsKMSLocation: tfvars.ProjectsKMSLocation,
+		ProjectsGCSLocation: tfvars.ProjectsGCSLocation,
+	}
+	for _, envfile := range []string{
+		"development.auto.tfvars",
+		"non-production.auto.tfvars",
+		"production.auto.tfvars"} {
+		err = utils.WriteTfvars(filepath.Join(foundationPath, step, envfile), envTfvars)
+		if err != nil {
+			return err
+		}
+	}
+
+	gcpPath := filepath.Join(checkoutPath, repo)
+	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
+	err = utils.CheckoutBranch(conf, "plan")
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-projects.copy-code", func() error {
+		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
+	})
+	if err != nil {
+		return err
+	}
+
+	// Apply shared
+	optbu1 := &terraform.Options{
+		TerraformDir: filepath.Join(gcpPath, "business_unit_1", "shared"),
+		Logger:       logger,
+		NoColor:      true,
+	}
+
+	err = state.RunStepE(s, "gcp-projects.bu1.apply-shared", func() error {
+		return applyShared(t, optbu1, outputs.ProjectsSA)
+	})
+	if err != nil {
+		return err
+	}
+
+	optbu2 := &terraform.Options{
+		TerraformDir: filepath.Join(gcpPath, "business_unit_2", "shared"),
+		Logger:       logger,
+		NoColor:      true,
+	}
+
+	err = state.RunStepE(s, "gcp-projects.bu2.apply-shared", func() error {
+		return applyShared(t, optbu2, outputs.ProjectsSA)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-projects.plan", func() error {
+		return planStep(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-projects.production", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-projects.non-production", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "non-production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "gcp-projects.development", func() error {
+		return applyEnv(t, conf, outputs.CICDProject, outputs.DefaultRegion, repo, "development")
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("end of", step, "deploy")
+	return nil
+}
+
+func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs InfraPipelineOutputs) error {
+	repo := "bu1-example-app"
+	step := "5-app-infra"
+
+	commonTfvars := AppInfraCommonTfvars{
+		InstanceRegion:    tfvars.DefaultRegion,
+		RemoteStateBucket: outputs.RemoteStateBucket,
+	}
+	err := utils.WriteTfvars(filepath.Join(foundationPath, step, "common.auto.tfvars"), commonTfvars)
+	if err != nil {
+		return err
+	}
+
+	//prepare policies repo
+	gcpPoliciesPath := filepath.Join(checkoutPath, "gcp-policies-app-infra")
+	policiesConf := utils.CloneRepo(t, "gcp-policies", gcpPoliciesPath, outputs.InfraPipeProj)
+	policiesBranch := "main"
+
+	err = state.RunStepE(s, "bu1-example-app.gcp-policies-app-infra", func() error {
+		err = utils.CheckoutBranch(policiesConf, policiesBranch)
+		if err != nil {
+			return err
+		}
+		err = utils.CopyDirectory(filepath.Join(foundationPath, "policy-library"), gcpPoliciesPath)
+		if err != nil {
+			return err
+		}
+		err = utils.CommitFiles(policiesConf, "Initialize policy library repo")
+		if err != nil {
+			return err
+		}
+		err = utils.PushBranch(policiesConf, policiesBranch)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	gcpPath := filepath.Join(checkoutPath, repo)
+	conf := utils.CloneRepo(t, repo, gcpPath, outputs.InfraPipeProj)
+	err = utils.CheckoutBranch(conf, "plan")
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "bu1-example-app.copy-code", func() error {
+		return copyStepCode(t, conf, foundationPath, checkoutPath, repo, step, "")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "bu1-example-app.plan", func() error {
+		return planStep(t, conf, outputs.InfraPipeProj, outputs.DefaultRegion, repo)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "bu1-example-app.production", func() error {
+		return applyEnv(t, conf, outputs.InfraPipeProj, outputs.DefaultRegion, repo, "production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "bu1-example-app.non-production", func() error {
+		return applyEnv(t, conf, outputs.InfraPipeProj, outputs.DefaultRegion, repo, "non-production")
+	})
+	if err != nil {
+		return err
+	}
+
+	err = state.RunStepE(s, "bu1-example-app.development", func() error {
+		return applyEnv(t, conf, outputs.InfraPipeProj, outputs.DefaultRegion, repo, "development")
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("end of", step, "deploy")
+	return nil
+}
+
 func copyStepCode(t testing.TB, conf *git.CmdCfg, foundationPath, checkoutPath, repo, step, customPath string) error {
 	gcpPath := filepath.Join(checkoutPath, repo)
 	targetDir := gcpPath
@@ -442,4 +794,30 @@ func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment
 	return nil
 }
 
+func applyShared(t testing.TB, options *terraform.Options, serviceAccount string) error {
+	err := os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount)
+	if err != nil {
+		return err
+	}
+	initOutput, err := terraform.InitE(t, options)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", initOutput)
+	planOutput, err := terraform.PlanE(t, options)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", planOutput)
 
+	applyOutput, err := terraform.ApplyE(t, options)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", applyOutput)
+	err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
+	if err != nil {
+		return err
+	}
+	return nil
+}

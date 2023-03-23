@@ -108,17 +108,65 @@ func main() {
 		NoColor:      true,
 	}
 
-	state.RunStep(s, "gcp-bootstrap", func() error {
+	err = state.RunStepE(s, "gcp-bootstrap", func() error {
 		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
 	})
+	if err != nil {
+		fmt.Printf("Bootstrap step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
 
 	bootstrapOutputs := steps.GetBootstrapStepOutputs(t, bootstrapOptions)
 
-	state.RunStep(s, "gcp-org", func() error {
+	// TODO tell the user about the form for asking additional quota projects for the service account of step 4
+	// TODO put the link in the output
+
+	err = state.RunStepE(s, "gcp-org", func() error {
 		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
+	if err != nil {
+		fmt.Printf("Org step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
 
-	state.RunStep(s, "gcp-environments", func() error {
+	err = state.RunStepE(s, "gcp-environments", func() error {
 		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
 	})
+	if err != nil {
+		fmt.Printf("Environments step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
+
+	err = state.RunStepE(s, "gcp-networks", func() error {
+		return steps.DeployNetworksStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	})
+	if err != nil {
+		fmt.Printf("Networks step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
+
+	err = state.RunStepE(s, "gcp-projects", func() error {
+		return steps.DeployProjectsStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	})
+	if err != nil {
+		fmt.Printf("Projects step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
+	//5-app-infra
+	InfraPipelineOptions := &terraform.Options{
+		TerraformDir: filepath.Join(codeCheckoutPath, "gcp-projects", "business_unit_1", "shared"),
+		Logger:       logger,
+		NoColor:      true,
+	}
+	infraPipelineOutputs := steps.GetInfraPipelineOutputs(t, InfraPipelineOptions, "bu1-example-app")
+	infraPipelineOutputs.RemoteStateBucket = bootstrapOutputs.RemoteStateBucketProjects
+	err = state.RunStepE(s, "bu1-example-app", func() error {
+		return steps.DeployExampleAppStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, infraPipelineOutputs)
+	})
+	if err != nil {
+		fmt.Printf("Example app step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
+
+	// TODO ask about the answer of thr request form to asking additional quota projects for the service account of step 4
 }

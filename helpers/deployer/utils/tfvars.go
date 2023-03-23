@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 )
 
+// ReadTfvars reads a valid terraform tfvars file into the provided struct.
 func ReadTfvars(filename string, val interface{}) error {
 	f, d := hclparse.NewParser().ParseHCLFile(filename)
 	if d.HasErrors() {
@@ -35,6 +36,7 @@ func ReadTfvars(filename string, val interface{}) error {
 	return nil
 }
 
+// WriteTfvars writes a valid terraform tfvars file from the provided struct.
 func WriteTfvars(filename string, val interface{}) error {
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(val, f.Body())

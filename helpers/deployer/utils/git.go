@@ -25,6 +25,7 @@ import (
 	"github.com/mitchellh/go-testing-interface"
 )
 
+// CloneRepo clones a Google cloud source repository and returns a CmdConfig pointing to the repository.
 func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
@@ -33,6 +34,7 @@ func CloneRepo(t testing.TB, name, path, project string) *git.CmdCfg {
 	return git.NewCmdConfig(t, git.WithDir(path), git.WithLogger(logger.Default))
 }
 
+// GetCurrentBranch getes the current branch in the repository.
 func GetCurrentBranch(conf *git.CmdCfg) (string, error) {
 	b, err := conf.RunCmdE("branch", "-q", "--show-current")
 	if err != nil {
@@ -41,6 +43,7 @@ func GetCurrentBranch(conf *git.CmdCfg) (string, error) {
 	return b, nil
 }
 
+// HasRemoteTRacking check it a branch has a remote upstream configured.
 func HasRemoteTRacking(conf *git.CmdCfg, branch string) (bool, error) {
 	s, err := conf.RunCmdE("status", "-sb")
 	if err != nil {
@@ -52,6 +55,8 @@ func HasRemoteTRacking(conf *git.CmdCfg, branch string) (bool, error) {
 	return false, nil
 }
 
+// PushBranch pushes a branch to remote origin.
+// If the branch does not have a upstream it will be set.
 func PushBranch(conf *git.CmdCfg, branch string) error {
 	exits, err := HasRemoteTRacking(conf, branch)
 	if err != nil {
@@ -71,6 +76,8 @@ func PushBranch(conf *git.CmdCfg, branch string) error {
 	return nil
 }
 
+// CheckoutBranch checkouts a branch.
+// If the branch does not exist it will be created.
 func CheckoutBranch(conf *git.CmdCfg, branch string) error {
 	c, err := GetCurrentBranch(conf)
 	if err != nil {
@@ -92,6 +99,7 @@ func CheckoutBranch(conf *git.CmdCfg, branch string) error {
 	return nil
 }
 
+// CommitFiles commit files it there are pending changes.
 func CommitFiles(conf *git.CmdCfg, msg string) error {
 	s, err := conf.RunCmdE("status", "-s")
 	if err != nil {

@@ -36,6 +36,7 @@ type State struct {
 	Steps map[string]Step `json:"steps"`
 }
 
+// LoadState loads a previous execution state from the given file.
 func LoadState(file string) (State, error) {
 	var s State
 	_, err := os.Stat(file)
@@ -61,12 +62,14 @@ func LoadState(file string) (State, error) {
 	return s, nil
 }
 
- func (s State) SaveState() {
-	f, _ := json.Marshal(s)
+// SaveState saves the current execution state in the file that was loaded.
+func (s State) SaveState() {
+	f, _ := json.MarshalIndent(s, "", "    ")
 	os.WriteFile(s.File, f, 0644)
 }
 
- func (s State) CompleteStep(name string) {
+// CompleteStep marks a given step as completed.
+func (s State) CompleteStep(name string) {
 	s.Steps[name] = Step{
 		Name:   name,
 		Status: completeState,
@@ -76,7 +79,8 @@ func LoadState(file string) (State, error) {
 	fmt.Printf("completing step '%s' execution\n", name)
 }
 
- func (s State) IsStepComplete(name string) bool {
+// IsStepComplete checks it the given step is completed.
+func (s State) IsStepComplete(name string) bool {
 	v, ok := s.Steps[name]
 	if ok {
 		return v.Status == completeState
@@ -84,17 +88,19 @@ func LoadState(file string) (State, error) {
 	return false
 }
 
- func (s State) FailStep(name string, err string) {
+// FailStep marks a given step as failed and saves the error message.
+func (s State) FailStep(name string, err string) {
 	s.Steps[name] = Step{
 		Name:   name,
 		Status: errorState,
 		Error:  err,
 	}
 	s.SaveState()
-	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err) // TODO make message shorter
+	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err)
 }
 
- func (s State) GetStepError(name string) string {
+// GetStepError gets the error message save in an step.
+func (s State) GetStepError(name string) string {
 	v, ok := s.Steps[name]
 	if ok {
 		return v.Error
@@ -102,21 +108,9 @@ func LoadState(file string) (State, error) {
 	return ""
 }
 
-func RunStep(s State, step string, f func() (error)){
-	if s.IsStepComplete(step) {
-		fmt.Printf("skipping step '%s' execution\n", step)
-	} else {
-		fmt.Printf("starting step '%s' execution\n", step)
-		err := f()
-		if err != nil {
-			s.FailStep(step, err.Error())
-			os.Exit(4)
-		}
-		s.CompleteStep(step)
-	}
-}
-
-func RunStepE(s State, step string, f func() (error)) error {
+// RunStepE executes a step and marks it as completed or failed.
+// Completed steps are not executesd again.
+func RunStepE(s State, step string, f func() error) error {
 	if s.IsStepComplete(step) {
 		fmt.Printf("skipping step '%s' execution\n", step)
 	} else {
