@@ -19,7 +19,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/git"
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 
@@ -158,7 +157,7 @@ func GetInfraPipelineOutputs(t testing.TB, options *terraform.Options, workspace
 	}
 }
 
-func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string) error {
+func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, options *terraform.Options, checkoutPath, foundationPath string, logger *logger.Logger) error {
 	repo := "gcp-bootstrap"
 	step := "0-bootstrap"
 
@@ -259,11 +258,11 @@ func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, optio
 
 	//prepare policies repo
 	gcpPoliciesPath := filepath.Join(checkoutPath, "gcp-policies")
-	policiesConf := utils.CloneRepo(t, "gcp-policies", gcpPoliciesPath, cbProjectID)
+	policiesConf := utils.CloneCSR(t, "gcp-policies", gcpPoliciesPath, cbProjectID, logger)
 	policiesBranch := "main"
 
 	err = state.RunStepE(s, "gcp-bootstrap.gcp-policies", func() error {
-		err = utils.CheckoutBranch(policiesConf, policiesBranch)
+		err = policiesConf.CheckoutBranch(policiesBranch)
 		if err != nil {
 			return err
 		}
@@ -271,11 +270,11 @@ func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, optio
 		if err != nil {
 			return err
 		}
-		err = utils.CommitFiles(policiesConf, "Initialize policy library repo")
+		err = policiesConf.CommitFiles("Initialize policy library repo")
 		if err != nil {
 			return err
 		}
-		err = utils.PushBranch(policiesConf, policiesBranch)
+		err = policiesConf.PushBranch(policiesBranch, "origin")
 		if err != nil {
 			return err
 		}
@@ -287,8 +286,8 @@ func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, optio
 
 	//prepare bootstrap repo
 	gcpBootstrapPath := filepath.Join(checkoutPath, "gcp-bootstrap")
-	bootstrapConf := utils.CloneRepo(t, "gcp-bootstrap", gcpBootstrapPath, cbProjectID)
-	err = utils.CheckoutBranch(bootstrapConf, "plan")
+	bootstrapConf := utils.CloneCSR(t, "gcp-bootstrap", gcpBootstrapPath, cbProjectID, logger)
+	err = bootstrapConf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -319,7 +318,7 @@ func DeployBootstrapStep(t testing.TB, s state.State, tfvars GlobalTfvars, optio
 	return nil
 }
 
-func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs, logger *logger.Logger) error {
 	repo := "gcp-org"
 	step := "1-org"
 	createACMAPolicy := gcp.GetAccessContextManagerPolicyID(t, tfvars.OrgID) == ""
@@ -342,8 +341,8 @@ func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPat
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = utils.CheckoutBranch(conf, "plan")
+	conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, logger)
+	err = conf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -373,7 +372,7 @@ func DeployOrgStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPat
 	return nil
 }
 
-func DeployEnvStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs) error {
+func DeployEnvStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs BootstrapOutputs, logger *logger.Logger) error {
 	repo := "gcp-environments"
 	step := "2-environments"
 
@@ -388,8 +387,8 @@ func DeployEnvStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPat
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = utils.CheckoutBranch(conf, "plan")
+	conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, logger)
+	err = conf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -473,8 +472,8 @@ func DeployNetworksStep(t testing.TB, s state.State, tfvars GlobalTfvars, checko
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = utils.CheckoutBranch(conf, "plan")
+	conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, logger)
+	err = conf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -568,8 +567,8 @@ func DeployProjectsStep(t testing.TB, s state.State, tfvars GlobalTfvars, checko
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := utils.CloneRepo(t, repo, gcpPath, outputs.CICDProject)
-	err = utils.CheckoutBranch(conf, "plan")
+	conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, logger)
+	err = conf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -640,7 +639,7 @@ func DeployProjectsStep(t testing.TB, s state.State, tfvars GlobalTfvars, checko
 	return nil
 }
 
-func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs InfraPipelineOutputs) error {
+func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, checkoutPath, foundationPath string, outputs InfraPipelineOutputs, logger *logger.Logger) error {
 	repo := "bu1-example-app"
 	step := "5-app-infra"
 
@@ -655,11 +654,11 @@ func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, chec
 
 	//prepare policies repo
 	gcpPoliciesPath := filepath.Join(checkoutPath, "gcp-policies-app-infra")
-	policiesConf := utils.CloneRepo(t, "gcp-policies", gcpPoliciesPath, outputs.InfraPipeProj)
+	policiesConf := utils.CloneCSR(t, "gcp-policies", gcpPoliciesPath, outputs.InfraPipeProj, logger)
 	policiesBranch := "main"
 
 	err = state.RunStepE(s, "bu1-example-app.gcp-policies-app-infra", func() error {
-		err = utils.CheckoutBranch(policiesConf, policiesBranch)
+		err = policiesConf.CheckoutBranch(policiesBranch)
 		if err != nil {
 			return err
 		}
@@ -667,11 +666,11 @@ func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, chec
 		if err != nil {
 			return err
 		}
-		err = utils.CommitFiles(policiesConf, "Initialize policy library repo")
+		err = policiesConf.CommitFiles("Initialize policy library repo")
 		if err != nil {
 			return err
 		}
-		err = utils.PushBranch(policiesConf, policiesBranch)
+		err = policiesConf.PushBranch(policiesBranch, "origin")
 		if err != nil {
 			return err
 		}
@@ -682,8 +681,8 @@ func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, chec
 	}
 
 	gcpPath := filepath.Join(checkoutPath, repo)
-	conf := utils.CloneRepo(t, repo, gcpPath, outputs.InfraPipeProj)
-	err = utils.CheckoutBranch(conf, "plan")
+	conf := utils.CloneCSR(t, repo, gcpPath, outputs.InfraPipeProj, logger)
+	err = conf.CheckoutBranch("plan")
 	if err != nil {
 		return err
 	}
@@ -727,7 +726,7 @@ func DeployExampleAppStep(t testing.TB, s state.State, tfvars GlobalTfvars, chec
 	return nil
 }
 
-func copyStepCode(t testing.TB, conf *git.CmdCfg, foundationPath, checkoutPath, repo, step, customPath string) error {
+func copyStepCode(t testing.TB, conf utils.GitRepo, foundationPath, checkoutPath, repo, step, customPath string) error {
 	gcpPath := filepath.Join(checkoutPath, repo)
 	targetDir := gcpPath
 	if customPath != "" {
@@ -756,13 +755,13 @@ func copyStepCode(t testing.TB, conf *git.CmdCfg, foundationPath, checkoutPath, 
 	return nil
 }
 
-func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) error {
-	err := utils.CommitFiles(conf, fmt.Sprintf("Initialize %s repo", repo))
+func planStep(t testing.TB, conf utils.GitRepo, project, region, repo string) error {
+	err := conf.CommitFiles(fmt.Sprintf("Initialize %s repo", repo))
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = utils.PushBranch(conf, "plan")
+	err = conf.PushBranch("plan", "origin")
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -775,13 +774,13 @@ func planStep(t testing.TB, conf *git.CmdCfg, project, region, repo string) erro
 	return nil
 }
 
-func applyEnv(t testing.TB, conf *git.CmdCfg, project, region, repo, environment string) error {
-	err := utils.CheckoutBranch(conf, environment)
+func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environment string) error {
+	err := conf.CheckoutBranch(environment)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	err = utils.PushBranch(conf, environment)
+	err = conf.PushBranch(environment, "origin")
 	if err != nil {
 		fmt.Println(err)
 		return err

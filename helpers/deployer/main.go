@@ -109,7 +109,7 @@ func main() {
 	}
 
 	err = state.RunStepE(s, "gcp-bootstrap", func() error {
-		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath)
+		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath, logger)
 	})
 	if err != nil {
 		fmt.Printf("Bootstrap step failed. Error: %s\n", err.Error())
@@ -122,7 +122,7 @@ func main() {
 	// TODO put the link in the output
 
 	err = state.RunStepE(s, "gcp-org", func() error {
-		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Org step failed. Error: %s\n", err.Error())
@@ -130,7 +130,7 @@ func main() {
 	}
 
 	err = state.RunStepE(s, "gcp-environments", func() error {
-		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs)
+		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Environments step failed. Error: %s\n", err.Error())
@@ -161,7 +161,7 @@ func main() {
 	infraPipelineOutputs := steps.GetInfraPipelineOutputs(t, InfraPipelineOptions, "bu1-example-app")
 	infraPipelineOutputs.RemoteStateBucket = bootstrapOutputs.RemoteStateBucketProjects
 	err = state.RunStepE(s, "bu1-example-app", func() error {
-		return steps.DeployExampleAppStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, infraPipelineOutputs)
+		return steps.DeployExampleAppStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, infraPipelineOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Example app step failed. Error: %s\n", err.Error())
