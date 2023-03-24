@@ -25,25 +25,29 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/state"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/stages"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
 
 type depCfg struct {
 	tfvarsFile string
-	stateFile  string
+	stepsFile  string
+	resetStep  string
 	quiet      bool
 	help       bool
+	listSteps  bool
 }
 
 func parseFlags() depCfg {
 	var d depCfg
 
 	flag.StringVar(&d.tfvarsFile, "tfvars_file", "", "Full path to the Terraform .tfvars `file` with the complete configuration to be used.")
-	flag.StringVar(&d.stateFile, "state_file", ".state.json", "Path to the state `file` to be used to save progress.")
+	flag.StringVar(&d.stepsFile, "steps_file", ".steps.json", "Path to the stepes `file` to be used to save progress.")
+	flag.StringVar(&d.resetStep, "reset_step", "", "Name of a step to be reset.")
 	flag.BoolVar(&d.quiet, "quiet", false, "If true, additional output is suppressed.")
 	flag.BoolVar(&d.help, "help", false, "Prints this help text and exits.")
+	flag.BoolVar(&d.listSteps, "list_steps", false, "List the existing steps.")
 
 	flag.Parse()
 	return d
@@ -56,7 +60,7 @@ func getLogger(c depCfg) *logger.Logger {
 	return logger.Default
 }
 
-func getTfvars(c depCfg) steps.GlobalTfvars {
+func getTfvars(c depCfg) stages.GlobalTfvars {
 	if c.tfvarsFile == "" {
 		fmt.Println("stopping execution, tfvars file is required.")
 		os.Exit(1)
@@ -66,7 +70,7 @@ func getTfvars(c depCfg) steps.GlobalTfvars {
 		fmt.Printf("stopping execution, tfvars file '%s' does not exits\n", c.tfvarsFile)
 		os.Exit(1)
 	}
-	var globalTfvars steps.GlobalTfvars
+	var globalTfvars stages.GlobalTfvars
 	err = utils.ReadTfvars(c.tfvarsFile, &globalTfvars)
 	if err != nil {
 		fmt.Printf("failed to load tfvars file %s. Error: %s\n", c.tfvarsFile, err.Error())
@@ -84,6 +88,28 @@ func main() {
 		return
 	}
 
+	s, err := steps.LoadSteps(cfg.stepsFile)
+	if err != nil {
+		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stepsFile, err.Error())
+		os.Exit(2)
+	}
+	if cfg.listSteps {
+		fmt.Println("Executed steps:")
+		e := s.ListSteps()
+		if len(e) == 0 {
+			fmt.Println("No steps executed")
+			return
+		}
+		for _, step := range e {
+			fmt.Println(step)
+		}
+		return
+	}
+	if cfg.resetStep != "" {
+		s.ResetStep(cfg.resetStep)
+		return
+	}
+
 	// load tfvars
 	globalTfvars := getTfvars(cfg)
 
@@ -94,59 +120,46 @@ func main() {
 	codeCheckoutPath := globalTfvars.CodeCheckoutPath
 	logger := getLogger(cfg)
 
-	// load state
-	s, err := state.LoadState(cfg.stateFile)
-	if err != nil {
-		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stateFile, err.Error())
-		os.Exit(2)
-	}
-
-	// deploy foundation
-	bootstrapOptions := &terraform.Options{
-		TerraformDir: filepath.Join(foundationCodePath, "0-bootstrap"),
-		Logger:       logger,
-		NoColor:      true,
-	}
-
-	err = state.RunStepE(s, "gcp-bootstrap", func() error {
-		return steps.DeployBootstrapStep(t, s, globalTfvars, bootstrapOptions, codeCheckoutPath, foundationCodePath, logger)
+	// deploy stages
+	err = s.RunStep("gcp-bootstrap", func() error {
+		return stages.DeployBootstrapStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, logger)
 	})
 	if err != nil {
 		fmt.Printf("Bootstrap step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
-	bootstrapOutputs := steps.GetBootstrapStepOutputs(t, bootstrapOptions)
+	bootstrapOutputs := stages.GetBootstrapStepOutputs(t, foundationCodePath)
 
 	// TODO tell the user about the form for asking additional quota projects for the service account of step 4
 	// TODO put the link in the output
 
-	err = state.RunStepE(s, "gcp-org", func() error {
-		return steps.DeployOrgStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	err = s.RunStep("gcp-org", func() error {
+		return stages.DeployOrgStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Org step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
-	err = state.RunStepE(s, "gcp-environments", func() error {
-		return steps.DeployEnvStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	err = s.RunStep("gcp-environments", func() error {
+		return stages.DeployEnvStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Environments step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
-	err = state.RunStepE(s, "gcp-networks", func() error {
-		return steps.DeployNetworksStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	err = s.RunStep("gcp-networks", func() error {
+		return stages.DeployNetworksStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Networks step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
-	err = state.RunStepE(s, "gcp-projects", func() error {
-		return steps.DeployProjectsStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
+	err = s.RunStep("gcp-projects", func() error {
+		return stages.DeployProjectsStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, bootstrapOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Projects step failed. Error: %s\n", err.Error())
@@ -158,10 +171,10 @@ func main() {
 		Logger:       logger,
 		NoColor:      true,
 	}
-	infraPipelineOutputs := steps.GetInfraPipelineOutputs(t, InfraPipelineOptions, "bu1-example-app")
+	infraPipelineOutputs := stages.GetInfraPipelineOutputs(t, InfraPipelineOptions, "bu1-example-app")
 	infraPipelineOutputs.RemoteStateBucket = bootstrapOutputs.RemoteStateBucketProjects
-	err = state.RunStepE(s, "bu1-example-app", func() error {
-		return steps.DeployExampleAppStep(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, infraPipelineOutputs, logger)
+	err = s.RunStep("bu1-example-app", func() error {
+		return stages.DeployExampleAppStage(t, s, globalTfvars, codeCheckoutPath, foundationCodePath, infraPipelineOutputs, logger)
 	})
 	if err != nil {
 		fmt.Printf("Example app step failed. Error: %s\n", err.Error())
