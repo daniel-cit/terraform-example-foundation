@@ -23,14 +23,31 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func GetBuilds(t testing.TB, projectID, region, filter string) []gjson.Result {
-	gcOps := gcloud.WithCommonArgs([]string{"--project", projectID, "--region", region, "--filter", filter, "--format", "json"})
-	return gcloud.Run(t, "builds list", gcOps).Array()
+type GCP struct {
+	Runf func(t testing.TB, cmd string, args ...interface{}) gjson.Result
 }
 
-func GetRunningBuild(t testing.TB, projectID string, region string, filter string) string {
+func NewGCP() GCP {
+	return GCP{
+		Runf: gcloud.Runf,
+	}
+}
+
+func (g GCP) GetBuilds(t testing.TB, projectID, region, filter string) []gjson.Result {
+	return g.Runf(t, "builds list --project %s --region %s --filter %s", projectID, region, filter).Array()
+}
+
+func (g GCP) GetLastBuildStatus(t testing.TB, projectID, region, filter string) string {
+	return g.Runf(t, "builds list --project %s --region %s --limit 1 --sort-by ~createTime --filter %s", projectID, region, filter).Array()[0].Get("status").String()
+}
+
+func (g GCP) GetBuildState(t testing.TB, projectID, region, buildID string) string {
+	return g.Runf(t, "builds describe %s  --project %s --region %s", buildID, projectID, region).Get("status").String()
+}
+
+func (g GCP) GetRunningBuildID(t testing.TB, projectID, region, filter string) string {
 	time.Sleep(20 * time.Second)
-	builds := GetBuilds(t, projectID, region, filter)
+	builds := g.GetBuilds(t, projectID, region, filter)
 	for _, build := range builds {
 		status := build.Get("status").String()
 		if status == "QUEUED" || status == "WORKING" {
@@ -40,40 +57,29 @@ func GetRunningBuild(t testing.TB, projectID string, region string, filter strin
 	return ""
 }
 
-func GetLastBuildStatus(t testing.TB, projectID string, region string, filter string) string {
-	gcOps := gcloud.WithCommonArgs([]string{"--project", projectID, "--region", region, "--limit", "1", "--sort-by", "~createTime", "--filter", filter, "--format", "json"})
-	build := gcloud.Run(t, "builds list", gcOps).Array()[0]
-	return build.Get("status").String()
-}
-
-func GetBuildState(t testing.TB, projectID, region, buildID string) string {
-	gcOps := gcloud.WithCommonArgs([]string{buildID, "--project", projectID, "--region", region, "--format", "json(status)"})
-	return gcloud.Run(t, "builds describe", gcOps).Get("status").String()
-}
-
-func GetTerminalState(t testing.TB, projectID string, region string, buildID string) string {
+func (g GCP) GetFinalBuildState(t testing.TB, projectID, region, buildID string) string {
 	var status string
 	fmt.Printf("waiting for build %s execution.\n", buildID)
-	status = GetBuildState(t, projectID, region, buildID)
+	status = g.GetBuildState(t, projectID, region, buildID)
 	for status != "SUCCESS" && status != "FAILURE" && status != "CANCELLED" {
 		fmt.Printf("build status is %s\n", status)
 		time.Sleep(20 * time.Second)
-		status = GetBuildState(t, projectID, region, buildID)
+		status = g.GetBuildState(t, projectID, region, buildID)
 	}
 	fmt.Printf("final build status is %s\n", status)
 	return status
 }
 
-func WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
+func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
 	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
-	build := GetRunningBuild(t, project, region, filter)
+	build := g.GetRunningBuildID(t, project, region, filter)
 	if build != "" {
-		status := GetTerminalState(t, project, region, build)
+		status := g.GetFinalBuildState(t, project, region, build)
 		if status != "SUCCESS" {
 			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
 		}
 	} else {
-		status := GetLastBuildStatus(t, project, region, filter)
+		status := g.GetLastBuildStatus(t, project, region, filter)
 		if status != "SUCCESS" {
 			return fmt.Errorf("%s\nSee:\nhttps://console.cloud.google.com/cloud-build/builds;region=%s/%s?project=%s\nfor details.\n", failureMsg, region, build, project)
 		}

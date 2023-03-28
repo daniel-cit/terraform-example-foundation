@@ -26,8 +26,7 @@ import (
 //GetAccessContextManagerPolicyID gets the access context manager policy ID of the organization
 func GetAccessContextManagerPolicyID(t testing.TB, ordID string) string {
 	filter := fmt.Sprintf("parent:organizations/%s", ordID)
-	gcOps := gcloud.WithCommonArgs([]string{"--organization", ordID, "--filter", filter, "--format", "json"})
-	acmpID := gcloud.Run(t, "access-context-manager policies list", gcOps).Array()
+	acmpID := gcloud.Runf(t, "access-context-manager policies list --organization %s --filter %s ", ordID, filter).Array()
 	if len(acmpID) == 0 {
 		return ""
 	}

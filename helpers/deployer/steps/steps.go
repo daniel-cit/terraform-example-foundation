@@ -51,7 +51,7 @@ func LoadSteps(file string) (Steps, error) {
 	var s Steps
 	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
-		fmt.Printf("creating new steps file '%s'\n.", file)
+		fmt.Printf("# creating new steps file '%s'\n.", file)
 		s = Steps{
 			File: file,
 		}
@@ -86,7 +86,7 @@ func (s Steps) CompleteStep(name string) {
 		Error:  "",
 	}
 	s.SaveSteps()
-	fmt.Printf("completing step '%s' execution\n", name)
+	fmt.Printf("# completing step '%s' execution\n", name)
 }
 
 // IsStepComplete checks it the given step is completed.
@@ -106,7 +106,7 @@ func (s Steps) FailStep(name string, err string) {
 		Error:  err,
 	}
 	s.SaveSteps()
-	fmt.Printf("failing step '%s'. Failed with error: %s\n", name, err)
+	fmt.Printf("# failing step '%s'. Failed with error: %s\n", name, err)
 }
 
 // ResetStep resets the execution status of a given step.
@@ -117,7 +117,7 @@ func (s Steps) ResetStep(name string) {
 		Error:  "",
 	}
 	s.SaveSteps()
-	fmt.Printf("resetting step '%s' execution\n", name)
+	fmt.Printf("# resetting step '%s' execution\n", name)
 }
 
 // GetStepError gets the error message save in an step.
@@ -143,10 +143,10 @@ func (s Steps) ListSteps() []string {
 // Completed steps are not executed again.
 func (s Steps) RunStep(step string, f func() error) error {
 	if s.IsStepComplete(step) {
-		fmt.Printf("skipping step '%s' execution\n", step)
+		fmt.Printf("# skipping step '%s' execution\n", step)
 		return nil
 	}
-	fmt.Printf("starting step '%s' execution\n", step)
+	fmt.Printf("# starting step '%s' execution\n", step)
 	err := f()
 	if err != nil {
 		s.FailStep(step, err.Error())
