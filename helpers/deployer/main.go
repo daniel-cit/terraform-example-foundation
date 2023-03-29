@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	gotest "testing"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
@@ -28,6 +29,11 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/stages"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+)
+
+const (
+	replaceME     = "REPLACE_ME"
+	exampleDotCom = "example.com"
 )
 
 type depCfg struct {
@@ -96,6 +102,72 @@ func validateDirectories(g stages.GlobalTfvars) {
 	}
 }
 
+func validate(t testing.TB, g stages.GlobalTfvars) {
+
+	gcpConf := gcp.NewGCP()
+	fmt.Println("")
+	fmt.Println("# Validating tfvar file.")
+	if gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
+		fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", g.SccNotificationName, g.OrgID)
+		fmt.Printf("# See existing Notifications for organization '%s'.\n", g.OrgID)
+		fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", g.OrgID, g.OrgID, g.SccNotificationName)
+		fmt.Println("")
+	}
+	if !g.CreateUniqueTagKey && gcpConf.HasTagKey(t, g.OrgID, "environment") {
+		fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", g.OrgID)
+		fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
+		fmt.Println("")
+	}
+	if g.OrgID == replaceME {
+		fmt.Println("# Replace value for input 'org_id'")
+	}
+	if g.BillingAccount == replaceME {
+		fmt.Println("# Replace value for input 'billing_account'")
+	}
+	if g.GroupOrgAdmins == replaceME {
+		fmt.Println("# Replace value for input 'group_org_admins'")
+	}
+	if g.GroupBillingAdmins == replaceME {
+		fmt.Println("# Replace value for input 'group_billing_admins'")
+	}
+	if g.BillingDataUsers == replaceME {
+		fmt.Println("# Replace value for input 'billing_data_users'")
+	}
+	if g.MonitoringWorkspaceUsers == replaceME {
+		fmt.Println("# Replace value for input 'monitoring_workspace_users'")
+	}
+	if g.AuditDataUsers == replaceME {
+		fmt.Println("# Replace value for input 'audit_data_users'")
+	}
+	if strings.Contains(g.Domain, exampleDotCom) {
+		fmt.Println("# Replace value 'example.com' for input 'domain'")
+	}
+	if g.Domain != "" && g.Domain[len(g.Domain)-1:] != "." {
+		fmt.Println("# Value for input 'domain' must end with '.'")
+	}
+	for _, d := range g.DomainsToAllow {
+		if strings.Contains(d, exampleDotCom) {
+			fmt.Println("# Replace value 'example.com' for input 'domains_to_allow'")
+		}
+	}
+	for _, e := range g.EssentialContactsDomains {
+		if strings.Contains(e, exampleDotCom) {
+			fmt.Println("# Replace value 'example.com' for input 'essential_contacts_domains_to_allow'")
+		}
+		if e != "" && e[0:1] != "@" {
+			fmt.Printf("# Essential contacts must start with '@': '%s'\n", e)
+		}
+	}
+	for _, p := range g.PerimeterAdditionalMembers {
+		if strings.Contains(p, exampleDotCom) {
+			fmt.Printf("# Replace value for input 'perimeter_additional_members': '%s'\n", p)
+		}
+		if strings.Contains(p, "group:") {
+			fmt.Printf("# VPC Service Controls does not allow groups in the perimeter: '%s'\n", p)
+		}
+	}
+}
+
 func main() {
 
 	cfg := parseFlags()
@@ -144,23 +216,9 @@ func main() {
 	}
 
 	if cfg.validate {
-		gcpConf := gcp.NewGCP()
-		fmt.Println("")
-		fmt.Println("# Validating tfvar file.")
-		if gcpConf.HasSccNotification(t, globalTfvars.OrgID, globalTfvars.SccNotificationName) {
-			fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", globalTfvars.SccNotificationName, globalTfvars.OrgID)
-			fmt.Printf("# See existing Notifications for organization '%s'.\n", globalTfvars.OrgID)
-			fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", globalTfvars.OrgID, globalTfvars.OrgID, globalTfvars.SccNotificationName)
-			fmt.Println("")
-		}
-		if gcpConf.HasTagKey(t, globalTfvars.OrgID, "environment") {
-			fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", globalTfvars.OrgID)
-			fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
-			fmt.Println("")
-		}
+		validate(t, globalTfvars)
 		return
 	}
-
 
 	// deploy stages
 	msg.PrintStageMsg("Deploying 0-bootstrap stage")
