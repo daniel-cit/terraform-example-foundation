@@ -23,6 +23,7 @@ import (
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/mitchellh/go-testing-interface"
 
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/msg"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/stages"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
@@ -37,6 +38,7 @@ type depCfg struct {
 	help          bool
 	listSteps     bool
 	disablePrompt bool
+	validate      bool
 }
 
 func parseFlags() depCfg {
@@ -49,6 +51,7 @@ func parseFlags() depCfg {
 	flag.BoolVar(&d.help, "help", false, "Prints this help text and exits.")
 	flag.BoolVar(&d.listSteps, "list_steps", false, "List the existing steps.")
 	flag.BoolVar(&d.disablePrompt, "disable_prompt", false, "Disable interactive prompt.")
+	flag.BoolVar(&d.validate, "validate", false, "Validate tfvars file inputs.")
 
 	flag.Parse()
 	return d
@@ -63,21 +66,34 @@ func getLogger(quiet bool) *logger.Logger {
 
 func getTfvars(file string) stages.GlobalTfvars {
 	if file == "" {
-		fmt.Println("stopping execution, tfvars file is required.")
+		fmt.Println("# Stopping execution, tfvars file is required.")
 		os.Exit(1)
 	}
 	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
-		fmt.Printf("stopping execution, tfvars file '%s' does not exits\n", file)
+		fmt.Printf("# Stopping execution, tfvars file '%s' does not exits\n", file)
 		os.Exit(1)
 	}
 	var globalTfvars stages.GlobalTfvars
 	err = utils.ReadTfvars(file, &globalTfvars)
 	if err != nil {
-		fmt.Printf("failed to load tfvars file %s. Error: %s\n", file, err.Error())
+		fmt.Printf("# Failed to load tfvars file %s. Error: %s\n", file, err.Error())
 		os.Exit(1)
 	}
 	return globalTfvars
+}
+
+func validateDirectories(g stages.GlobalTfvars) {
+	_, err := os.Stat(g.FoundationCodePath)
+	if os.IsNotExist(err) {
+		fmt.Printf("# Stopping execution, FoundationCodePath directory '%s' does not exits\n", g.FoundationCodePath)
+		os.Exit(1)
+	}
+	_, err = os.Stat(g.CodeCheckoutPath)
+	if os.IsNotExist(err) {
+		fmt.Printf("# Stopping execution, CodeCheckoutPath directory '%s' does not exits\n", g.CodeCheckoutPath)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -91,14 +107,14 @@ func main() {
 
 	s, err := steps.LoadSteps(cfg.stepsFile)
 	if err != nil {
-		fmt.Printf("failed to load state file %s. Error: %s\n", cfg.stepsFile, err.Error())
+		fmt.Printf("# failed to load state file %s. Error: %s\n", cfg.stepsFile, err.Error())
 		os.Exit(2)
 	}
 	if cfg.listSteps {
-		fmt.Println("Executed steps:")
+		fmt.Println("# Executed steps:")
 		e := s.ListSteps()
 		if len(e) == 0 {
-			fmt.Println("No steps executed")
+			fmt.Println("# No steps executed")
 			return
 		}
 		for _, step := range e {
@@ -114,6 +130,9 @@ func main() {
 	// load tfvars
 	globalTfvars := getTfvars(cfg.tfvarsFile)
 
+	// validate inputs
+	validateDirectories(globalTfvars)
+
 	// init infra
 	gotest.Init()
 	t := &testing.RuntimeT{}
@@ -124,6 +143,25 @@ func main() {
 		Logger:         getLogger(cfg.quiet),
 	}
 
+	if cfg.validate {
+		gcpConf := gcp.NewGCP()
+		fmt.Println("")
+		fmt.Println("# Validating tfvar file.")
+		if gcpConf.HasSccNotification(t, globalTfvars.OrgID, globalTfvars.SccNotificationName) {
+			fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", globalTfvars.SccNotificationName, globalTfvars.OrgID)
+			fmt.Printf("# See existing Notifications for organization '%s'.\n", globalTfvars.OrgID)
+			fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", globalTfvars.OrgID, globalTfvars.OrgID, globalTfvars.SccNotificationName)
+			fmt.Println("")
+		}
+		if gcpConf.HasTagKey(t, globalTfvars.OrgID, "environment") {
+			fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", globalTfvars.OrgID)
+			fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
+			fmt.Println("")
+		}
+		return
+	}
+
+
 	// deploy stages
 	msg.PrintStageMsg("Deploying 0-bootstrap stage")
 	skipInnerBuildMsg := s.IsStepComplete("gcp-bootstrap")
@@ -131,7 +169,7 @@ func main() {
 		return stages.DeployBootstrapStage(t, s, globalTfvars, conf)
 	})
 	if err != nil {
-		fmt.Printf("Bootstrap step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Bootstrap step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
@@ -147,7 +185,7 @@ func main() {
 		return stages.DeployOrgStage(t, s, globalTfvars, bo, conf)
 	})
 	if err != nil {
-		fmt.Printf("Org step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Org step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
@@ -156,7 +194,7 @@ func main() {
 		return stages.DeployEnvStage(t, s, globalTfvars, bo, conf)
 	})
 	if err != nil {
-		fmt.Printf("Environments step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Environments step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
@@ -165,7 +203,7 @@ func main() {
 		return stages.DeployNetworksStage(t, s, globalTfvars, bo, conf)
 	})
 	if err != nil {
-		fmt.Printf("Networks step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Networks step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
@@ -176,7 +214,7 @@ func main() {
 		return stages.DeployProjectsStage(t, s, globalTfvars, bo, conf)
 	})
 	if err != nil {
-		fmt.Printf("Projects step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Projects step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 
@@ -190,7 +228,7 @@ func main() {
 		return stages.DeployExampleAppStage(t, s, globalTfvars, io, conf)
 	})
 	if err != nil {
-		fmt.Printf("Example app step failed. Error: %s\n", err.Error())
+		fmt.Printf("# Example app step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 }

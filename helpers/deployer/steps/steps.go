@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 )
 
 const (
@@ -109,7 +110,15 @@ func (s Steps) FailStep(name string, err string) {
 	fmt.Printf("# failing step '%s'. Failed with error: %s\n", name, err)
 }
 
-// ResetStep resets the execution status of a given step.
+func isNested(name string) bool {
+	return strings.Contains(name, ".")
+}
+
+func parent(name string) string {
+	return strings.Split(name, ".")[0]
+}
+
+// ResetStep resets the execution status of a given step and its parent.
 func (s Steps) ResetStep(name string) {
 	s.Steps[name] = Step{
 		Name:   name,
@@ -118,6 +127,9 @@ func (s Steps) ResetStep(name string) {
 	}
 	s.SaveSteps()
 	fmt.Printf("# resetting step '%s' execution\n", name)
+	if isNested(name) {
+		s.ResetStep(parent(name))
+	}
 }
 
 // GetStepError gets the error message save in an step.

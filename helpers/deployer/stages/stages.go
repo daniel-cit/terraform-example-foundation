@@ -57,31 +57,33 @@ type ServerAddress struct {
 }
 
 type GlobalTfvars struct {
-	OrgID                         string          `hcl:"org_id"`
-	BillingAccount                string          `hcl:"billing_account"`
-	GroupOrgAdmins                string          `hcl:"group_org_admins"`
-	GroupBillingAdmins            string          `hcl:"group_billing_admins"`
-	BillingDataUsers              string          `hcl:"billing_data_users"`
-	MonitoringWorkspaceUsers      string          `hcl:"monitoring_workspace_users"`
-	AuditDataUsers                string          `hcl:"audit_data_users"`
-	DefaultRegion                 string          `hcl:"default_region"`
-	ParentFolder                  *string         `hcl:"parent_folder"`
-	Domain                        string          `hcl:"domain"`
-	DomainsToAllow                []string        `hcl:"domains_to_allow"`
-	EssentialContactsDomains      []string        `hcl:"essential_contacts_domains_to_allow"`
-	PerimeterAdditionalMembers    []string        `hcl:"perimeter_additional_members"`
-	TargetNameServerAddresses     []ServerAddress `hcl:"target_name_server_addresses"`
-	SccNotificationName           string          `hcl:"scc_notification_name"`
-	ProjectPrefix                 *string         `hcl:"project_prefix"`
-	FolderPrefix                  *string         `hcl:"folder_prefix"`
-	BucketForceDestroy            *bool           `hcl:"bucket_force_destroy"`
-	EnableHubAndSpoke             bool            `hcl:"enable_hub_and_spoke"`
-	EnableHubAndSpokeTransitivity bool            `hcl:"enable_hub_and_spoke_transitivity"`
-	CreateUniqueTagKey            bool            `hcl:"create_unique_tag_key"`
-	ProjectsKMSLocation           string          `hcl:"projects_kms_location"`
-	ProjectsGCSLocation           string          `hcl:"projects_gcs_location"`
-	CodeCheckoutPath              string          `hcl:"code_checkout_path"`
-	FoundationCodePath            string          `hcl:"foundation_code_path"`
+	OrgID                                 string          `hcl:"org_id"`
+	BillingAccount                        string          `hcl:"billing_account"`
+	GroupOrgAdmins                        string          `hcl:"group_org_admins"`
+	GroupBillingAdmins                    string          `hcl:"group_billing_admins"`
+	BillingDataUsers                      string          `hcl:"billing_data_users"`
+	MonitoringWorkspaceUsers              string          `hcl:"monitoring_workspace_users"`
+	AuditDataUsers                        string          `hcl:"audit_data_users"`
+	DefaultRegion                         string          `hcl:"default_region"`
+	ParentFolder                          *string         `hcl:"parent_folder"`
+	Domain                                string          `hcl:"domain"`
+	DomainsToAllow                        []string        `hcl:"domains_to_allow"`
+	EssentialContactsDomains              []string        `hcl:"essential_contacts_domains_to_allow"`
+	PerimeterAdditionalMembers            []string        `hcl:"perimeter_additional_members"`
+	TargetNameServerAddresses             []ServerAddress `hcl:"target_name_server_addresses"`
+	SccNotificationName                   string          `hcl:"scc_notification_name"`
+	ProjectPrefix                         *string         `hcl:"project_prefix"`
+	FolderPrefix                          *string         `hcl:"folder_prefix"`
+	BucketForceDestroy                    *bool           `hcl:"bucket_force_destroy"`
+	AuditLogsTableDeleteContentsOnDestroy *bool           `hcl:"audit_logs_table_delete_contents_on_destroy"`
+	LogExportStorageForceDestroy          *bool           `hcl:"log_export_storage_force_destroy"`
+	EnableHubAndSpoke                     bool            `hcl:"enable_hub_and_spoke"`
+	EnableHubAndSpokeTransitivity         bool            `hcl:"enable_hub_and_spoke_transitivity"`
+	CreateUniqueTagKey                    bool            `hcl:"create_unique_tag_key"`
+	ProjectsKMSLocation                   string          `hcl:"projects_kms_location"`
+	ProjectsGCSLocation                   string          `hcl:"projects_gcs_location"`
+	CodeCheckoutPath                      string          `hcl:"code_checkout_path"`
+	FoundationCodePath                    string          `hcl:"foundation_code_path"`
 }
 
 type BootstrapTfvars struct {
@@ -97,15 +99,17 @@ type BootstrapTfvars struct {
 }
 
 type OrgTfvars struct {
-	DomainsToAllow           []string `hcl:"domains_to_allow"`
-	EssentialContactsDomains []string `hcl:"essential_contacts_domains_to_allow"`
-	BillingDataUsers         string   `hcl:"billing_data_users"`
-	AuditDataUsers           string   `hcl:"audit_data_users"`
-	SccNotificationName      string   `hcl:"scc_notification_name"`
-	RemoteStateBucket        string   `hcl:"remote_state_bucket"`
-	EnableHubAndSpoke        bool     `hcl:"enable_hub_and_spoke"`
-	CreateACMAPolicy         bool     `hcl:"create_access_context_manager_access_policy"`
-	CreateUniqueTagKey       bool     `hcl:"create_unique_tag_key"`
+	DomainsToAllow                        []string `hcl:"domains_to_allow"`
+	EssentialContactsDomains              []string `hcl:"essential_contacts_domains_to_allow"`
+	BillingDataUsers                      string   `hcl:"billing_data_users"`
+	AuditDataUsers                        string   `hcl:"audit_data_users"`
+	SccNotificationName                   string   `hcl:"scc_notification_name"`
+	RemoteStateBucket                     string   `hcl:"remote_state_bucket"`
+	EnableHubAndSpoke                     bool     `hcl:"enable_hub_and_spoke"`
+	CreateACMAPolicy                      bool     `hcl:"create_access_context_manager_access_policy"`
+	CreateUniqueTagKey                    bool     `hcl:"create_unique_tag_key"`
+	AuditLogsTableDeleteContentsOnDestroy *bool    `hcl:"audit_logs_table_delete_contents_on_destroy"`
+	LogExportStorageForceDestroy          *bool    `hcl:"log_export_storage_force_destroy"`
 }
 
 type EnvsTfvars struct {
@@ -341,18 +345,20 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-org"
 	step := "1-org"
-	createACMAPolicy := gcp.GetAccessContextManagerPolicyID(t, tfvars.OrgID) == ""
+	createACMAPolicy := gcp.NewGCP().GetAccessContextManagerPolicyID(t, tfvars.OrgID) == ""
 
 	orgTfvars := OrgTfvars{
-		DomainsToAllow:           tfvars.DomainsToAllow,
-		EssentialContactsDomains: tfvars.EssentialContactsDomains,
-		BillingDataUsers:         tfvars.BillingDataUsers,
-		AuditDataUsers:           tfvars.AuditDataUsers,
-		SccNotificationName:      tfvars.SccNotificationName,
-		RemoteStateBucket:        outputs.RemoteStateBucket,
-		EnableHubAndSpoke:        tfvars.EnableHubAndSpoke,
-		CreateACMAPolicy:         createACMAPolicy,
-		CreateUniqueTagKey:       tfvars.CreateUniqueTagKey,
+		DomainsToAllow:                        tfvars.DomainsToAllow,
+		EssentialContactsDomains:              tfvars.EssentialContactsDomains,
+		BillingDataUsers:                      tfvars.BillingDataUsers,
+		AuditDataUsers:                        tfvars.AuditDataUsers,
+		SccNotificationName:                   tfvars.SccNotificationName,
+		RemoteStateBucket:                     outputs.RemoteStateBucket,
+		EnableHubAndSpoke:                     tfvars.EnableHubAndSpoke,
+		CreateACMAPolicy:                      createACMAPolicy,
+		CreateUniqueTagKey:                    tfvars.CreateUniqueTagKey,
+		AuditLogsTableDeleteContentsOnDestroy: tfvars.AuditLogsTableDeleteContentsOnDestroy,
+		LogExportStorageForceDestroy:          tfvars.LogExportStorageForceDestroy,
 	}
 
 	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, step, "envs", "shared", "terraform.tfvars"), orgTfvars)
@@ -484,7 +490,7 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	}
 	//access_context
 	accessContextTfvars := NetAccessContextTfvars{
-		AccessContextManagerPolicyID: gcp.GetAccessContextManagerPolicyID(t, tfvars.OrgID),
+		AccessContextManagerPolicyID: gcp.NewGCP().GetAccessContextManagerPolicyID(t, tfvars.OrgID),
 	}
 	err = utils.WriteTfvars(filepath.Join(c.FoundationPath, step, "access_context.auto.tfvars"), accessContextTfvars)
 	if err != nil {

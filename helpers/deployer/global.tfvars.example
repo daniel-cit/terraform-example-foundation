@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
+// General
+code_checkout_path   = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
+foundation_code_path = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOUNDATION_CODE_WAS_CHECKED_OUT"
+
+
+// 0-bootstrap inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md#inputs
+
 org_id          = "REPLACE_ME" # format "000000000000"
 billing_account = "REPLACE_ME" # format "000000-000000-000000"
 default_region  = "us-central1"
-project_prefix  = "prj"
-folder_prefix   = "fldr"
+
+group_org_admins     = "REPLACE_ME" # "gcp-organization-admins@example.com"
+group_billing_admins = "REPLACE_ME" # "gcp-billing-admins@example.com"
+
+bucket_force_destroy = false
+project_prefix       = "prj"
+folder_prefix        = "fldr"
 
 // Optional - for an organization with existing projects or for development/validation.
 // Uncomment this variable to place all the example foundation resources under
@@ -28,22 +41,38 @@ folder_prefix   = "fldr"
 
 //parent_folder = "01234567890"
 
-group_org_admins           = "REPLACE_ME" # "gcp-organization-admins@example.com"
-group_billing_admins       = "REPLACE_ME" # "gcp-billing-admins@example.com"
-monitoring_workspace_users = "REPLACE_ME" # "gcp-monitoring-admins@example.com"
-billing_data_users         = "REPLACE_ME" # "gcp-billing-data-users@example.com"
-audit_data_users           = "REPLACE_ME" # "gcp-security-admins@example.com"
 
-bucket_force_destroy              = false
-enable_hub_and_spoke              = false
-enable_hub_and_spoke_transitivity = false
-create_unique_tag_key             = false
-scc_notification_name             = "scc-notify"
+// 1-org inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/1-org/envs/shared/README.md#inputs
 
-domain                              = "example.com."
+audit_data_users   = "REPLACE_ME" # "gcp-security-admins@example.com"
+billing_data_users = "REPLACE_ME" # "gcp-billing-data-users@example.com"
+
 domains_to_allow                    = ["example.com"]
 essential_contacts_domains_to_allow = ["@example.com"]
-perimeter_additional_members        = ["user:YOUR-USER-EMAIL@example.com"]
+
+scc_notification_name                       = "scc-notify"
+create_unique_tag_key                       = false
+enable_hub_and_spoke                        = false
+audit_logs_table_delete_contents_on_destroy = false
+log_export_storage_force_destroy            = false
+
+
+
+// 2-environments inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/2-environments/envs/production/README.md#inputs
+
+monitoring_workspace_users = "REPLACE_ME" # "gcp-monitoring-admins@example.com"
+
+
+// 3-networks inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/envs/production/README.md#inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/envs/shared/README.md#inputs
+
+domain                       = "example.com."
+perimeter_additional_members = ["user:YOUR-USER-EMAIL@example.com"]
+
+enable_hub_and_spoke_transitivity = false
 
 target_name_server_addresses = [
   {
@@ -56,8 +85,9 @@ target_name_server_addresses = [
   }
 ]
 
+
+// 4-projects inputs
+// https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects/business_unit_1/production/README.md#inputs
+
 projects_gcs_location = "US"
 projects_kms_location = "us"
-
-code_checkout_path  = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
-foundation_code_path = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOUNDATION_CODE_WAS_CHECKED_OUT"

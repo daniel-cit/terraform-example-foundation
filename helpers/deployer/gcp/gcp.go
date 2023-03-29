@@ -21,32 +21,40 @@ import (
 	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/gcloud"
 	"github.com/mitchellh/go-testing-interface"
 	"github.com/tidwall/gjson"
+
+	"github.com/terraform-google-modules/terraform-example-foundation/test/integration/testutils"
 )
 
 type GCP struct {
-	Runf func(t testing.TB, cmd string, args ...interface{}) gjson.Result
+	Runf      func(t testing.TB, cmd string, args ...interface{}) gjson.Result
+	sleepTime time.Duration
 }
 
+// NewGCP creates a new wrapper for Google Cloud Platform CLI.
 func NewGCP() GCP {
 	return GCP{
-		Runf: gcloud.Runf,
+		Runf:      gcloud.Runf,
+		sleepTime: 20,
 	}
 }
 
+// GetBuilds gets all Cloud Build builds form a project and region that satisfy the given filter.
 func (g GCP) GetBuilds(t testing.TB, projectID, region, filter string) []gjson.Result {
 	return g.Runf(t, "builds list --project %s --region %s --filter %s", projectID, region, filter).Array()
 }
 
+// GetLastBuildStatus gets the status of the last build form a project and region that satisfy the given filter.
 func (g GCP) GetLastBuildStatus(t testing.TB, projectID, region, filter string) string {
 	return g.Runf(t, "builds list --project %s --region %s --limit 1 --sort-by ~createTime --filter %s", projectID, region, filter).Array()[0].Get("status").String()
 }
 
-func (g GCP) GetBuildState(t testing.TB, projectID, region, buildID string) string {
+// GetBuildStatus gets the status of the given build
+func (g GCP) GetBuildStatus(t testing.TB, projectID, region, buildID string) string {
 	return g.Runf(t, "builds describe %s  --project %s --region %s", buildID, projectID, region).Get("status").String()
 }
 
 func (g GCP) GetRunningBuildID(t testing.TB, projectID, region, filter string) string {
-	time.Sleep(20 * time.Second)
+	time.Sleep(g.sleepTime * time.Second)
 	builds := g.GetBuilds(t, projectID, region, filter)
 	for _, build := range builds {
 		status := build.Get("status").String()
@@ -60,11 +68,12 @@ func (g GCP) GetRunningBuildID(t testing.TB, projectID, region, filter string) s
 func (g GCP) GetFinalBuildState(t testing.TB, projectID, region, buildID string) string {
 	var status string
 	fmt.Printf("waiting for build %s execution.\n", buildID)
-	status = g.GetBuildState(t, projectID, region, buildID)
+	status = g.GetBuildStatus(t, projectID, region, buildID)
+	fmt.Printf("build status is %s\n", status)
 	for status != "SUCCESS" && status != "FAILURE" && status != "CANCELLED" {
 		fmt.Printf("build status is %s\n", status)
-		time.Sleep(20 * time.Second)
-		status = g.GetBuildState(t, projectID, region, buildID)
+		time.Sleep(g.sleepTime * time.Second)
+		status = g.GetBuildStatus(t, projectID, region, buildID)
 	}
 	fmt.Printf("final build status is %s\n", status)
 	return status
@@ -85,4 +94,33 @@ func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg st
 		}
 	}
 	return nil
+}
+
+//GetAccessContextManagerPolicyID gets the access context manager policy ID of the organization
+func (g GCP) GetAccessContextManagerPolicyID(t testing.TB, orgID string) string {
+	filter := fmt.Sprintf("parent:organizations/%s", orgID)
+	acmpID := g.Runf(t, "access-context-manager policies list --organization %s --filter %s ", orgID, filter).Array()
+	if len(acmpID) == 0 {
+		return ""
+	}
+	return testutils.GetLastSplitElement(acmpID[0].Get("name").String(), "/")
+}
+
+// HasSccNotification checks if a Security Command Center notification exists
+func (g GCP) HasSccNotification(t testing.TB, orgID, sccName string) bool {
+	filter := fmt.Sprintf("name=organizations/%s/notificationConfigs/%s", orgID, sccName)
+	scc := g.Runf(t, "scc notifications list organizations/%s --filter %s ", orgID, filter).Array()
+	if len(scc) == 0 {
+		return false
+	}
+	return testutils.GetLastSplitElement(scc[0].Get("name").String(), "/") == sccName
+}
+
+func (g GCP) HasTagKey(t testing.TB, orgID, tag string) bool {
+	filter := fmt.Sprintf("shortName=%s", tag)
+	tags := g.Runf(t, "resource-manager tags keys list --parent organizations/%s --filter %s ", orgID, filter).Array()
+	if len(tags) == 0 {
+		return false
+	}
+	return tags[0].Get("shortName").String() == tag
 }

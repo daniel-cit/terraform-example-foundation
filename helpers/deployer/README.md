@@ -37,7 +37,13 @@ See the READMEs for the stages for adicional information:
     ```bash
     go build
     ```
-    
+
+- Validate the tfvars file:
+
+    ```bash
+    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -validate
+    ```
+
 - Run the helper:
 
     ```bash
@@ -71,6 +77,8 @@ See the READMEs for the stages for adicional information:
         List the existing steps.
   -reset_step step
         Name of a step to be reset.
+  -validate
+        Validate tfvars file inputs
   -quiet
         If true, additional output is suppressed.
   -disable_prompt
@@ -85,4 +93,4 @@ See the READMEs for the stages for adicional information:
 - [Google Cloud SDK](https://cloud.google.com/sdk/install) version 393.0.0+
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) version 2.28.0+
 - [Terraform](https://www.terraform.io/downloads.html) version 1.3.0+
-- Additional [requirements](../../0-bootstrap/README.md#prerequisites)
+- See `0-bootstrap` README for additional IAM [requirements](../../0-bootstrap/README.md#prerequisites) on the user deploying the Foundation.
