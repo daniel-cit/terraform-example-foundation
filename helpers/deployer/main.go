@@ -107,20 +107,22 @@ func validate(t testing.TB, g stages.GlobalTfvars) {
 	gcpConf := gcp.NewGCP()
 	fmt.Println("")
 	fmt.Println("# Validating tfvar file.")
-	if gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
-		fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", g.SccNotificationName, g.OrgID)
-		fmt.Printf("# See existing Notifications for organization '%s'.\n", g.OrgID)
-		fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", g.OrgID, g.OrgID, g.SccNotificationName)
-		fmt.Println("")
-	}
-	if !g.CreateUniqueTagKey && gcpConf.HasTagKey(t, g.OrgID, "environment") {
-		fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", g.OrgID)
-		fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
-		fmt.Println("")
-	}
 	if g.OrgID == replaceME {
 		fmt.Println("# Replace value for input 'org_id'")
+	} else {
+		if gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
+			fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", g.SccNotificationName, g.OrgID)
+			fmt.Printf("# See existing Notifications for organization '%s'.\n", g.OrgID)
+			fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", g.OrgID, g.OrgID, g.SccNotificationName)
+			fmt.Println("")
+		}
+		if !g.CreateUniqueTagKey && gcpConf.HasTagKey(t, g.OrgID, "environment") {
+			fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", g.OrgID)
+			fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
+			fmt.Println("")
+		}
 	}
+
 	if g.BillingAccount == replaceME {
 		fmt.Println("# Replace value for input 'billing_account'")
 	}

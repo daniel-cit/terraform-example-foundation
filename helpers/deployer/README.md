@@ -4,6 +4,18 @@ Helper tool to deploy the Terraform example foundation .
 
 ## Usage
 
+- Check if required tools, Go 1.18+, Terraform 1.3.0+, gcloud 393.0.0+, and Git 2.28.0+, are installed:
+
+    ```bash
+    go version
+
+    terraform -version
+
+    gcloud --version
+
+    git --version
+    ```
+
 - Create a directory in the file system to host the Cloud Source repositories the will be created and a copy of the terraform example foundation.
 - Clone the `terraform-example-foundation` repository on this directory.
 
