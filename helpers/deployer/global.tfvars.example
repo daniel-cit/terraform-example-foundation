@@ -48,14 +48,24 @@ folder_prefix        = "fldr"
 audit_data_users   = "REPLACE_ME" # "gcp-security-admins@example.com"
 billing_data_users = "REPLACE_ME" # "gcp-billing-data-users@example.com"
 
-domains_to_allow                    = ["example.com"]
+domains_to_allow                    = ["example.com"] # Must include the domain of the organization you are deploying the foundation.
 essential_contacts_domains_to_allow = ["@example.com"]
 
 scc_notification_name                       = "scc-notify"
-create_unique_tag_key                       = false
-enable_hub_and_spoke                        = false
 audit_logs_table_delete_contents_on_destroy = false
 log_export_storage_force_destroy            = false
+
+// Choose witch network architecture to use:
+// Dual Shared VPC: https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-dual-svpc/README.md
+// Hub And Spoke: https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/README.md
+
+enable_hub_and_spoke                        = false
+
+// Optional - If you are deploying Foundation Example in a parent folder
+// consider setting 'create_unique_tag_key' to 'true' because as Tag Keys are
+// unique organization-wide it will add a random suffix at each tag key
+
+create_unique_tag_key = false
 
 
 
@@ -69,10 +79,17 @@ monitoring_workspace_users = "REPLACE_ME" # "gcp-monitoring-admins@example.com"
 // https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/envs/production/README.md#inputs
 // https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/envs/shared/README.md#inputs
 
-domain                       = "example.com."
+domain = "example.com." # The DNS name of peering managed zone. Must end with a period.
+
+// Add you email in the perimeter_additional_members list.
+// You must be in this list to be able to view/access resources in the project protected by the VPC service controls.
+
 perimeter_additional_members = ["user:YOUR-USER-EMAIL@example.com"]
 
 enable_hub_and_spoke_transitivity = false
+
+// List of IPv4 address of target name servers for the forwarding zone configuration.
+// See https://cloud.google.com/dns/docs/overview#dns-forwarding-zones
 
 target_name_server_addresses = [
   {

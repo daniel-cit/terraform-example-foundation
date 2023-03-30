@@ -53,6 +53,7 @@ func (g GCP) GetBuildStatus(t testing.TB, projectID, region, buildID string) str
 	return g.Runf(t, "builds describe %s  --project %s --region %s", buildID, projectID, region).Get("status").String()
 }
 
+// GetRunningBuildID gets the current build running for the given prohec, region, and filter
 func (g GCP) GetRunningBuildID(t testing.TB, projectID, region, filter string) string {
 	time.Sleep(g.sleepTime * time.Second)
 	builds := g.GetBuilds(t, projectID, region, filter)
@@ -65,6 +66,7 @@ func (g GCP) GetRunningBuildID(t testing.TB, projectID, region, filter string) s
 	return ""
 }
 
+// GetFinalBuildState gets the terminal status of the given build. It will wait if build is not finished.
 func (g GCP) GetFinalBuildState(t testing.TB, projectID, region, buildID string) string {
 	var status string
 	fmt.Printf("waiting for build %s execution.\n", buildID)
@@ -79,6 +81,7 @@ func (g GCP) GetFinalBuildState(t testing.TB, projectID, region, buildID string)
 	return status
 }
 
+// WaitBuildSuccess waits for teh current build in a repo to finish.
 func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg string) error {
 	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
 	build := g.GetRunningBuildID(t, project, region, filter)
@@ -116,6 +119,7 @@ func (g GCP) HasSccNotification(t testing.TB, orgID, sccName string) bool {
 	return testutils.GetLastSplitElement(scc[0].Get("name").String(), "/") == sccName
 }
 
+// HasTagKey  checks if a Tag Key exists
 func (g GCP) HasTagKey(t testing.TB, orgID, tag string) bool {
 	filter := fmt.Sprintf("shortName=%s", tag)
 	tags := g.Runf(t, "resource-manager tags keys list --parent organizations/%s --filter %s ", orgID, filter).Array()

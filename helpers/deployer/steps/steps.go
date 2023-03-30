@@ -52,7 +52,7 @@ func LoadSteps(file string) (Steps, error) {
 	var s Steps
 	_, err := os.Stat(file)
 	if os.IsNotExist(err) {
-		fmt.Printf("# creating new steps file '%s'\n.", file)
+		fmt.Printf("# creating new steps file '%s'.\n", file)
 		s = Steps{
 			File: file,
 		}
