@@ -24,6 +24,7 @@ import (
 
 const (
 	completedStatus = "COMPLETED"
+	destroyedStatus = "DESTROYED"
 	failedStatus    = "FAILED"
 	pendingStatus   = "PENDING"
 )
@@ -90,13 +91,19 @@ func (s Steps) CompleteStep(name string) {
 	fmt.Printf("# completing step '%s' execution\n", name)
 }
 
-// IsStepComplete checks it the given step is completed.
+// IsStepComplete checks if the given step is completed.
 func (s Steps) IsStepComplete(name string) bool {
 	v, ok := s.Steps[name]
 	if ok {
 		return v.Status == completedStatus
 	}
 	return false
+}
+
+// StepExists checks if the given step exists
+func (s Steps) StepExists(name string) bool {
+	_, ok := s.Steps[name]
+	return ok
 }
 
 // FailStep marks a given step as failed and saves the error message.
@@ -165,5 +172,38 @@ func (s Steps) RunStep(step string, f func() error) error {
 		return err
 	}
 	s.CompleteStep(step)
+	return nil
+}
+
+func (s Steps) IsStepDestroyed(name string) bool {
+	v, ok := s.Steps[name]
+	if ok {
+		return v.Status == destroyedStatus
+	}
+	return false
+}
+
+func (s Steps) DestroyStep(name string) {
+	s.Steps[name] = Step{
+		Name:   name,
+		Status: destroyedStatus,
+		Error:  "",
+	}
+	s.SaveSteps()
+	fmt.Printf("# destroying step '%s'\n", name)
+}
+
+func (s Steps) RunDestroyStep(step string, f func() error) error {
+	if s.IsStepDestroyed(step) || !s.StepExists(step) {
+		fmt.Printf("# skipping step '%s' destruction\n", step)
+		return nil
+	}
+	fmt.Printf("# starting step '%s' destruction\n", step)
+	err := f()
+	if err != nil {
+		s.FailStep(step, err.Error())
+		return err
+	}
+	s.DestroyStep(step)
 	return nil
 }

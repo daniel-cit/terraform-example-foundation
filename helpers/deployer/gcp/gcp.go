@@ -16,6 +16,7 @@ package gcp
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/gcloud"
@@ -102,7 +103,7 @@ func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg st
 //GetAccessContextManagerPolicyID gets the access context manager policy ID of the organization
 func (g GCP) GetAccessContextManagerPolicyID(t testing.TB, orgID string) string {
 	filter := fmt.Sprintf("parent:organizations/%s", orgID)
-	acmpID := g.Runf(t, "access-context-manager policies list --organization %s --filter %s ", orgID, filter).Array()
+	acmpID := g.Runf(t, "access-context-manager policies list --organization %s --filter %s --quiet", orgID, filter).Array()
 	if len(acmpID) == 0 {
 		return ""
 	}
@@ -112,7 +113,7 @@ func (g GCP) GetAccessContextManagerPolicyID(t testing.TB, orgID string) string 
 // HasSccNotification checks if a Security Command Center notification exists
 func (g GCP) HasSccNotification(t testing.TB, orgID, sccName string) bool {
 	filter := fmt.Sprintf("name=organizations/%s/notificationConfigs/%s", orgID, sccName)
-	scc := g.Runf(t, "scc notifications list organizations/%s --filter %s ", orgID, filter).Array()
+	scc := g.Runf(t, "scc notifications list organizations/%s --filter %s --quiet", orgID, filter).Array()
 	if len(scc) == 0 {
 		return false
 	}
@@ -127,4 +128,15 @@ func (g GCP) HasTagKey(t testing.TB, orgID, tag string) bool {
 		return false
 	}
 	return tags[0].Get("shortName").String() == tag
+}
+
+// EnableApis enables the apis in the given project
+func (g GCP) EnableApis(t testing.TB, project string, apis []string) {
+	g.Runf(t, "services enable %s --project %s", strings.Join(apis, " "), project)
+}
+
+// ApiIsEnabled checks if the api is enabled in the given project
+func (g GCP) ApiIsEnabled(t testing.TB, project, api string)  bool {
+	filter := fmt.Sprintf("config.name=%s", api)
+	return len(g.Runf(t, "services list --enabled --project %s --filter %s", project, filter).Array())  > 0
 }

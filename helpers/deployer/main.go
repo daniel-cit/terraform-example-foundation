@@ -20,8 +20,10 @@ import (
 	"os"
 	"strings"
 	gotest "testing"
+	"time"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
+	grunttest "github.com/gruntwork-io/terratest/modules/testing"
 	"github.com/mitchellh/go-testing-interface"
 
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
@@ -45,6 +47,14 @@ type depCfg struct {
 	listSteps     bool
 	disablePrompt bool
 	validate      bool
+	destroy       bool
+}
+
+func validatorApis() []string {
+	return []string{
+		"securitycenter.googleapis.com",
+		"accesscontextmanager.googleapis.com",
+	}
 }
 
 func parseFlags() depCfg {
@@ -58,16 +68,24 @@ func parseFlags() depCfg {
 	flag.BoolVar(&d.listSteps, "list_steps", false, "List the existing steps.")
 	flag.BoolVar(&d.disablePrompt, "disable_prompt", false, "Disable interactive prompt.")
 	flag.BoolVar(&d.validate, "validate", false, "Validate tfvars file inputs.")
+	flag.BoolVar(&d.destroy, "destroy", false, "Destroy the deployment.")
 
 	flag.Parse()
 	return d
+}
+
+type customLogger struct{}
+
+func (_ customLogger) Logf(t grunttest.TestingT, format string, args ...interface{}) {
+	fmt.Fprintln(os.Stdout, fmt.Sprintf("  # %s", fmt.Sprintf(format, args...)))
 }
 
 func getLogger(quiet bool) *logger.Logger {
 	if quiet {
 		return logger.Discard
 	}
-	return logger.Default
+	return logger.New(customLogger{})
+	//return logger.Default
 }
 
 func getTfvars(file string) stages.GlobalTfvars {
@@ -211,14 +229,100 @@ func main() {
 	gotest.Init()
 	t := &testing.RuntimeT{}
 	conf := stages.CommonConf{
-		FoundationPath: globalTfvars.FoundationCodePath,
-		CheckoutPath:   globalTfvars.CodeCheckoutPath,
-		DisablePrompt:  cfg.disablePrompt,
-		Logger:         getLogger(cfg.quiet),
+		FoundationPath:    globalTfvars.FoundationCodePath,
+		CheckoutPath:      globalTfvars.CodeCheckoutPath,
+		EnableHubAndSpoke: globalTfvars.EnableHubAndSpoke,
+		DisablePrompt:     cfg.disablePrompt,
+		Logger:            getLogger(cfg.quiet),
+	}
+
+	if globalTfvars.HasValidatorProj() {
+		// so habilitar apis se são estiver ligadas
+		var apis []string
+		gcpConf := gcp.NewGCP()
+		for _, a := range validatorApis() {
+			if !gcpConf.ApiIsEnabled(t, *globalTfvars.ValidatorProjectId, a) {
+				apis = append(apis, a)
+			}
+		}
+		if len(apis) > 0 {
+			fmt.Printf("# Enabling APIs: %s in validator project '%s'\n", strings.Join(apis, ", "), *globalTfvars.ValidatorProjectId)
+			gcpConf.EnableApis(t, *globalTfvars.ValidatorProjectId, apis)
+			fmt.Println("# waiting for API propagation")
+			for i := 0; i < 20; i++ {
+				time.Sleep(10 * time.Second)
+				fmt.Println("# waiting for API propagation")
+			}
+		}
 	}
 
 	if cfg.validate {
 		validate(t, globalTfvars)
+		return
+	}
+
+	// destroy stages
+	if cfg.destroy {
+		// destroy is only terraform destroy
+
+		// 5-app-infra
+		err = s.RunDestroyStep("bu1-example-app", func() error {
+			io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
+			return stages.DestroyExampleAppStage(t, s, io, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Example app step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
+		// 4-projects
+		err = s.RunDestroyStep("gcp-projects", func() error {
+			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
+			return stages.DestroyProjectsStage(t, s, bo, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Projects step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
+		// 3-networks
+		err = s.RunDestroyStep("gcp-networks", func() error {
+			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
+			return stages.DestroyNetworksStage(t, s, bo, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Networks step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
+		// 2-environments
+		err = s.RunDestroyStep("gcp-environments", func() error {
+			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
+			return stages.DestroyEnvStage(t, s, bo, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Environments step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
+		//1-org
+		err = s.RunDestroyStep("gcp-org", func() error {
+			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
+			return stages.DestroyOrgStage(t, s, bo, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Org step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
+		// 0-bootstrap
+		err = s.RunDestroyStep("gcp-bootstrap", func() error {
+			return stages.DestroyBootstrapStage(t, s, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Bootstrap step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
 		return
 	}
 

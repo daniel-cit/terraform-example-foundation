@@ -30,10 +30,11 @@ import (
 )
 
 type CommonConf struct {
-	FoundationPath string
-	CheckoutPath   string
-	DisablePrompt  bool
-	Logger         *logger.Logger
+	FoundationPath    string
+	CheckoutPath      string
+	EnableHubAndSpoke bool
+	DisablePrompt     bool
+	Logger            *logger.Logger
 }
 
 type BootstrapOutputs struct {
@@ -43,12 +44,16 @@ type BootstrapOutputs struct {
 	DefaultRegion             string
 	NetworkSA                 string
 	ProjectsSA                string
+	EnvsSA                    string
+	OrgSA                     string
 }
 
 type InfraPipelineOutputs struct {
 	RemoteStateBucket string
 	InfraPipeProj     string
 	DefaultRegion     string
+	TerraformSA       string
+	StateBucket       string
 }
 
 type ServerAddress struct {
@@ -84,6 +89,12 @@ type GlobalTfvars struct {
 	ProjectsGCSLocation                   string          `hcl:"projects_gcs_location"`
 	CodeCheckoutPath                      string          `hcl:"code_checkout_path"`
 	FoundationCodePath                    string          `hcl:"foundation_code_path"`
+	ValidatorProjectId                    *string         `hcl:"validator_project_id"`
+}
+
+// HasValidatorProj checks if a Validator Project was provided
+func (g GlobalTfvars) HasValidatorProj() bool {
+	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != ""
 }
 
 type BootstrapTfvars struct {
@@ -163,6 +174,8 @@ func GetBootstrapStepOutputs(t testing.TB, foundationPath string) BootstrapOutpu
 		DefaultRegion:             terraform.OutputMap(t, options, "common_config")["default_region"],
 		NetworkSA:                 terraform.Output(t, options, "networks_step_terraform_service_account_email"),
 		ProjectsSA:                terraform.Output(t, options, "projects_step_terraform_service_account_email"),
+		EnvsSA:                    terraform.Output(t, options, "environment_step_terraform_service_account_email"),
+		OrgSA:                     terraform.Output(t, options, "organization_step_terraform_service_account_email"),
 	}
 }
 
@@ -175,7 +188,53 @@ func GetInfraPipelineOutputs(t testing.TB, checkoutPath, workspace string) Infra
 	return InfraPipelineOutputs{
 		InfraPipeProj: terraform.Output(t, options, "cloudbuild_project_id"),
 		DefaultRegion: terraform.Output(t, options, "default_region"),
+		TerraformSA:   terraform.OutputMap(t, options, "terraform_service_accounts")["bu1-example-app"],
+		StateBucket:   terraform.OutputMap(t, options, "state_buckets")["bu1-example-app"],
 	}
+}
+
+func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
+	repo := "gcp-bootstrap"
+	step := "0-bootstrap"
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	// remove backend.tf file
+	tfDir := filepath.Join(gcpPath, "envs", "shared")
+	backendF := filepath.Join(tfDir, "backend.tf")
+	exist, err := utils.FileExists(backendF)
+	if err != nil {
+		return err
+	}
+	if exist {
+		err = utils.CopyFile(backendF, filepath.Join(tfDir, "backend.tf.backup"))
+		if err != nil {
+			return err
+		}
+		err = os.Remove(backendF)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = s.RunDestroyStep("gcp-bootstrap.production", func() error {
+		options := &terraform.Options{
+			TerraformDir: tfDir,
+			Logger:       c.Logger,
+			NoColor:      true,
+			MigrateState: true,
+		}
+		conf := utils.CloneCSR(t, repo, gcpPath, "", c.Logger)
+		err := conf.CheckoutBranch("production")
+		if err != nil {
+			return err
+		}
+		return destroyEnv(t, options, "")
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("end of", step, "destroy")
+	return nil
 }
 
 func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c CommonConf) error {
@@ -336,9 +395,49 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 	if err != nil {
 		return err
 	}
-
+	// Init gcp-bootstrap terraform
+	err = s.RunStep("gcp-bootstrap.init-tf", func() error {
+		options := &terraform.Options{
+			TerraformDir: filepath.Join(gcpBootstrapPath, "envs", "shared"),
+			Logger:       c.Logger,
+			NoColor:      true,
+		}
+		_, err := terraform.InitE(t, options)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	fmt.Println("end of bootstrap deploy")
 
+	return nil
+}
+
+func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
+	repo := "gcp-org"
+	step := "1-org"
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	err := s.RunDestroyStep("gcp-org.production", func() error {
+		options := &terraform.Options{
+			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
+			Logger:       c.Logger,
+			NoColor:      true,
+		}
+		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+		err := conf.CheckoutBranch("production")
+		if err != nil {
+			return err
+		}
+		return destroyEnv(t, options, outputs.OrgSA)
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -395,6 +494,34 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	}
 
 	fmt.Println("end of", step, "deploy")
+	return nil
+}
+
+func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
+	repo := "gcp-environments"
+	step := "2-environments"
+
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	for _, e := range []string{"development", "non-production", "production"} {
+		err := s.RunDestroyStep(fmt.Sprintf("gcp-environments.%s", e), func() error {
+			options := &terraform.Options{
+				TerraformDir: filepath.Join(gcpPath, "envs", e),
+				Logger:       c.Logger,
+				NoColor:      true,
+			}
+			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			err := conf.CheckoutBranch(e)
+			if err != nil {
+				return err
+			}
+			return destroyEnv(t, options, outputs.EnvsSA)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -458,10 +585,58 @@ func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	return nil
 }
 
+func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
+	repo := "gcp-networks"
+	var step string
+	if c.EnableHubAndSpoke {
+		step = "3-networks-hub-and-spoke"
+	} else {
+		step = "3-networks-dual-svpc"
+	}
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	for _, e := range []string{"development", "non-production", "production"} {
+		err := s.RunDestroyStep(fmt.Sprintf("gcp-networks.%s", e), func() error {
+			options := &terraform.Options{
+				TerraformDir: filepath.Join(gcpPath, "envs", e),
+				Logger:       c.Logger,
+				NoColor:      true,
+			}
+			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			err := conf.CheckoutBranch(e)
+			if err != nil {
+				return err
+			}
+			return destroyEnv(t, options, outputs.NetworkSA)
+		})
+		if err != nil {
+			return err
+		}
+	}
+	err := s.RunDestroyStep("gcp-networks.apply-shared", func() error {
+		options := &terraform.Options{
+			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
+			Logger:       c.Logger,
+			NoColor:      true,
+		}
+		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+		err := conf.CheckoutBranch("production")
+		if err != nil {
+			return err
+		}
+		return destroyEnv(t, options, outputs.NetworkSA)
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("end of", step, "destroy")
+	return nil
+}
+
 func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-networks"
 	var step string
-	if tfvars.EnableHubAndSpoke {
+	if c.EnableHubAndSpoke {
 		step = "3-networks-hub-and-spoke"
 	} else {
 		step = "3-networks-dual-svpc"
@@ -557,6 +732,58 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	return nil
 }
 
+func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
+	repo := "gcp-projects"
+	step := "4-projects"
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	for _, e := range []string{"development", "non-production", "production"} {
+		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s", e), func() error {
+			for _, u := range []string{"business_unit_1", "business_unit_2"} {
+				options := &terraform.Options{
+					TerraformDir: filepath.Join(gcpPath, u, e),
+					Logger:       c.Logger,
+					NoColor:      true,
+				}
+				conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+				err := conf.CheckoutBranch(e)
+				if err != nil {
+					return err
+				}
+				err = destroyEnv(t, options, outputs.ProjectsSA)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	for _, u := range []string{"business_unit_1", "business_unit_2"} {
+		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s.apply-shared", u), func() error {
+			options := &terraform.Options{
+				TerraformDir: filepath.Join(gcpPath, u, "shared"),
+				Logger:       c.Logger,
+				NoColor:      true,
+			}
+			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			err := conf.CheckoutBranch("production")
+			if err != nil {
+				return err
+			}
+			return destroyEnv(t, options, outputs.ProjectsSA)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("end of", step, "destroy")
+	return nil
+}
+
 func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-projects"
 	step := "4-projects"
@@ -613,7 +840,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 		NoColor:      true,
 	}
 
-	err = s.RunStep("gcp-projects.bu1.apply-shared", func() error {
+	err = s.RunStep("gcp-projects.business_unit_1.apply-shared", func() error {
 		return applyShared(t, optbu1, outputs.ProjectsSA)
 	})
 	if err != nil {
@@ -626,7 +853,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 		NoColor:      true,
 	}
 
-	err = s.RunStep("gcp-projects.bu2.apply-shared", func() error {
+	err = s.RunStep("gcp-projects.business_unit_2.apply-shared", func() error {
 		return applyShared(t, optbu2, outputs.ProjectsSA)
 	})
 	if err != nil {
@@ -662,6 +889,38 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	}
 
 	fmt.Println("end of", step, "deploy")
+	return nil
+}
+
+func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOutputs, c CommonConf) error {
+	repo := "bu1-example-app"
+	step := "5-app-infra"
+	gcpPath := filepath.Join(c.CheckoutPath, repo)
+
+	for _, e := range []string{"development", "non-production", "production"} {
+		err := s.RunDestroyStep(fmt.Sprintf("bu1-example-app.%s", e), func() error {
+			options := &terraform.Options{
+				TerraformDir: filepath.Join(gcpPath, "business_unit_1", e),
+				Logger:       c.Logger,
+				NoColor:      true,
+			}
+			conf := utils.CloneCSR(t, repo, gcpPath, outputs.InfraPipeProj, c.Logger)
+			err := conf.CheckoutBranch(e)
+			err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
+			if err != nil {
+				return err
+			}
+			if err != nil {
+				return err
+			}
+			return destroyEnv(t, options, outputs.TerraformSA)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -843,6 +1102,37 @@ func applyShared(t testing.TB, options *terraform.Options, serviceAccount string
 	err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func destroyEnv(t testing.TB, options *terraform.Options, serviceAccount string) error {
+	var err error
+
+	if serviceAccount != "" {
+		err = os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount)
+		if err != nil {
+			return err
+		}
+	}
+
+	initOutput, err := terraform.InitE(t, options)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", initOutput)
+
+	destroyOutput, err := terraform.DestroyE(t, options)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", destroyOutput)
+
+	if serviceAccount != "" {
+		err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -95,9 +95,17 @@ See the READMEs for the stages for adicional information:
         If true, additional output is suppressed.
   -disable_prompt
         Disable interactive prompt.
+  -destroy
+        Destroy the deployment.
   -help
         Prints this help text and exits.
 ```
+
+
+## Common problems
+
+### Update global tfvars file to fix a build failure
+
 
 ## Requirements
 
