@@ -206,6 +206,16 @@ func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
 		return err
 	}
 	if exist {
+		options := &terraform.Options{
+			TerraformDir: tfDir,
+			Logger:       c.Logger,
+			NoColor:      true,
+		}
+		initOutput, err := terraform.InitE(t, options)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", initOutput)
 		err = utils.CopyFile(backendF, filepath.Join(tfDir, "backend.tf.backup"))
 		if err != nil {
 			return err
