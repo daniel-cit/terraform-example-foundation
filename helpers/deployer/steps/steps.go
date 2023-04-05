@@ -193,6 +193,7 @@ func (s Steps) RunStep(step string, f func() error) error {
 	return s.CompleteStep(step)
 }
 
+// IsStepDestroyed checks is the step was destroyed
 func (s Steps) IsStepDestroyed(name string) bool {
 	v, ok := s.Steps[name]
 	if ok {
@@ -201,6 +202,7 @@ func (s Steps) IsStepDestroyed(name string) bool {
 	return false
 }
 
+// DestroyStep destroys the given step
 func (s Steps) DestroyStep(name string) error {
 	s.Steps[name] = Step{
 		Name:   name,
@@ -214,6 +216,7 @@ func (s Steps) DestroyStep(name string) error {
 	return nil
 }
 
+// RunDestroyStep destroys a step and marks it as destroyed or failed.
 func (s Steps) RunDestroyStep(step string, f func() error) error {
 	if s.IsStepDestroyed(step) || !s.StepExists(step) {
 		fmt.Printf("# skipping step '%s' destruction\n", step)
@@ -228,9 +231,5 @@ func (s Steps) RunDestroyStep(step string, f func() error) error {
 		}
 		return err
 	}
-	err = s.DestroyStep(step)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.DestroyStep(step)
 }
