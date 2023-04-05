@@ -16,24 +16,20 @@ package steps
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
+	"path/filepath"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestProcessSteps(t *testing.T) {
-	jsonFile := filepath.Join(t.TempDir(), "steps.json")
-	content := fmt.Sprintf("{\"file\": \"%s\", \"steps\": { \"test\": { \"name\": \"test\", \"status\": \"COMPLETED\", \"error\": \"\" }}}", jsonFile)
-	err := os.WriteFile(jsonFile, []byte(content), 0644)
+	e, err := LoadSteps("./testdata/existing.json")
 	assert.NoError(t, err)
+	assert.True(t, e.IsStepComplete("test"), "check if 'test' is 'COMPLETED' should be true")
+	assert.False(t, e.IsStepComplete("unit"), "check if 'unit' is 'COMPLETED' should be false")
 
-	s, err := LoadSteps(jsonFile)
-	assert.NoError(t, err)
-	assert.True(t, s.IsStepComplete("test"), "check if 'test' is 'COMPLETED' should be true")
+	s, err := LoadSteps(filepath.Join(t.TempDir(), "new.json"))
 	assert.False(t, s.IsStepComplete("unit"), "check if 'unit' is 'COMPLETED' should be false")
-
 	s.CompleteStep("unit")
 	assert.True(t, s.IsStepComplete("unit"), "check if 'unit' is 'COMPLETED' should be true")
 
@@ -79,7 +75,6 @@ func TestProcessSteps(t *testing.T) {
 		"fail FAILED error:step failed",
 		"good PENDING",
 		"good.day PENDING",
-		"test COMPLETED",
 		"unit COMPLETED",
 	}
 	assert.ElementsMatch(t, expectedSteps, s.ListSteps())
