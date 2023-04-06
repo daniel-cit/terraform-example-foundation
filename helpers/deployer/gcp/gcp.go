@@ -102,8 +102,13 @@ func (g GCP) GetFinalBuildState(t testing.TB, projectID, region, buildID string,
 }
 
 // WaitBuildSuccess waits for the current build in a repo to finish.
-func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, failureMsg string, maxRetry int) error {
-	filter := fmt.Sprintf("source.repoSource.repoName:%s", repo)
+func (g GCP) WaitBuildSuccess(t testing.TB, project, region, repo, commitSha, failureMsg string, maxRetry int) error {
+	var filter string
+	if commitSha == "" {
+		filter = fmt.Sprintf("source.repoSource.repoName:%s", repo)
+	} else {
+		filter = fmt.Sprintf("source.repoSource.commitSha:%s", commitSha)
+	}
 	build := g.GetRunningBuildID(t, project, region, filter)
 	if build != "" {
 		status, err := g.GetFinalBuildState(t, project, region, build, maxRetry)

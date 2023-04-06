@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -27,6 +28,7 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/msg"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/test/integration/testutils"
 )
 
 const (
@@ -348,7 +350,7 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 	msg.PrintBuildMsg(cbProjectID, defaultRegion, c.DisablePrompt)
 
 	// Check if image build was successful.
-	err = gcp.NewGCP().WaitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.", MaxBuildRetries)
+	err = gcp.NewGCP().WaitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "", "Terraform Image builder Build Failed for tf-cloudbuilder repository.", MaxBuildRetries)
 	if err != nil {
 		return err
 	}
@@ -612,9 +614,12 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 	for _, e := range []string{"development", "non-production", "production"} {
 		err := s.RunDestroyStep(fmt.Sprintf("gcp-networks.%s", e), func() error {
 			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, "envs", e),
-				Logger:       c.Logger,
-				NoColor:      true,
+				TerraformDir:             filepath.Join(gcpPath, "envs", e),
+				Logger:                   c.Logger,
+				NoColor:                  true,
+				RetryableTerraformErrors: testutils.RetryableTransientErrors,
+				MaxRetries:               2,
+				TimeBetweenRetries:       2 * time.Minute,
 			}
 			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
 			err := conf.CheckoutBranch(e)
@@ -632,6 +637,9 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
 			Logger:       c.Logger,
 			NoColor:      true,
+			RetryableTerraformErrors: testutils.RetryableTransientErrors,
+			MaxRetries:               2,
+			TimeBetweenRetries:       2 * time.Minute,
 		}
 		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
 		err := conf.CheckoutBranch("production")
@@ -1066,7 +1074,12 @@ func planStage(t testing.TB, conf utils.GitRepo, project, region, repo string) e
 		return err
 	}
 
-	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo), MaxBuildRetries)
+	commitSha, err := conf.GetCommitSha()
+	if err != nil {
+		return err
+	}
+
+	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, commitSha, fmt.Sprintf("Terraform %s plan build Failed.", repo), MaxBuildRetries)
 	if err != nil {
 		return err
 	}
@@ -1084,8 +1097,13 @@ func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environme
 		fmt.Println(err)
 		return err
 	}
+	commitSha, err := conf.GetCommitSha()
+	if err != nil {
 
-	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment), MaxBuildRetries)
+		return err
+	}
+
+	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, commitSha, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment), MaxBuildRetries)
 	if err != nil {
 		return err
 	}
