@@ -29,6 +29,10 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
 
+const (
+	MaxBuildRetries = 40
+)
+
 type CommonConf struct {
 	FoundationPath    string
 	CheckoutPath      string
@@ -344,7 +348,7 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 	msg.PrintBuildMsg(cbProjectID, defaultRegion, c.DisablePrompt)
 
 	// Check if image build was successful.
-	err = gcp.NewGCP().WaitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.")
+	err = gcp.NewGCP().WaitBuildSuccess(t, cbProjectID, defaultRegion, "tf-cloudbuilder", "Terraform Image builder Build Failed for tf-cloudbuilder repository.", MaxBuildRetries)
 	if err != nil {
 		return err
 	}
@@ -1062,7 +1066,7 @@ func planStage(t testing.TB, conf utils.GitRepo, project, region, repo string) e
 		return err
 	}
 
-	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo))
+	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s plan build Failed.", repo), MaxBuildRetries)
 	if err != nil {
 		return err
 	}
@@ -1081,7 +1085,7 @@ func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environme
 		return err
 	}
 
-	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment))
+	err = gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, fmt.Sprintf("Terraform %s apply %s build Failed.", repo, environment), MaxBuildRetries)
 	if err != nil {
 		return err
 	}
