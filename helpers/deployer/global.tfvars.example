@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-// General
-code_checkout_path   = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
+// General inputs
+
+// The directory where the helper will git clone the Google Source Repositories that will
+// host the code for each one of the stages
+code_checkout_path = "FULL_PATH_TO_FOLDER_WHERE_TO_CHECK_OUT_THE_SOURCE_REPOSITORIES"
+
+// The directory where the user has created a fresh git clone of the Terraform Example Foundation repository
 foundation_code_path = "FULL_PATH_TO_FOLDER_WHERE_THE_EXAMPLE_FOUNDATION_CODE_WAS_CHECKED_OUT"
+
+// An existing project configured as the default project in the local Cloud SDK configuration
+// See https://cloud.google.com/sdk/gcloud/reference/config/set#EXAMPLES
 validator_project_id = "EXISTING_PROJECT_ID_TO_USE_IN_API_CALLS_FOR_VALIDATION"
 
 
@@ -60,7 +68,7 @@ log_export_storage_force_destroy            = false
 // Dual Shared VPC: https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-dual-svpc/README.md
 // Hub And Spoke: https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke/README.md
 
-enable_hub_and_spoke                        = false
+enable_hub_and_spoke = false
 
 // Optional - If you are deploying Foundation Example in a parent folder
 // consider setting 'create_unique_tag_key' to 'true' because as Tag Keys are

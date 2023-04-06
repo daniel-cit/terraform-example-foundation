@@ -75,7 +75,6 @@ func parseFlags() depCfg {
 }
 
 type customLogger struct{}
-
 func (_ customLogger) Logf(t grunttest.TestingT, format string, args ...interface{}) {
 	fmt.Fprintln(os.Stdout, fmt.Sprintf("  # %s", fmt.Sprintf(format, args...)))
 }
@@ -85,7 +84,6 @@ func getLogger(quiet bool) *logger.Logger {
 		return logger.Discard
 	}
 	return logger.New(customLogger{})
-	//return logger.Default
 }
 
 func getTfvars(file string) stages.GlobalTfvars {
@@ -128,13 +126,13 @@ func validate(t testing.TB, g stages.GlobalTfvars) {
 	if g.OrgID == replaceME {
 		fmt.Println("# Replace value for input 'org_id'")
 	} else {
-		if gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
+		if g.HasValidatorProj() && gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
 			fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", g.SccNotificationName, g.OrgID)
 			fmt.Printf("# See existing Notifications for organization '%s'.\n", g.OrgID)
 			fmt.Printf("# gcloud scc notifications list organizations/%s --filter=\"name:organizations/%s/notificationConfigs/%s\" --format=\"value(name)\"\n", g.OrgID, g.OrgID, g.SccNotificationName)
 			fmt.Println("")
 		}
-		if !g.CreateUniqueTagKey && gcpConf.HasTagKey(t, g.OrgID, "environment") {
+		if g.HasValidatorProj() && !g.CreateUniqueTagKey && gcpConf.HasTagKey(t, g.OrgID, "environment") {
 			fmt.Printf("# Tag key 'environment' exists in organization '%s'.\n", g.OrgID)
 			fmt.Println("# Set variable 'create_unique_tag_key' to 'true' in the tfvar file.")
 			fmt.Println("")
@@ -188,6 +186,26 @@ func validate(t testing.TB, g stages.GlobalTfvars) {
 	}
 }
 
+func validateDestroyFlags(t testing.TB, g stages.GlobalTfvars) {
+	flags := []string{}
+
+	if g.BucketForceDestroy == nil || !*g.BucketForceDestroy {
+		flags = append(flags,"bucket_force_destroy")
+	}
+	if g.AuditLogsTableDeleteContentsOnDestroy == nil || !*g.AuditLogsTableDeleteContentsOnDestroy {
+		flags = append(flags,"audit_logs_table_delete_contents_on_destroy")
+	}
+	if g.LogExportStorageForceDestroy == nil || !*g.LogExportStorageForceDestroy {
+		flags = append(flags,"log_export_storage_force_destroy")
+	}
+
+	if len(flags) > 0 {
+		fmt.Println("# To use the feature to destroy the deployment created by this helper,")
+		fmt.Println("# please set the following flags to 'true' in the tfvars file:")
+		fmt.Printf("# %s\n", strings.Join(flags,", "))
+	}
+}
+
 func main() {
 
 	cfg := parseFlags()
@@ -202,6 +220,7 @@ func main() {
 		fmt.Printf("# failed to load state file %s. Error: %s\n", cfg.stepsFile, err.Error())
 		os.Exit(2)
 	}
+
 	if cfg.listSteps {
 		fmt.Println("# Executed steps:")
 		e := s.ListSteps()
@@ -214,6 +233,7 @@ func main() {
 		}
 		return
 	}
+
 	if cfg.resetStep != "" {
 		s.ResetStep(cfg.resetStep)
 		return
@@ -236,8 +256,8 @@ func main() {
 		Logger:            getLogger(cfg.quiet),
 	}
 
+	// only enable if they are not enabled
 	if globalTfvars.HasValidatorProj() {
-		// so habilitar apis se são estiver ligadas
 		var apis []string
 		gcpConf := gcp.NewGCP()
 		for _, a := range validatorApis() {
@@ -256,16 +276,18 @@ func main() {
 		}
 	}
 
+	// validate inputs
 	if cfg.validate {
 		validate(t, globalTfvars)
+		validateDestroyFlags(t, globalTfvars)
 		return
 	}
 
 	// destroy stages
 	if cfg.destroy {
-		// destroy is only terraform destroy
-
+		// Note: destroy is only terraform destroy, local directories are not deleted.
 		// 5-app-infra
+		msg.PrintStageMsg("Destroying 5-app-infra stage")
 		err = s.RunDestroyStep("bu1-example-app", func() error {
 			io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
 			return stages.DestroyExampleAppStage(t, s, io, conf)
@@ -276,6 +298,7 @@ func main() {
 		}
 
 		// 4-projects
+		msg.PrintStageMsg("Destroying 4-projects stage")
 		err = s.RunDestroyStep("gcp-projects", func() error {
 			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
 			return stages.DestroyProjectsStage(t, s, bo, conf)
@@ -286,6 +309,7 @@ func main() {
 		}
 
 		// 3-networks
+		msg.PrintStageMsg("Destroying 3-networks stage")
 		err = s.RunDestroyStep("gcp-networks", func() error {
 			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
 			return stages.DestroyNetworksStage(t, s, bo, conf)
@@ -296,6 +320,7 @@ func main() {
 		}
 
 		// 2-environments
+		msg.PrintStageMsg("Destroying 2-environments stage")
 		err = s.RunDestroyStep("gcp-environments", func() error {
 			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
 			return stages.DestroyEnvStage(t, s, bo, conf)
@@ -305,7 +330,8 @@ func main() {
 			os.Exit(3)
 		}
 
-		//1-org
+		// 1-org
+		msg.PrintStageMsg("Destroying 1-org stage")
 		err = s.RunDestroyStep("gcp-org", func() error {
 			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
 			return stages.DestroyOrgStage(t, s, bo, conf)
@@ -316,6 +342,7 @@ func main() {
 		}
 
 		// 0-bootstrap
+		msg.PrintStageMsg("Destroying 0-bootstrap stage")
 		err = s.RunDestroyStep("gcp-bootstrap", func() error {
 			return stages.DestroyBootstrapStage(t, s, conf)
 		})
@@ -327,6 +354,8 @@ func main() {
 	}
 
 	// deploy stages
+
+	// 0-bootstrap
 	msg.PrintStageMsg("Deploying 0-bootstrap stage")
 	skipInnerBuildMsg := s.IsStepComplete("gcp-bootstrap")
 	err = s.RunStep("gcp-bootstrap", func() error {
@@ -344,6 +373,7 @@ func main() {
 	}
 	msg.PrintQuotaMsg(bo.ProjectsSA, conf.DisablePrompt)
 
+	// 1-org
 	msg.PrintStageMsg("Deploying 1-org stage")
 	err = s.RunStep("gcp-org", func() error {
 		return stages.DeployOrgStage(t, s, globalTfvars, bo, conf)
@@ -353,6 +383,7 @@ func main() {
 		os.Exit(3)
 	}
 
+	// 2-environments
 	msg.PrintStageMsg("Deploying 2-environments stage")
 	err = s.RunStep("gcp-environments", func() error {
 		return stages.DeployEnvStage(t, s, globalTfvars, bo, conf)
@@ -362,6 +393,7 @@ func main() {
 		os.Exit(3)
 	}
 
+	// 3-networks
 	msg.PrintStageMsg("Deploying 3-networks stage")
 	err = s.RunStep("gcp-networks", func() error {
 		return stages.DeployNetworksStage(t, s, globalTfvars, bo, conf)
@@ -371,6 +403,7 @@ func main() {
 		os.Exit(3)
 	}
 
+	// 4-projects
 	msg.PrintStageMsg("Deploying 4-projects stage")
 	msg.ConfirmQuota(bo.ProjectsSA, conf.DisablePrompt)
 
@@ -382,6 +415,7 @@ func main() {
 		os.Exit(3)
 	}
 
+	// 5-app-infra
 	msg.PrintStageMsg("Deploying 5-app-infra stage")
 	io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
 	io.RemoteStateBucket = bo.RemoteStateBucketProjects
