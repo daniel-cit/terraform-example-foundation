@@ -18,9 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
@@ -28,230 +26,8 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/msg"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
-	"github.com/terraform-google-modules/terraform-example-foundation/test/integration/testutils"
 )
 
-const (
-	MaxBuildRetries = 40
-)
-
-type CommonConf struct {
-	FoundationPath    string
-	CheckoutPath      string
-	EnableHubAndSpoke bool
-	DisablePrompt     bool
-	Logger            *logger.Logger
-}
-
-type BootstrapOutputs struct {
-	RemoteStateBucket         string
-	RemoteStateBucketProjects string
-	CICDProject               string
-	DefaultRegion             string
-	NetworkSA                 string
-	ProjectsSA                string
-	EnvsSA                    string
-	OrgSA                     string
-}
-
-type InfraPipelineOutputs struct {
-	RemoteStateBucket string
-	InfraPipeProj     string
-	DefaultRegion     string
-	TerraformSA       string
-	StateBucket       string
-}
-
-type ServerAddress struct {
-	Ipv4Address    string `cty:"ipv4_address"`
-	ForwardingPath string `cty:"forwarding_path"`
-}
-
-type GlobalTfvars struct {
-	OrgID                                 string          `hcl:"org_id"`
-	BillingAccount                        string          `hcl:"billing_account"`
-	GroupOrgAdmins                        string          `hcl:"group_org_admins"`
-	GroupBillingAdmins                    string          `hcl:"group_billing_admins"`
-	BillingDataUsers                      string          `hcl:"billing_data_users"`
-	MonitoringWorkspaceUsers              string          `hcl:"monitoring_workspace_users"`
-	AuditDataUsers                        string          `hcl:"audit_data_users"`
-	DefaultRegion                         string          `hcl:"default_region"`
-	ParentFolder                          *string         `hcl:"parent_folder"`
-	Domain                                string          `hcl:"domain"`
-	DomainsToAllow                        []string        `hcl:"domains_to_allow"`
-	EssentialContactsDomains              []string        `hcl:"essential_contacts_domains_to_allow"`
-	PerimeterAdditionalMembers            []string        `hcl:"perimeter_additional_members"`
-	TargetNameServerAddresses             []ServerAddress `hcl:"target_name_server_addresses"`
-	SccNotificationName                   string          `hcl:"scc_notification_name"`
-	ProjectPrefix                         *string         `hcl:"project_prefix"`
-	FolderPrefix                          *string         `hcl:"folder_prefix"`
-	BucketForceDestroy                    *bool           `hcl:"bucket_force_destroy"`
-	AuditLogsTableDeleteContentsOnDestroy *bool           `hcl:"audit_logs_table_delete_contents_on_destroy"`
-	LogExportStorageForceDestroy          *bool           `hcl:"log_export_storage_force_destroy"`
-	EnableHubAndSpoke                     bool            `hcl:"enable_hub_and_spoke"`
-	EnableHubAndSpokeTransitivity         bool            `hcl:"enable_hub_and_spoke_transitivity"`
-	CreateUniqueTagKey                    bool            `hcl:"create_unique_tag_key"`
-	ProjectsKMSLocation                   string          `hcl:"projects_kms_location"`
-	ProjectsGCSLocation                   string          `hcl:"projects_gcs_location"`
-	CodeCheckoutPath                      string          `hcl:"code_checkout_path"`
-	FoundationCodePath                    string          `hcl:"foundation_code_path"`
-	ValidatorProjectId                    *string         `hcl:"validator_project_id"`
-}
-
-// HasValidatorProj checks if a Validator Project was provided
-func (g GlobalTfvars) HasValidatorProj() bool {
-	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != ""
-}
-
-type BootstrapTfvars struct {
-	OrgID              string  `hcl:"org_id"`
-	BillingAccount     string  `hcl:"billing_account"`
-	GroupOrgAdmins     string  `hcl:"group_org_admins"`
-	GroupBillingAdmins string  `hcl:"group_billing_admins"`
-	DefaultRegion      string  `hcl:"default_region"`
-	ParentFolder       *string `hcl:"parent_folder"`
-	ProjectPrefix      *string `hcl:"project_prefix"`
-	FolderPrefix       *string `hcl:"folder_prefix"`
-	BucketForceDestroy *bool   `hcl:"bucket_force_destroy"`
-}
-
-type OrgTfvars struct {
-	DomainsToAllow                        []string `hcl:"domains_to_allow"`
-	EssentialContactsDomains              []string `hcl:"essential_contacts_domains_to_allow"`
-	BillingDataUsers                      string   `hcl:"billing_data_users"`
-	AuditDataUsers                        string   `hcl:"audit_data_users"`
-	SccNotificationName                   string   `hcl:"scc_notification_name"`
-	RemoteStateBucket                     string   `hcl:"remote_state_bucket"`
-	EnableHubAndSpoke                     bool     `hcl:"enable_hub_and_spoke"`
-	CreateACMAPolicy                      bool     `hcl:"create_access_context_manager_access_policy"`
-	CreateUniqueTagKey                    bool     `hcl:"create_unique_tag_key"`
-	AuditLogsTableDeleteContentsOnDestroy *bool    `hcl:"audit_logs_table_delete_contents_on_destroy"`
-	LogExportStorageForceDestroy          *bool    `hcl:"log_export_storage_force_destroy"`
-}
-
-type EnvsTfvars struct {
-	MonitoringWorkspaceUsers string `hcl:"monitoring_workspace_users"`
-	RemoteStateBucket        string `hcl:"remote_state_bucket"`
-}
-
-type NetCommonTfvars struct {
-	Domain                        string   `hcl:"domain"`
-	PerimeterAdditionalMembers    []string `hcl:"perimeter_additional_members"`
-	RemoteStateBucket             string   `hcl:"remote_state_bucket"`
-	EnableHubAndSpokeTransitivity *bool    `hcl:"enable_hub_and_spoke_transitivity"`
-}
-
-type NetSharedTfvars struct {
-	TargetNameServerAddresses []ServerAddress `hcl:"target_name_server_addresses"`
-}
-
-type NetAccessContextTfvars struct {
-	AccessContextManagerPolicyID string `hcl:"access_context_manager_policy_id"`
-}
-
-type ProjCommonTfvars struct {
-	RemoteStateBucket string `hcl:"remote_state_bucket"`
-}
-
-type ProjSharedTfvars struct {
-	DefaultRegion string `hcl:"default_region"`
-}
-
-type ProjEnvTfvars struct {
-	ProjectsKMSLocation string `hcl:"projects_kms_location"`
-	ProjectsGCSLocation string `hcl:"projects_gcs_location"`
-}
-
-type AppInfraCommonTfvars struct {
-	InstanceRegion    string `hcl:"instance_region"`
-	RemoteStateBucket string `hcl:"remote_state_bucket"`
-}
-
-func GetBootstrapStepOutputs(t testing.TB, foundationPath string) BootstrapOutputs {
-	options := &terraform.Options{
-		TerraformDir: filepath.Join(foundationPath, "0-bootstrap"),
-		Logger:       logger.Discard,
-		NoColor:      true,
-	}
-	return BootstrapOutputs{
-		CICDProject:               terraform.Output(t, options, "cloudbuild_project_id"),
-		RemoteStateBucket:         terraform.Output(t, options, "gcs_bucket_tfstate"),
-		RemoteStateBucketProjects: terraform.Output(t, options, "projects_gcs_bucket_tfstate"),
-		DefaultRegion:             terraform.OutputMap(t, options, "common_config")["default_region"],
-		NetworkSA:                 terraform.Output(t, options, "networks_step_terraform_service_account_email"),
-		ProjectsSA:                terraform.Output(t, options, "projects_step_terraform_service_account_email"),
-		EnvsSA:                    terraform.Output(t, options, "environment_step_terraform_service_account_email"),
-		OrgSA:                     terraform.Output(t, options, "organization_step_terraform_service_account_email"),
-	}
-}
-
-func GetInfraPipelineOutputs(t testing.TB, checkoutPath, workspace string) InfraPipelineOutputs {
-	options := &terraform.Options{
-		TerraformDir: filepath.Join(checkoutPath, "gcp-projects", "business_unit_1", "shared"),
-		Logger:       logger.Discard,
-		NoColor:      true,
-	}
-	return InfraPipelineOutputs{
-		InfraPipeProj: terraform.Output(t, options, "cloudbuild_project_id"),
-		DefaultRegion: terraform.Output(t, options, "default_region"),
-		TerraformSA:   terraform.OutputMap(t, options, "terraform_service_accounts")["bu1-example-app"],
-		StateBucket:   terraform.OutputMap(t, options, "state_buckets")["bu1-example-app"],
-	}
-}
-
-func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
-	repo := "gcp-bootstrap"
-	step := "0-bootstrap"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	// remove backend.tf file
-	tfDir := filepath.Join(gcpPath, "envs", "shared")
-	backendF := filepath.Join(tfDir, "backend.tf")
-	exist, err := utils.FileExists(backendF)
-	if err != nil {
-		return err
-	}
-	if exist {
-		options := &terraform.Options{
-			TerraformDir: tfDir,
-			Logger:       c.Logger,
-			NoColor:      true,
-		}
-		initOutput, err := terraform.InitE(t, options)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%s\n", initOutput)
-		err = utils.CopyFile(backendF, filepath.Join(tfDir, "backend.tf.backup"))
-		if err != nil {
-			return err
-		}
-		err = os.Remove(backendF)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = s.RunDestroyStep("gcp-bootstrap.production", func() error {
-		options := &terraform.Options{
-			TerraformDir: tfDir,
-			Logger:       c.Logger,
-			NoColor:      true,
-			MigrateState: true,
-		}
-		conf := utils.CloneCSR(t, repo, gcpPath, "", c.Logger)
-		err := conf.CheckoutBranch("production")
-		if err != nil {
-			return err
-		}
-		return destroyEnv(t, options, "")
-	})
-	if err != nil {
-		return err
-	}
-	fmt.Println("end of", step, "destroy")
-	return nil
-}
 
 func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c CommonConf) error {
 	repo := "gcp-bootstrap"
@@ -432,31 +208,6 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 	return nil
 }
 
-func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-org"
-	step := "1-org"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	err := s.RunDestroyStep("gcp-org.production", func() error {
-		options := &terraform.Options{
-			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
-			Logger:       c.Logger,
-			NoColor:      true,
-		}
-		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-		err := conf.CheckoutBranch("production")
-		if err != nil {
-			return err
-		}
-		return destroyEnv(t, options, outputs.OrgSA)
-	})
-	if err != nil {
-		return err
-	}
-	fmt.Println("end of", step, "destroy")
-	return nil
-}
-
 func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-org"
 	step := "1-org"
@@ -510,34 +261,6 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	}
 
 	fmt.Println("end of", step, "deploy")
-	return nil
-}
-
-func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-environments"
-	step := "2-environments"
-
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-environments.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, "envs", e),
-				Logger:       c.Logger,
-				NoColor:      true,
-			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-			err := conf.CheckoutBranch(e)
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.EnvsSA)
-		})
-		if err != nil {
-			return err
-		}
-	}
-	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -598,60 +321,6 @@ func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	}
 
 	fmt.Println("end of", step, "deploy")
-	return nil
-}
-
-func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-networks"
-	var step string
-	if c.EnableHubAndSpoke {
-		step = "3-networks-hub-and-spoke"
-	} else {
-		step = "3-networks-dual-svpc"
-	}
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-networks.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir:             filepath.Join(gcpPath, "envs", e),
-				Logger:                   c.Logger,
-				NoColor:                  true,
-				RetryableTerraformErrors: testutils.RetryableTransientErrors,
-				MaxRetries:               2,
-				TimeBetweenRetries:       2 * time.Minute,
-			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-			err := conf.CheckoutBranch(e)
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.NetworkSA)
-		})
-		if err != nil {
-			return err
-		}
-	}
-	err := s.RunDestroyStep("gcp-networks.apply-shared", func() error {
-		options := &terraform.Options{
-			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
-			Logger:       c.Logger,
-			NoColor:      true,
-			RetryableTerraformErrors: testutils.RetryableTransientErrors,
-			MaxRetries:               2,
-			TimeBetweenRetries:       2 * time.Minute,
-		}
-		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-		err := conf.CheckoutBranch("production")
-		if err != nil {
-			return err
-		}
-		return destroyEnv(t, options, outputs.NetworkSA)
-	})
-	if err != nil {
-		return err
-	}
-	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -751,58 +420,6 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	}
 
 	fmt.Println("end of", step, "deploy")
-	return nil
-}
-
-func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-projects"
-	step := "4-projects"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s", e), func() error {
-			for _, u := range []string{"business_unit_1", "business_unit_2"} {
-				options := &terraform.Options{
-					TerraformDir: filepath.Join(gcpPath, u, e),
-					Logger:       c.Logger,
-					NoColor:      true,
-				}
-				conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-				err := conf.CheckoutBranch(e)
-				if err != nil {
-					return err
-				}
-				err = destroyEnv(t, options, outputs.ProjectsSA)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-	}
-	for _, u := range []string{"business_unit_1", "business_unit_2"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s.apply-shared", u), func() error {
-			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, u, "shared"),
-				Logger:       c.Logger,
-				NoColor:      true,
-			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
-			err := conf.CheckoutBranch("production")
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.ProjectsSA)
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -911,38 +528,6 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	}
 
 	fmt.Println("end of", step, "deploy")
-	return nil
-}
-
-func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOutputs, c CommonConf) error {
-	repo := "bu1-example-app"
-	step := "5-app-infra"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("bu1-example-app.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, "business_unit_1", e),
-				Logger:       c.Logger,
-				NoColor:      true,
-			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.InfraPipeProj, c.Logger)
-			err := conf.CheckoutBranch(e)
-			err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
-			if err != nil {
-				return err
-			}
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.TerraformSA)
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	fmt.Println("end of", step, "destroy")
 	return nil
 }
 
@@ -1134,37 +719,6 @@ func applyShared(t testing.TB, options *terraform.Options, serviceAccount string
 	err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func destroyEnv(t testing.TB, options *terraform.Options, serviceAccount string) error {
-	var err error
-
-	if serviceAccount != "" {
-		err = os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount)
-		if err != nil {
-			return err
-		}
-	}
-
-	initOutput, err := terraform.InitE(t, options)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("%s\n", initOutput)
-
-	destroyOutput, err := terraform.DestroyE(t, options)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("%s\n", destroyOutput)
-
-	if serviceAccount != "" {
-		err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
