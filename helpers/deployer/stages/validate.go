@@ -32,11 +32,11 @@ const (
 func ValidateDirectories(g GlobalTfvars) error {
 	_, err := os.Stat(g.FoundationCodePath)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("# Stopping execution, FoundationCodePath directory '%s' does not exits\n", g.FoundationCodePath)
+		return fmt.Errorf("Stopping execution, FoundationCodePath directory '%s' does not exits\n", g.FoundationCodePath)
 	}
 	_, err = os.Stat(g.CodeCheckoutPath)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("# Stopping execution, CodeCheckoutPath directory '%s' does not exits\n", g.CodeCheckoutPath)
+		return fmt.Errorf("Stopping execution, CodeCheckoutPath directory '%s' does not exits\n", g.CodeCheckoutPath)
 	}
 	return nil
 }

@@ -92,7 +92,7 @@ type GlobalTfvars struct {
 
 // HasValidatorProj checks if a Validator Project was provided
 func (g GlobalTfvars) HasValidatorProj() bool {
-	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != ""
+	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != ""  && *g.ValidatorProjectId != "EXISTING_PROJECT_ID"
 }
 
 type BootstrapTfvars struct {
@@ -191,6 +191,7 @@ func GetInfraPipelineOutputs(t testing.TB, checkoutPath, workspace string) Infra
 	}
 }
 
+// ReadGlobalTfvars reads the tfvars file that has all the configuration for the deploy
 func ReadGlobalTfvars(file string) (GlobalTfvars, error) {
 	var globalTfvars GlobalTfvars
 	if file == "" {
