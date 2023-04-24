@@ -28,7 +28,6 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
 
-
 func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c CommonConf) error {
 	repo := "gcp-bootstrap"
 	step := "0-bootstrap"
@@ -50,8 +49,9 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		return err
 	}
 
+	terraformDir := filepath.Join(c.FoundationPath, step)
 	options := &terraform.Options{
-		TerraformDir: filepath.Join(c.FoundationPath, step),
+		TerraformDir: terraformDir,
 		Logger:       c.Logger,
 		NoColor:      true,
 	}
@@ -66,6 +66,13 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		return err
 	}
 	fmt.Printf("%s\n", planOutput)
+
+	if tfvars.HasValidatorProj() {
+		_, err = TerraformVet(t, terraformDir, filepath.Join(c.FoundationPath, "policy-library"), *tfvars.ValidatorProjectId, c)
+		if err != nil {
+			return err
+		}
+	}
 
 	applyOutput, err := terraform.ApplyE(t, options)
 	if err != nil {
