@@ -1,6 +1,6 @@
 # Terraform Example Foundation deploy helper
 
-Helper tool to deploy the Terraform example foundation .
+Helper tool to deploy the Terraform example foundation.
 
 ## Usage
 

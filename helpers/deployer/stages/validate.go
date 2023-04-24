@@ -29,7 +29,7 @@ const (
 	exampleDotCom = "example.com"
 )
 
-func ValidateDirectories(g GlobalTfvars) error {
+func ValidateDirectories(g GlobalTFVars) error {
 	_, err := os.Stat(g.FoundationCodePath)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("Stopping execution, FoundationCodePath directory '%s' does not exits\n", g.FoundationCodePath)
@@ -41,13 +41,11 @@ func ValidateDirectories(g GlobalTfvars) error {
 	return nil
 }
 
-func ValidateBasicFields(t testing.TB, g GlobalTfvars) {
+func ValidateBasicFields(t testing.TB, g GlobalTFVars) {
 	gcpConf := gcp.NewGCP()
 	fmt.Println("")
 	fmt.Println("# Validating tfvar file.")
-	if g.OrgID == replaceME {
-		fmt.Println("# Replace value for input 'org_id'")
-	} else {
+	if g.OrgID != replaceME {
 		if g.HasValidatorProj() && gcpConf.HasSccNotification(t, g.OrgID, g.SccNotificationName) {
 			fmt.Printf("# Notification '%s' exists in organization '%s'. Chose a different one.\n", g.SccNotificationName, g.OrgID)
 			fmt.Printf("# See existing Notifications for organization '%s'.\n", g.OrgID)
@@ -61,24 +59,8 @@ func ValidateBasicFields(t testing.TB, g GlobalTfvars) {
 		}
 	}
 
-	if g.BillingAccount == replaceME {
-		fmt.Println("# Replace value for input 'billing_account'")
-	}
-	if g.GroupOrgAdmins == replaceME {
-		fmt.Println("# Replace value for input 'group_org_admins'")
-	}
-	if g.GroupBillingAdmins == replaceME {
-		fmt.Println("# Replace value for input 'group_billing_admins'")
-	}
-	if g.BillingDataUsers == replaceME {
-		fmt.Println("# Replace value for input 'billing_data_users'")
-	}
-	if g.MonitoringWorkspaceUsers == replaceME {
-		fmt.Println("# Replace value for input 'monitoring_workspace_users'")
-	}
-	if g.AuditDataUsers == replaceME {
-		fmt.Println("# Replace value for input 'audit_data_users'")
-	}
+	g.CheckString(replaceME)
+
 	if strings.Contains(g.Domain, exampleDotCom) {
 		fmt.Println("# Replace value 'example.com' for input 'domain'")
 	}
@@ -108,7 +90,7 @@ func ValidateBasicFields(t testing.TB, g GlobalTfvars) {
 	}
 }
 
-func ValidateDestroyFlags(t testing.TB, g GlobalTfvars) {
+func ValidateDestroyFlags(t testing.TB, g GlobalTFVars) {
 	flags := []string{}
 
 	if g.BucketForceDestroy == nil || !*g.BucketForceDestroy {

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
-
 
 type CommonConf struct {
 	FoundationPath    string
@@ -59,7 +59,7 @@ type ServerAddress struct {
 	ForwardingPath string `cty:"forwarding_path"`
 }
 
-type GlobalTfvars struct {
+type GlobalTFVars struct {
 	OrgID                                 string          `hcl:"org_id"`
 	BillingAccount                        string          `hcl:"billing_account"`
 	GroupOrgAdmins                        string          `hcl:"group_org_admins"`
@@ -91,8 +91,18 @@ type GlobalTfvars struct {
 }
 
 // HasValidatorProj checks if a Validator Project was provided
-func (g GlobalTfvars) HasValidatorProj() bool {
-	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != ""  && *g.ValidatorProjectId != "EXISTING_PROJECT_ID"
+func (g GlobalTFVars) HasValidatorProj() bool {
+	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != "" && *g.ValidatorProjectId != "EXISTING_PROJECT_ID"
+}
+
+// CheckString checks if any of the string fields in the GlobalTFVars has the given string
+func (g GlobalTFVars) CheckString(s string) {
+	f := reflect.ValueOf(g)
+	for i := 0; i < f.NumField(); i++ {
+		if f.Field(i).Kind() == reflect.String && f.Field(i).Interface() == s {
+			fmt.Printf("# Replace value '%s' for input '%s'\n", s, f.Type().Field(i).Tag.Get("hcl"))
+		}
+	}
 }
 
 type BootstrapTfvars struct {
@@ -191,9 +201,9 @@ func GetInfraPipelineOutputs(t testing.TB, checkoutPath, workspace string) Infra
 	}
 }
 
-// ReadGlobalTfvars reads the tfvars file that has all the configuration for the deploy
-func ReadGlobalTfvars(file string) (GlobalTfvars, error) {
-	var globalTfvars GlobalTfvars
+// ReadGlobalTFVars reads the tfvars file that has all the configuration for the deploy
+func ReadGlobalTFVars(file string) (GlobalTFVars, error) {
+	var globalTfvars GlobalTFVars
 	if file == "" {
 		return globalTfvars, fmt.Errorf("tfvars file is required.")
 	}

@@ -31,7 +31,14 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
 )
 
-type Cfg struct {
+var (
+	validatorApis = []string{
+		"securitycenter.googleapis.com",
+		"accesscontextmanager.googleapis.com",
+	}
+)
+
+type cfg struct {
 	tfvarsFile    string
 	stepsFile     string
 	resetStep     string
@@ -43,15 +50,8 @@ type Cfg struct {
 	destroy       bool
 }
 
-func validatorApis() []string {
-	return []string{
-		"securitycenter.googleapis.com",
-		"accesscontextmanager.googleapis.com",
-	}
-}
-
-func parseFlags() Cfg {
-	var c Cfg
+func parseFlags() cfg {
+	var c cfg
 
 	flag.StringVar(&c.tfvarsFile, "tfvars_file", "", "Full path to the Terraform .tfvars `file` with the configuration to be used.")
 	flag.StringVar(&c.stepsFile, "steps_file", ".steps.json", "Path to the steps `file` to be used to save progress.")
@@ -77,14 +77,14 @@ func main() {
 	}
 
 	// load tfvars
-	globalTfvars, err := stages.ReadGlobalTfvars(cfg.tfvarsFile)
+	globalTFVars, err := stages.ReadGlobalTFVars(cfg.tfvarsFile)
 	if err != nil {
-		fmt.Printf("# Failed to read GlobalTfvars file. Error: %s\n", err.Error())
+		fmt.Printf("# Failed to read GlobalTFVars file. Error: %s\n", err.Error())
 		os.Exit(1)
 	}
 
 	// validate Directories
-	err = stages.ValidateDirectories(globalTfvars)
+	err = stages.ValidateDirectories(globalTFVars)
 	if err != nil {
 		fmt.Printf("# Failed validating directories. Error: %s\n", err.Error())
 		os.Exit(1)
@@ -94,37 +94,29 @@ func main() {
 	gotest.Init()
 	t := &testing.RuntimeT{}
 	conf := stages.CommonConf{
-		FoundationPath:    globalTfvars.FoundationCodePath,
-		CheckoutPath:      globalTfvars.CodeCheckoutPath,
-		EnableHubAndSpoke: globalTfvars.EnableHubAndSpoke,
+		FoundationPath:    globalTFVars.FoundationCodePath,
+		CheckoutPath:      globalTFVars.CodeCheckoutPath,
+		EnableHubAndSpoke: globalTFVars.EnableHubAndSpoke,
 		DisablePrompt:     cfg.disablePrompt,
 		Logger:            utils.GetLogger(cfg.quiet),
 	}
 
-	// only enable serivices if they are not already enabled
-	if globalTfvars.HasValidatorProj() {
-		var apis []string
+	// enable services in the Validator project
+	if globalTFVars.HasValidatorProj() {
 		gcpConf := gcp.NewGCP()
-		for _, a := range validatorApis() {
-			if !gcpConf.ApiIsEnabled(t, *globalTfvars.ValidatorProjectId, a) {
-				apis = append(apis, a)
-			}
-		}
-		if len(apis) > 0 {
-			fmt.Printf("# Enabling APIs: %s in validator project '%s'\n", strings.Join(apis, ", "), *globalTfvars.ValidatorProjectId)
-			gcpConf.EnableApis(t, *globalTfvars.ValidatorProjectId, apis)
+		fmt.Printf("# Enabling APIs: %s in validator project '%s'\n", strings.Join(validatorApis, ", "), *globalTFVars.ValidatorProjectId)
+		gcpConf.EnableApis(t, *globalTFVars.ValidatorProjectId, validatorApis)
+		fmt.Println("# waiting for API propagation")
+		for i := 0; i < 20; i++ {
+			time.Sleep(10 * time.Second)
 			fmt.Println("# waiting for API propagation")
-			for i := 0; i < 20; i++ {
-				time.Sleep(10 * time.Second)
-				fmt.Println("# waiting for API propagation")
-			}
 		}
 	}
 
 	// validate inputs
 	if cfg.validate {
-		stages.ValidateBasicFields(t, globalTfvars)
-		stages.ValidateDestroyFlags(t, globalTfvars)
+		stages.ValidateBasicFields(t, globalTFVars)
+		stages.ValidateDestroyFlags(t, globalTFVars)
 		return
 	}
 
@@ -228,7 +220,7 @@ func main() {
 	msg.PrintStageMsg("Deploying 0-bootstrap stage")
 	skipInnerBuildMsg := s.IsStepComplete("gcp-bootstrap")
 	err = s.RunStep("gcp-bootstrap", func() error {
-		return stages.DeployBootstrapStage(t, s, globalTfvars, conf)
+		return stages.DeployBootstrapStage(t, s, globalTFVars, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Bootstrap step failed. Error: %s\n", err.Error())
@@ -245,7 +237,7 @@ func main() {
 	// 1-org
 	msg.PrintStageMsg("Deploying 1-org stage")
 	err = s.RunStep("gcp-org", func() error {
-		return stages.DeployOrgStage(t, s, globalTfvars, bo, conf)
+		return stages.DeployOrgStage(t, s, globalTFVars, bo, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Org step failed. Error: %s\n", err.Error())
@@ -255,7 +247,7 @@ func main() {
 	// 2-environments
 	msg.PrintStageMsg("Deploying 2-environments stage")
 	err = s.RunStep("gcp-environments", func() error {
-		return stages.DeployEnvStage(t, s, globalTfvars, bo, conf)
+		return stages.DeployEnvStage(t, s, globalTFVars, bo, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Environments step failed. Error: %s\n", err.Error())
@@ -265,7 +257,7 @@ func main() {
 	// 3-networks
 	msg.PrintStageMsg("Deploying 3-networks stage")
 	err = s.RunStep("gcp-networks", func() error {
-		return stages.DeployNetworksStage(t, s, globalTfvars, bo, conf)
+		return stages.DeployNetworksStage(t, s, globalTFVars, bo, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Networks step failed. Error: %s\n", err.Error())
@@ -277,7 +269,7 @@ func main() {
 	msg.ConfirmQuota(bo.ProjectsSA, conf.DisablePrompt)
 
 	err = s.RunStep("gcp-projects", func() error {
-		return stages.DeployProjectsStage(t, s, globalTfvars, bo, conf)
+		return stages.DeployProjectsStage(t, s, globalTFVars, bo, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Projects step failed. Error: %s\n", err.Error())
@@ -292,7 +284,7 @@ func main() {
 	msg.PrintBuildMsg(io.InfraPipeProj, io.DefaultRegion, conf.DisablePrompt)
 
 	err = s.RunStep("bu1-example-app", func() error {
-		return stages.DeployExampleAppStage(t, s, globalTfvars, io, conf)
+		return stages.DeployExampleAppStage(t, s, globalTFVars, io, conf)
 	})
 	if err != nil {
 		fmt.Printf("# Example app step failed. Error: %s\n", err.Error())

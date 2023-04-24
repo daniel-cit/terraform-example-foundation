@@ -29,7 +29,7 @@ import (
 )
 
 
-func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c CommonConf) error {
+func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c CommonConf) error {
 	repo := "gcp-bootstrap"
 	step := "0-bootstrap"
 
@@ -208,7 +208,7 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, c Co
 	return nil
 }
 
-func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
+func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-org"
 	step := "1-org"
 	createACMAPolicy := gcp.NewGCP().GetAccessContextManagerPolicyID(t, tfvars.OrgID) == ""
@@ -264,7 +264,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	return nil
 }
 
-func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
+func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-environments"
 	step := "2-environments"
 
@@ -324,7 +324,7 @@ func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs Bo
 	return nil
 }
 
-func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
+func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-networks"
 	var step string
 	if c.EnableHubAndSpoke {
@@ -423,7 +423,7 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	return nil
 }
 
-func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs BootstrapOutputs, c CommonConf) error {
+func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
 	repo := "gcp-projects"
 	step := "4-projects"
 
@@ -531,7 +531,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outpu
 	return nil
 }
 
-func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTfvars, outputs InfraPipelineOutputs, c CommonConf) error {
+func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs InfraPipelineOutputs, c CommonConf) error {
 	repo := "bu1-example-app"
 	step := "5-app-infra"
 
