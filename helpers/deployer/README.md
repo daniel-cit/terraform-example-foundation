@@ -33,7 +33,7 @@ Helper tool to deploy the Terraform example foundation.
     ```
 
 - Update `global.tfvars` with values from your environment.
-See the READMEs for the stages for adicional information:
+See the READMEs for the stages for additional information:
   - [0-bootstrap](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md)
   - [1-org](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/1-org/README.md)
   - [2-environments](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/2-environments/README.md)
@@ -59,7 +59,6 @@ See the READMEs for the stages for adicional information:
 - Run the helper:
 
     ```bash
-    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE>
     ```
 
 - After deployment:
@@ -80,8 +79,6 @@ See the READMEs for the stages for adicional information:
 
 ### Supported flags
 
-```bash
-  -tfvars_file file
         Full path to the Terraform .tfvars file with the configuration to be used.
   -steps_file file
         Path to the steps file to be used to save progress. (default ".steps.json")
@@ -100,7 +97,6 @@ See the READMEs for the stages for adicional information:
   -help
         Prints this help text and exits.
 ```
-
 
 ## Common problems
 

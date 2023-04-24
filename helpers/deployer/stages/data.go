@@ -17,8 +17,8 @@ package stages
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
+	"path/filepath"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -54,11 +54,14 @@ type InfraPipelineOutputs struct {
 	StateBucket       string
 }
 
+
+// ServerAddress is the element for TargetNameServerAddresses
 type ServerAddress struct {
 	Ipv4Address    string `cty:"ipv4_address"`
 	ForwardingPath string `cty:"forwarding_path"`
 }
 
+// GlobalTFVars contains all the configuration for the deploy
 type GlobalTFVars struct {
 	OrgID                                 string          `hcl:"org_id"`
 	BillingAccount                        string          `hcl:"billing_account"`

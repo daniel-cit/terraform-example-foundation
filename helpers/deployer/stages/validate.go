@@ -29,6 +29,7 @@ const (
 	exampleDotCom = "example.com"
 )
 
+// ValidateDirectories checks if the required directories exist
 func ValidateDirectories(g GlobalTFVars) error {
 	_, err := os.Stat(g.FoundationCodePath)
 	if os.IsNotExist(err) {
@@ -41,6 +42,7 @@ func ValidateDirectories(g GlobalTFVars) error {
 	return nil
 }
 
+// ValidateBasicFields validates if the values for the required field were provided
 func ValidateBasicFields(t testing.TB, g GlobalTFVars) {
 	gcpConf := gcp.NewGCP()
 	fmt.Println("")
@@ -90,6 +92,7 @@ func ValidateBasicFields(t testing.TB, g GlobalTFVars) {
 	}
 }
 
+// ValidateDestroyFlags checks if the flags to allow the destruction of the infrastructure are enabled
 func ValidateDestroyFlags(t testing.TB, g GlobalTFVars) {
 	flags := []string{}
 
