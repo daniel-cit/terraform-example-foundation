@@ -101,15 +101,23 @@ func main() {
 		Logger:            utils.GetLogger(cfg.quiet),
 	}
 
-	// enable services in the Validator project
+	//  only enable serivices if they are not already enabled
 	if globalTFVars.HasValidatorProj() {
+		var apis []string
 		gcpConf := gcp.NewGCP()
-		fmt.Printf("# Enabling APIs: %s in validator project '%s'\n", strings.Join(validatorApis, ", "), *globalTFVars.ValidatorProjectId)
-		gcpConf.EnableApis(t, *globalTFVars.ValidatorProjectId, validatorApis)
-		fmt.Println("# waiting for API propagation")
-		for i := 0; i < 20; i++ {
-			time.Sleep(10 * time.Second)
+		for _, a := range validatorApis {
+			if !gcpConf.IsApiEnabled(t, *globalTFVars.ValidatorProjectId, a) {
+				apis = append(apis, a)
+			}
+		}
+		if len(apis) > 0 {
+			fmt.Printf("# Enabling APIs: %s in validator project '%s'\n", strings.Join(apis, ", "), *globalTFVars.ValidatorProjectId)
+			gcpConf.EnableApis(t, *globalTFVars.ValidatorProjectId, apis)
 			fmt.Println("# waiting for API propagation")
+			for i := 0; i < 20; i++ {
+				time.Sleep(10 * time.Second)
+				fmt.Println("# waiting for API propagation")
+			}
 		}
 	}
 
