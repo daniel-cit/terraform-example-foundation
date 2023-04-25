@@ -98,11 +98,10 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		if err != nil {
 			return err
 		}
-		migrate, err := terraform.InitE(t, options)
+		_, err := terraform.InitE(t, options)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", migrate)
 		return nil
 	})
 	if err != nil {

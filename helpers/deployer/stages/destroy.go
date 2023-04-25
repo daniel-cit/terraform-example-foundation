@@ -50,11 +50,10 @@ func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
 			Logger:       c.Logger,
 			NoColor:      true,
 		}
-		initOutput, err := terraform.InitE(t, options)
+		_, err := terraform.InitE(t, options)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", initOutput)
 		err = utils.CopyFile(backendF, filepath.Join(tfDir, "backend.tf.backup"))
 		if err != nil {
 			return err
@@ -287,17 +286,14 @@ func destroyEnv(t testing.TB, options *terraform.Options, serviceAccount string)
 		}
 	}
 
-	initOutput, err := terraform.InitE(t, options)
+	_, err = terraform.InitE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", initOutput)
-
-	destroyOutput, err := terraform.DestroyE(t, options)
+	_, err = terraform.DestroyE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", destroyOutput)
 
 	if serviceAccount != "" {
 		err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
