@@ -59,6 +59,19 @@ See the READMEs for the stages for additional information:
 - Run the helper:
 
     ```bash
+    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE>
+    ```
+
+- To Suppress additional output use:
+
+    ```bash
+    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -quiet
+    ```
+
+- To destroy the deployment run:
+
+    ```bash
+    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -destroy
     ```
 
 - After deployment:
