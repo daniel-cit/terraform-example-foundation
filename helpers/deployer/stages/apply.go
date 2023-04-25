@@ -56,29 +56,30 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		NoColor:      true,
 	}
 	// terraform deploy
-	initOutput, err := terraform.InitE(t, options)
+	_, err = terraform.InitE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", initOutput)
-	planOutput, err := terraform.PlanE(t, options)
+	_, err = terraform.PlanE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", planOutput)
 
+	// Runs gcloud terraform vet on the
 	if tfvars.HasValidatorProj() {
-		_, err = TerraformVet(t, terraformDir, filepath.Join(c.FoundationPath, "policy-library"), *tfvars.ValidatorProjectId, c)
+		fmt.Println("")
+		fmt.Println("# Running gcloud terraform vet for validation of bootstrap stage")
+		fmt.Println("")
+		err = TerraformVet(t, terraformDir, filepath.Join(c.FoundationPath, "policy-library"), *tfvars.ValidatorProjectId, c)
 		if err != nil {
 			return err
 		}
 	}
 
-	applyOutput, err := terraform.ApplyE(t, options)
+	_, err = terraform.ApplyE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", applyOutput)
 
 	// read bootstrap outputs
 	defaultRegion := terraform.OutputMap(t, options, "common_config")["default_region"]
@@ -633,22 +634,18 @@ func copyStepCode(t testing.TB, conf utils.GitRepo, foundationPath, checkoutPath
 	}
 	err := utils.CopyDirectory(filepath.Join(foundationPath, step), targetDir)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	err = utils.CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-apply.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-apply.yaml"))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	err = utils.CopyFile(filepath.Join(foundationPath, "build/cloudbuild-tf-plan.yaml"), filepath.Join(gcpPath, "cloudbuild-tf-plan.yaml"))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	err = utils.CopyFile(filepath.Join(foundationPath, "build/tf-wrapper.sh"), filepath.Join(gcpPath, "tf-wrapper.sh"))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	return nil
@@ -657,12 +654,10 @@ func copyStepCode(t testing.TB, conf utils.GitRepo, foundationPath, checkoutPath
 func planStage(t testing.TB, conf utils.GitRepo, project, region, repo string) error {
 	err := conf.CommitFiles(fmt.Sprintf("Initialize %s repo", repo))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	err = conf.PushBranch("plan", "origin")
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -681,17 +676,14 @@ func planStage(t testing.TB, conf utils.GitRepo, project, region, repo string) e
 func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environment string) error {
 	err := conf.CheckoutBranch(environment)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	err = conf.PushBranch(environment, "origin")
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	commitSha, err := conf.GetCommitSha()
 	if err != nil {
-
 		return err
 	}
 
@@ -707,22 +699,18 @@ func applyShared(t testing.TB, options *terraform.Options, serviceAccount string
 	if err != nil {
 		return err
 	}
-	initOutput, err := terraform.InitE(t, options)
+	_, err = terraform.InitE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", initOutput)
-	planOutput, err := terraform.PlanE(t, options)
+	_, err = terraform.PlanE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", planOutput)
-
-	applyOutput, err := terraform.ApplyE(t, options)
+	_, err = terraform.ApplyE(t, options)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", applyOutput)
 	err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
 	if err != nil {
 		return err

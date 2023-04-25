@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 	"github.com/tidwall/gjson"
@@ -28,34 +29,42 @@ import (
 	"github.com/GoogleCloudPlatform/cloud-foundation-toolkit/infra/blueprint-test/pkg/utils"
 )
 
-func TerraformVet(t testing.TB, terraformDir, policyPath, project string, c CommonConf) (string, error) {
-	var result string
+// TerraformVet runs gcloud terraform vet on the plan of the provided terraform directory
+func TerraformVet(t testing.TB, terraformDir, policyPath, project string, c CommonConf) error {
 	options := &terraform.Options{
 		TerraformDir: terraformDir,
-		Logger:       c.Logger,
+		Logger:       logger.Discard,
 		NoColor:      true,
 		PlanFilePath: filepath.Join(os.TempDir(), "plan.tfplan"),
 	}
 	_, err := terraform.PlanE(t, options)
 	if err != nil {
-		return result, err
+		return err
 	}
 	jsonPlan, err := terraform.ShowE(t, options)
 	if err != nil {
-		return result, err
+		return err
 	}
 	jsonFile, err := utils.WriteTmpFileWithExtension(jsonPlan, "json")
 	defer os.Remove(jsonFile)
 	defer os.Remove(options.PlanFilePath)
 	if err != nil {
-		return result, err
+		return err
 	}
-	result, err = gcloud.RunCmdE(t, fmt.Sprintf("beta terraform vet %s --policy-library=%s --project=%s", jsonFile, policyPath, project))
+	command := fmt.Sprintf("beta terraform vet %s --policy-library=%s --project=%s", jsonFile, policyPath, project)
+	result, err := gcloud.RunCmdE(t, command)
 	if err != nil && !(strings.Contains(err.Error(), "Validating resources") && strings.Contains(err.Error(), "done")) {
-		return result, err
+		return err
 	}
 	if !gjson.Valid(result) {
-		return result, fmt.Errorf("Error parsing output, invalid json: %s", result)
+		return fmt.Errorf("Error parsing output, invalid json: %s", result)
 	}
-	return gjson.Parse(result).String(), nil
+
+	if len(gjson.Parse(result).Array()) > 0 {
+		return fmt.Errorf("Policy violations found: %s", result)
+	}
+	fmt.Println("")
+	fmt.Println("# The configuration is valid.")
+	fmt.Println("")
+	return  nil
 }
