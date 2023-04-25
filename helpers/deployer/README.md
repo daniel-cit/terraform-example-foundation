@@ -44,34 +44,34 @@ See the READMEs for the stages for additional information:
 
 - Variable `code_checkout_path` is the full path to `deploy-directory` directory.
 - Variable `foundation_code_path` is the full path to `terraform-example-foundation` directory.
-- Build the helper:
+- Install the helper:
 
     ```bash
-    go build
+    go install
     ```
 
 - Validate the tfvars file:
 
     ```bash
-    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -validate
+    $HOME/go/bin/foundation-deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -validate
     ```
 
 - Run the helper:
 
     ```bash
-    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE>
+    $HOME/go/bin/foundation-deployer -tfvars_file <PATH TO 'global.tfvars' FILE>
     ```
 
 - To Suppress additional output use:
 
     ```bash
-    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -quiet
+    $HOME/go/bin/foundation-deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -quiet
     ```
 
 - To destroy the deployment run:
 
     ```bash
-    ./deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -destroy
+    $HOME/go/bin/foundation-deployer -tfvars_file <PATH TO 'global.tfvars' FILE> -destroy
     ```
 
 - After deployment:
@@ -92,6 +92,8 @@ See the READMEs for the stages for additional information:
 
 ### Supported flags
 
+```bash
+  -tfvars_file file
         Full path to the Terraform .tfvars file with the configuration to be used.
   -steps_file file
         Path to the steps file to be used to save progress. (default ".steps.json")
@@ -110,11 +112,6 @@ See the READMEs for the stages for additional information:
   -help
         Prints this help text and exits.
 ```
-
-## Common problems
-
-### Update global tfvars file to fix a build failure
-
 
 ## Requirements
 
