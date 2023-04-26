@@ -24,12 +24,14 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/utils"
 )
 
 type CommonConf struct {
 	FoundationPath    string
 	CheckoutPath      string
+	PolicyPath        string
+	ValidatorProject  string
 	EnableHubAndSpoke bool
 	DisablePrompt     bool
 	Logger            *logger.Logger

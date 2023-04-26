@@ -22,10 +22,10 @@ import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/msg"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/gcp"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/msg"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/steps"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/utils"
 )
 
 func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c CommonConf) error {
@@ -70,7 +70,8 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		fmt.Println("")
 		fmt.Println("# Running gcloud terraform vet for validation of bootstrap stage")
 		fmt.Println("")
-		err = TerraformVet(t, terraformDir, filepath.Join(c.FoundationPath, "policy-library"), *tfvars.ValidatorProjectId, c)
+		policyPath := filepath.Join(c.FoundationPath, "policy-library")
+		err = TerraformVet(t, terraformDir, policyPath, *tfvars.ValidatorProjectId)
 		if err != nil {
 			return err
 		}
@@ -392,7 +393,7 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 	}
 
 	err = s.RunStep("gcp-networks.apply-shared", func() error {
-		return applyShared(t, options, outputs.NetworkSA)
+		return applyShared(t, options, outputs.NetworkSA, c.PolicyPath, c.ValidatorProject)
 	})
 	if err != nil {
 		return err
@@ -487,7 +488,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 	}
 
 	err = s.RunStep("gcp-projects.business_unit_1.apply-shared", func() error {
-		return applyShared(t, optbu1, outputs.ProjectsSA)
+		return applyShared(t, optbu1, outputs.ProjectsSA, c.PolicyPath, c.ValidatorProject)
 	})
 	if err != nil {
 		return err
@@ -500,7 +501,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 	}
 
 	err = s.RunStep("gcp-projects.business_unit_2.apply-shared", func() error {
-		return applyShared(t, optbu2, outputs.ProjectsSA)
+		return applyShared(t, optbu2, outputs.ProjectsSA, c.PolicyPath, c.ValidatorProject)
 	})
 	if err != nil {
 		return err
@@ -693,7 +694,7 @@ func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environme
 	return nil
 }
 
-func applyShared(t testing.TB, options *terraform.Options, serviceAccount string) error {
+func applyShared(t testing.TB, options *terraform.Options, serviceAccount, policyPath, validatorProjectId string) error {
 	err := os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount)
 	if err != nil {
 		return err
@@ -706,6 +707,18 @@ func applyShared(t testing.TB, options *terraform.Options, serviceAccount string
 	if err != nil {
 		return err
 	}
+
+	// Runs gcloud terraform vet on the
+	if validatorProjectId != "" {
+		fmt.Println("")
+		fmt.Println("# Running gcloud terraform vet for validation of shared stage")
+		fmt.Println("")
+		err = TerraformVet(t, options.TerraformDir, policyPath, validatorProjectId)
+		if err != nil {
+			return err
+		}
+	}
+
 	_, err = terraform.ApplyE(t, options)
 	if err != nil {
 		return err

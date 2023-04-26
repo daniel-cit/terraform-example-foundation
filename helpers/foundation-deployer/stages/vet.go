@@ -30,7 +30,7 @@ import (
 )
 
 // TerraformVet runs gcloud terraform vet on the plan of the provided terraform directory
-func TerraformVet(t testing.TB, terraformDir, policyPath, project string, c CommonConf) error {
+func TerraformVet(t testing.TB, terraformDir, policyPath, project string) error {
 	options := &terraform.Options{
 		TerraformDir: terraformDir,
 		Logger:       logger.Discard,

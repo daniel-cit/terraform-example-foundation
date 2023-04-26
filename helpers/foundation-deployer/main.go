@@ -18,17 +18,18 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	gotest "testing"
 	"time"
 
 	"github.com/mitchellh/go-testing-interface"
 
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/gcp"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/msg"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/stages"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/steps"
-	"github.com/terraform-google-modules/terraform-example-foundation/helpers/deployer/utils"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/gcp"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/msg"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/stages"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/steps"
+	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/utils"
 )
 
 var (
@@ -96,13 +97,15 @@ func main() {
 	conf := stages.CommonConf{
 		FoundationPath:    globalTFVars.FoundationCodePath,
 		CheckoutPath:      globalTFVars.CodeCheckoutPath,
+		PolicyPath:        filepath.Join(globalTFVars.FoundationCodePath, "policy-library"),
 		EnableHubAndSpoke: globalTFVars.EnableHubAndSpoke,
 		DisablePrompt:     cfg.disablePrompt,
 		Logger:            utils.GetLogger(cfg.quiet),
 	}
 
-	//  only enable serivices if they are not already enabled
+	// only enable services if they are not already enabled
 	if globalTFVars.HasValidatorProj() {
+		conf.ValidatorProject = *globalTFVars.ValidatorProjectId
 		var apis []string
 		gcpConf := gcp.NewGCP()
 		for _, a := range validatorApis {
