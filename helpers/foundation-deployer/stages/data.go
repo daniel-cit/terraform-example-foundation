@@ -27,6 +27,12 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/helpers/foundation-deployer/utils"
 )
 
+const (
+	PoliciesRepo = "gcp-policies"
+	BootstrapRepo = "gcp-bootstrap"
+	BootstrapStep = "0-bootstrap"
+)
+
 type CommonConf struct {
 	FoundationPath    string
 	CheckoutPath      string
