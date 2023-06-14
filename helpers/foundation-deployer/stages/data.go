@@ -62,7 +62,6 @@ type InfraPipelineOutputs struct {
 	StateBucket       string
 }
 
-
 // ServerAddress is the element for TargetNameServerAddresses
 type ServerAddress struct {
 	Ipv4Address    string `cty:"ipv4_address"`

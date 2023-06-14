@@ -69,7 +69,6 @@ test/integration/tmp
 
 credentials.json
 
-helpers/foundation-deployer/deployer
 helpers/foundation-deployer/foundation-deployer
 helpers/foundation-deployer/.steps.json
 
