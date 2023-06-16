@@ -86,9 +86,7 @@ func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
 }
 
 func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-org"
-	step := "1-org"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
+	gcpPath := filepath.Join(c.CheckoutPath, OrgRepo)
 
 	err := s.RunDestroyStep("gcp-org.production", func() error {
 		options := &terraform.Options{
@@ -96,7 +94,7 @@ func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c Co
 			Logger:       c.Logger,
 			NoColor:      true,
 		}
-		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+		conf := utils.CloneCSR(t, OrgRepo, gcpPath, outputs.CICDProject, c.Logger)
 		err := conf.CheckoutBranch("production")
 		if err != nil {
 			return err
@@ -106,15 +104,12 @@ func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c Co
 	if err != nil {
 		return err
 	}
-	fmt.Println("end of", step, "destroy")
+	fmt.Println("end of", OrgStep, "destroy")
 	return nil
 }
 
 func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-environments"
-	step := "2-environments"
-
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
+	gcpPath := filepath.Join(c.CheckoutPath, EnvironmentsRepo)
 
 	for _, e := range []string{"development", "non-production", "production"} {
 		err := s.RunDestroyStep(fmt.Sprintf("gcp-environments.%s", e), func() error {
@@ -123,7 +118,7 @@ func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c Co
 				Logger:       c.Logger,
 				NoColor:      true,
 			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			conf := utils.CloneCSR(t, EnvironmentsRepo, gcpPath, outputs.CICDProject, c.Logger)
 			err := conf.CheckoutBranch(e)
 			if err != nil {
 				return err
@@ -134,19 +129,13 @@ func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c Co
 			return err
 		}
 	}
-	fmt.Println("end of", step, "destroy")
+	fmt.Println("end of", EnvironmentsStep, "destroy")
 	return nil
 }
 
 func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-networks"
-	var step string
-	if c.EnableHubAndSpoke {
-		step = "3-networks-hub-and-spoke"
-	} else {
-		step = "3-networks-dual-svpc"
-	}
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
+	step := GetNetworkStep(c.EnableHubAndSpoke)
+	gcpPath := filepath.Join(c.CheckoutPath, NetworksRepo)
 
 	for _, e := range []string{"development", "non-production", "production"} {
 		err := s.RunDestroyStep(fmt.Sprintf("gcp-networks.%s", e), func() error {
@@ -158,7 +147,7 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 				MaxRetries:               2,
 				TimeBetweenRetries:       2 * time.Minute,
 			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			conf := utils.CloneCSR(t, NetworksRepo, gcpPath, outputs.CICDProject, c.Logger)
 			err := conf.CheckoutBranch(e)
 			if err != nil {
 				return err
@@ -178,7 +167,7 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 			MaxRetries:               2,
 			TimeBetweenRetries:       2 * time.Minute,
 		}
-		conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+		conf := utils.CloneCSR(t, NetworksRepo, gcpPath, outputs.CICDProject, c.Logger)
 		err := conf.CheckoutBranch("production")
 		if err != nil {
 			return err
@@ -193,9 +182,7 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 }
 
 func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	repo := "gcp-projects"
-	step := "4-projects"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
+	gcpPath := filepath.Join(c.CheckoutPath, ProjectsRepo)
 
 	for _, e := range []string{"development", "non-production", "production"} {
 		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s", e), func() error {
@@ -205,7 +192,7 @@ func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 					Logger:       c.Logger,
 					NoColor:      true,
 				}
-				conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+				conf := utils.CloneCSR(t, ProjectsRepo, gcpPath, outputs.CICDProject, c.Logger)
 				err := conf.CheckoutBranch(e)
 				if err != nil {
 					return err
@@ -228,7 +215,7 @@ func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 				Logger:       c.Logger,
 				NoColor:      true,
 			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.CICDProject, c.Logger)
+			conf := utils.CloneCSR(t, ProjectsRepo, gcpPath, outputs.CICDProject, c.Logger)
 			err := conf.CheckoutBranch("production")
 			if err != nil {
 				return err
@@ -240,14 +227,12 @@ func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 		}
 	}
 
-	fmt.Println("end of", step, "destroy")
+	fmt.Println("end of", ProjectsStep, "destroy")
 	return nil
 }
 
 func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOutputs, c CommonConf) error {
-	repo := "bu1-example-app"
-	step := "5-app-infra"
-	gcpPath := filepath.Join(c.CheckoutPath, repo)
+	gcpPath := filepath.Join(c.CheckoutPath, AppInfraRepo)
 
 	for _, e := range []string{"development", "non-production", "production"} {
 		err := s.RunDestroyStep(fmt.Sprintf("bu1-example-app.%s", e), func() error {
@@ -256,7 +241,7 @@ func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOu
 				Logger:       c.Logger,
 				NoColor:      true,
 			}
-			conf := utils.CloneCSR(t, repo, gcpPath, outputs.InfraPipeProj, c.Logger)
+			conf := utils.CloneCSR(t, AppInfraRepo, gcpPath, outputs.InfraPipeProj, c.Logger)
 			err := conf.CheckoutBranch(e)
 			err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
 			if err != nil {
@@ -272,7 +257,7 @@ func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOu
 		}
 	}
 
-	fmt.Println("end of", step, "destroy")
+	fmt.Println("end of", AppInfraStep, "destroy")
 	return nil
 }
 

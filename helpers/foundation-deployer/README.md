@@ -1,4 +1,4 @@
-# [WIP] Terraform Example Foundation deploy helper
+# Terraform Example Foundation deploy helper
 
 Helper tool to deploy the Terraform example foundation.
 

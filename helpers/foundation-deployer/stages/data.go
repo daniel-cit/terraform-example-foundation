@@ -17,8 +17,8 @@ package stages
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"path/filepath"
+	"reflect"
 
 	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -28,9 +28,20 @@ import (
 )
 
 const (
-	PoliciesRepo = "gcp-policies"
-	BootstrapRepo = "gcp-bootstrap"
-	BootstrapStep = "0-bootstrap"
+	PoliciesRepo     = "gcp-policies"
+	BootstrapRepo    = "gcp-bootstrap"
+	BootstrapStep    = "0-bootstrap"
+	OrgRepo          = "gcp-org"
+	OrgStep          = "1-org"
+	EnvironmentsRepo = "gcp-environments"
+	EnvironmentsStep = "2-environments"
+	NetworksRepo     = "gcp-networks"
+	HubAndSpokeStep  = "3-networks-hub-and-spoke"
+	DualSvpcStep     = "3-networks-dual-svpc"
+	ProjectsRepo     = "gcp-projects"
+	ProjectsStep     = "4-projects"
+	AppInfraRepo     = "bu1-example-app"
+	AppInfraStep     = "5-app-infra"
 )
 
 type CommonConf struct {
@@ -41,6 +52,19 @@ type CommonConf struct {
 	EnableHubAndSpoke bool
 	DisablePrompt     bool
 	Logger            *logger.Logger
+}
+
+type StageConf struct {
+	Stage               string
+	StageSA             string
+	CICDProject         string
+	DefaultRegion       string
+	Step                string
+	Repo                string
+	CustomTargetDirPath string
+	GitConf             utils.GitRepo
+	Shared              []string
+	Envs                []string
 }
 
 type BootstrapOutputs struct {
@@ -226,4 +250,11 @@ func ReadGlobalTFVars(file string) (GlobalTFVars, error) {
 		return globalTfvars, fmt.Errorf("Failed to load tfvars file %s. Error: %s\n", file, err.Error())
 	}
 	return globalTfvars, nil
+}
+
+func GetNetworkStep(enableHubAndSpoke bool) string {
+	if enableHubAndSpoke {
+		return HubAndSpokeStep
+	}
+	return DualSvpcStep
 }
