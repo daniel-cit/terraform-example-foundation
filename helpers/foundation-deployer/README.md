@@ -16,6 +16,13 @@ Helper tool to deploy the Terraform example foundation.
     git --version
     ```
 
+- check if required components of `gcloud` are installed:
+
+    ```bash
+    gcloud components list --filter="id=beta OR id=terraform-tools"
+    ```
+
+- Follow the instructions in the output of the command if components `beta` and `terraform-tools` are not installed to install them.
 - Create a directory in the file system to host the Cloud Source repositories the will be created and a copy of the terraform example foundation.
 - Clone the `terraform-example-foundation` repository on this directory.
 
