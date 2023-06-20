@@ -30,17 +30,17 @@ import (
 const (
 	PoliciesRepo     = "gcp-policies"
 	BootstrapRepo    = "gcp-bootstrap"
-	BootstrapStep    = "0-bootstrap"
 	OrgRepo          = "gcp-org"
-	OrgStep          = "1-org"
 	EnvironmentsRepo = "gcp-environments"
-	EnvironmentsStep = "2-environments"
 	NetworksRepo     = "gcp-networks"
+	ProjectsRepo     = "gcp-projects"
+	AppInfraRepo     = "bu1-example-app"
+	BootstrapStep    = "0-bootstrap"
+	OrgStep          = "1-org"
+	EnvironmentsStep = "2-environments"
 	HubAndSpokeStep  = "3-networks-hub-and-spoke"
 	DualSvpcStep     = "3-networks-dual-svpc"
-	ProjectsRepo     = "gcp-projects"
 	ProjectsStep     = "4-projects"
-	AppInfraRepo     = "bu1-example-app"
 	AppInfraStep     = "5-app-infra"
 )
 
