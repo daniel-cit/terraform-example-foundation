@@ -185,8 +185,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		return err
 	}
 
-	gcpPath := filepath.Join(c.CheckoutPath, OrgRepo)
-	conf := utils.CloneCSR(t, OrgRepo, gcpPath, outputs.CICDProject, c.Logger)
+	conf := utils.CloneCSR(t, OrgRepo, filepath.Join(c.CheckoutPath, OrgRepo), outputs.CICDProject, c.Logger)
 	stageConf := StageConf{
 		Stage:         OrgRepo,
 		CICDProject:   outputs.CICDProject,
@@ -269,7 +268,8 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 		Step:          step,
 		Repo:          NetworksRepo,
 		GitConf:       conf,
-		Shared:        []string{"envs"},
+		HasManualStep: true,
+		GroupingUnits: []string{"envs"},
 		Envs:          []string{"production", "non-production", "development"},
 	}
 
@@ -317,7 +317,8 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 		Step:          ProjectsStep,
 		Repo:          ProjectsRepo,
 		GitConf:       conf,
-		Shared:        []string{"business_unit_1", "business_unit_2"},
+		HasManualStep: true,
+		GroupingUnits: []string{"business_unit_1", "business_unit_2"},
 		Envs:          []string{"production", "non-production", "development"},
 	}
 
@@ -326,6 +327,7 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 }
 
 func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs InfraPipelineOutputs, c CommonConf) error {
+	// create tfvars file
 	commonTfvars := AppInfraCommonTfvars{
 		InstanceRegion:    tfvars.DefaultRegion,
 		RemoteStateBucket: outputs.RemoteStateBucket,
@@ -334,12 +336,17 @@ func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, out
 	if err != nil {
 		return err
 	}
-
+	// update backend bucket
+	for _, e := range []string{"production", "non-production", "development"} {
+		err = utils.ReplaceStringInFile(filepath.Join(c.FoundationPath, AppInfraStep, "business_unit_1", e, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
+		if err != nil {
+			return err
+		}
+	}
 	//prepare policies repo
 	gcpPoliciesPath := filepath.Join(c.CheckoutPath, "gcp-policies-app-infra")
 	policiesConf := utils.CloneCSR(t, PoliciesRepo, gcpPoliciesPath, outputs.InfraPipeProj, c.Logger)
 	policiesBranch := "main"
-
 	err = s.RunStep("bu1-example-app.gcp-policies-app-infra", func() error {
 		return preparePoliciesRepo(policiesConf, policiesBranch, c.FoundationPath, gcpPoliciesPath)
 	})
@@ -375,7 +382,11 @@ func deployStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error 
 		return err
 	}
 
-	for _, bu := range sc.Shared {
+	shared := []string{}
+	if sc.HasManualStep {
+		shared = sc.GroupingUnits
+	}
+	for _, bu := range shared {
 		buOptions := &terraform.Options{
 			TerraformDir: filepath.Join(filepath.Join(c.CheckoutPath, sc.Repo), bu, "shared"),
 			Logger:       c.Logger,

@@ -63,7 +63,8 @@ type StageConf struct {
 	Repo                string
 	CustomTargetDirPath string
 	GitConf             utils.GitRepo
-	Shared              []string
+	HasManualStep       bool
+	GroupingUnits       []string
 	Envs                []string
 }
 

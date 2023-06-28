@@ -33,13 +33,26 @@ const (
 )
 
 func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
-	gcpPath := filepath.Join(c.CheckoutPath, BootstrapRepo)
 
-	// remove backend.tf file to force migration of the
-	// terraform state from GCS to the local directory.
-	// Before changing the backend we ensure it is has been initialized.
-	tfDir := filepath.Join(gcpPath, "envs", "shared")
+	forceBackendMigration(t, BootstrapRepo, "envs", "shared", c)
+
+	stageConf := StageConf{
+		Stage:         BootstrapStep,
+		Step:          BootstrapStep,
+		Repo:          BootstrapRepo,
+		GroupingUnits: []string{"envs"},
+		Envs:          []string{"shared"},
+	}
+	return destroyStage(t, stageConf, s, c)
+}
+
+// forceBackendMigration removes backend.tf file to force migration of the
+// terraform state from GCS to the local directory.
+// Before changing the backend we ensure it is has been initialized.
+func forceBackendMigration(t testing.TB, repo, groupUnit, env string, c CommonConf) error {
+	tfDir := filepath.Join(c.CheckoutPath, repo, groupUnit, env)
 	backendF := filepath.Join(tfDir, "backend.tf")
+
 	exist, err := utils.FileExists(backendF)
 	if err != nil {
 		return err
@@ -62,142 +75,106 @@ func DestroyBootstrapStage(t testing.TB, s steps.Steps, c CommonConf) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	err = s.RunDestroyStep("gcp-bootstrap.production", func() error {
-		options := &terraform.Options{
-			TerraformDir: tfDir,
-			Logger:       c.Logger,
-			NoColor:      true,
-			MigrateState: true,
-		}
-		conf := utils.CloneCSR(t, BootstrapRepo, gcpPath, "", c.Logger)
-		err := conf.CheckoutBranch("production")
+		options.MigrateState = true
+		_, err = terraform.InitE(t, options)
 		if err != nil {
 			return err
 		}
-		return destroyEnv(t, options, "")
-	})
-	if err != nil {
-		return err
 	}
-	fmt.Println("end of", BootstrapStep, "destroy")
 	return nil
 }
 
 func DestroyOrgStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	gcpPath := filepath.Join(c.CheckoutPath, OrgRepo)
-
-	err := s.RunDestroyStep("gcp-org.production", func() error {
-		options := &terraform.Options{
-			TerraformDir: filepath.Join(gcpPath, "envs", "shared"),
-			Logger:       c.Logger,
-			NoColor:      true,
-		}
-		conf := utils.CloneCSR(t, OrgRepo, gcpPath, outputs.CICDProject, c.Logger)
-		err := conf.CheckoutBranch("production")
-		if err != nil {
-			return err
-		}
-		return destroyEnv(t, options, outputs.OrgSA)
-	})
-	if err != nil {
-		return err
+	stageConf := StageConf{
+		Stage:         OrgRepo,
+		StageSA:       outputs.OrgSA,
+		CICDProject:   outputs.CICDProject,
+		Step:          OrgStep,
+		Repo:          OrgRepo,
+		GroupingUnits: []string{"envs"},
+		Envs:          []string{"shared"},
 	}
-	fmt.Println("end of", OrgStep, "destroy")
-	return nil
+	return destroyStage(t, stageConf, s, c)
 }
 
 func DestroyEnvStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	gcpPath := filepath.Join(c.CheckoutPath, EnvironmentsRepo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-environments.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, "envs", e),
-				Logger:       c.Logger,
-				NoColor:      true,
-			}
-			conf := utils.CloneCSR(t, EnvironmentsRepo, gcpPath, outputs.CICDProject, c.Logger)
-			err := conf.CheckoutBranch(e)
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.EnvsSA)
-		})
-		if err != nil {
-			return err
-		}
+	stageConf := StageConf{
+		Stage:         EnvironmentsRepo,
+		StageSA:       outputs.EnvsSA,
+		CICDProject:   outputs.CICDProject,
+		Step:          EnvironmentsStep,
+		Repo:          EnvironmentsRepo,
+		GroupingUnits: []string{"envs"},
+		Envs:          []string{"development", "non-production", "production"},
 	}
-	fmt.Println("end of", EnvironmentsStep, "destroy")
-	return nil
+	return destroyStage(t, stageConf, s, c)
 }
 
 func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
 	step := GetNetworkStep(c.EnableHubAndSpoke)
-	gcpPath := filepath.Join(c.CheckoutPath, NetworksRepo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-networks.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir:             filepath.Join(gcpPath, "envs", e),
-				Logger:                   c.Logger,
-				NoColor:                  true,
-				RetryableTerraformErrors: testutils.RetryableTransientErrors,
-				MaxRetries:               2,
-				TimeBetweenRetries:       2 * time.Minute,
-			}
-			conf := utils.CloneCSR(t, NetworksRepo, gcpPath, outputs.CICDProject, c.Logger)
-			err := conf.CheckoutBranch(e)
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.NetworkSA)
-		})
-		if err != nil {
-			return err
-		}
+	stageConf := StageConf{
+		Stage:         NetworksRepo,
+		StageSA:       outputs.NetworkSA,
+		CICDProject:   outputs.CICDProject,
+		Step:          step,
+		Repo:          NetworksRepo,
+		HasManualStep: true,
+		GroupingUnits: []string{"envs"},
+		Envs:          []string{"development", "non-production", "production"},
 	}
-	err := s.RunDestroyStep("gcp-networks.apply-shared", func() error {
-		options := &terraform.Options{
-			TerraformDir:             filepath.Join(gcpPath, "envs", "shared"),
-			Logger:                   c.Logger,
-			NoColor:                  true,
-			RetryableTerraformErrors: testutils.RetryableTransientErrors,
-			MaxRetries:               2,
-			TimeBetweenRetries:       2 * time.Minute,
-		}
-		conf := utils.CloneCSR(t, NetworksRepo, gcpPath, outputs.CICDProject, c.Logger)
-		err := conf.CheckoutBranch("production")
-		if err != nil {
-			return err
-		}
-		return destroyEnv(t, options, outputs.NetworkSA)
-	})
-	if err != nil {
-		return err
-	}
-	fmt.Println("end of", step, "destroy")
-	return nil
+	return destroyStage(t, stageConf, s, c)
 }
 
 func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
-	gcpPath := filepath.Join(c.CheckoutPath, ProjectsRepo)
+	stageConf := StageConf{
+		Stage:         ProjectsRepo,
+		StageSA:       outputs.ProjectsSA,
+		CICDProject:   outputs.CICDProject,
+		Step:          ProjectsStep,
+		Repo:          ProjectsRepo,
+		HasManualStep: true,
+		GroupingUnits: []string{"business_unit_1", "business_unit_2"},
+		Envs:          []string{"development", "non-production", "production"},
+	}
+	return destroyStage(t, stageConf, s, c)
+}
 
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s", e), func() error {
-			for _, u := range []string{"business_unit_1", "business_unit_2"} {
+func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOutputs, c CommonConf) error {
+	stageConf := StageConf{
+		Stage:         AppInfraRepo,
+		StageSA:       outputs.TerraformSA,
+		CICDProject:   outputs.InfraPipeProj,
+		Step:          AppInfraStep,
+		Repo:          AppInfraRepo,
+		GroupingUnits: []string{"business_unit_1"},
+		Envs:          []string{"development", "non-production", "production"},
+	}
+	return destroyStage(t, stageConf, s, c)
+}
+
+func destroyStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error {
+	gcpPath := filepath.Join(c.CheckoutPath, sc.Repo)
+	for _, e := range sc.Envs {
+		err := s.RunDestroyStep(fmt.Sprintf("%s.%s", sc.Repo, e), func() error {
+			for _, g := range sc.GroupingUnits {
 				options := &terraform.Options{
-					TerraformDir: filepath.Join(gcpPath, u, e),
-					Logger:       c.Logger,
-					NoColor:      true,
+					TerraformDir:             filepath.Join(gcpPath, g, e),
+					Logger:                   c.Logger,
+					NoColor:                  true,
+					RetryableTerraformErrors: testutils.RetryableTransientErrors,
+					MaxRetries:               2,
+					TimeBetweenRetries:       2 * time.Minute,
 				}
-				conf := utils.CloneCSR(t, ProjectsRepo, gcpPath, outputs.CICDProject, c.Logger)
-				err := conf.CheckoutBranch(e)
+				conf := utils.CloneCSR(t, sc.Repo, gcpPath, sc.CICDProject, c.Logger)
+				branch := e
+				if branch == "shared" {
+					branch = "production"
+				}
+				err := conf.CheckoutBranch(branch)
 				if err != nil {
 					return err
 				}
-				err = destroyEnv(t, options, outputs.ProjectsSA)
+				err = destroyEnv(t, options, sc.CICDProject)
 				if err != nil {
 					return err
 				}
@@ -208,56 +185,33 @@ func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 			return err
 		}
 	}
-	for _, u := range []string{"business_unit_1", "business_unit_2"} {
-		err := s.RunDestroyStep(fmt.Sprintf("gcp-projects.%s.apply-shared", u), func() error {
+	groupingUnits := []string{}
+	if sc.HasManualStep {
+		groupingUnits = sc.GroupingUnits
+	}
+	for _, g := range groupingUnits {
+		err := s.RunDestroyStep(fmt.Sprintf("%s.%s.apply-shared", sc.Repo, g), func() error {
 			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, u, "shared"),
+				TerraformDir: filepath.Join(gcpPath, g, "shared"),
 				Logger:       c.Logger,
 				NoColor:      true,
+				RetryableTerraformErrors: testutils.RetryableTransientErrors,
+				MaxRetries:               2,
+				TimeBetweenRetries:       2 * time.Minute,
 			}
-			conf := utils.CloneCSR(t, ProjectsRepo, gcpPath, outputs.CICDProject, c.Logger)
+			conf := utils.CloneCSR(t, ProjectsRepo, gcpPath, sc.CICDProject, c.Logger)
 			err := conf.CheckoutBranch("production")
 			if err != nil {
 				return err
 			}
-			return destroyEnv(t, options, outputs.ProjectsSA)
+			return destroyEnv(t, options, sc.CICDProject)
 		})
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Println("end of", ProjectsStep, "destroy")
-	return nil
-}
-
-func DestroyExampleAppStage(t testing.TB, s steps.Steps, outputs InfraPipelineOutputs, c CommonConf) error {
-	gcpPath := filepath.Join(c.CheckoutPath, AppInfraRepo)
-
-	for _, e := range []string{"development", "non-production", "production"} {
-		err := s.RunDestroyStep(fmt.Sprintf("bu1-example-app.%s", e), func() error {
-			options := &terraform.Options{
-				TerraformDir: filepath.Join(gcpPath, "business_unit_1", e),
-				Logger:       c.Logger,
-				NoColor:      true,
-			}
-			conf := utils.CloneCSR(t, AppInfraRepo, gcpPath, outputs.InfraPipeProj, c.Logger)
-			err := conf.CheckoutBranch(e)
-			err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
-			if err != nil {
-				return err
-			}
-			if err != nil {
-				return err
-			}
-			return destroyEnv(t, options, outputs.TerraformSA)
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	fmt.Println("end of", AppInfraStep, "destroy")
+	fmt.Println("end of", sc.Step, "destroy")
 	return nil
 }
 
