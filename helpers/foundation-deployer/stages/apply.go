@@ -37,15 +37,31 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		BillingAccount:     tfvars.BillingAccount,
 		GroupOrgAdmins:     tfvars.GroupOrgAdmins,
 		GroupBillingAdmins: tfvars.GroupBillingAdmins,
+		OrgProjectCreators: tfvars.OrgProjectCreators,
 		ParentFolder:       tfvars.ParentFolder,
 		ProjectPrefix:      tfvars.ProjectPrefix,
 		FolderPrefix:       tfvars.FolderPrefix,
 		BucketForceDestroy: tfvars.BucketForceDestroy,
+		Groups:             tfvars.Groups,
+		InitialGroupConfig: tfvars.InitialGroupConfig,
 	}
 
 	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, BootstrapStep, "terraform.tfvars"), bootstrapTfvars)
 	if err != nil {
 		return err
+	}
+
+	// delete README-Jenkins.md due to private key checker false positive
+	jenkinsReadme := filepath.Join(c.FoundationPath, BootstrapStep, "README-Jenkins.md")
+	exist, err := utils.FileExists(jenkinsReadme)
+	if err != nil {
+		return err
+	}
+	if exist {
+		err = os.Remove(jenkinsReadme)
+		if err != nil {
+			return err
+		}
 	}
 
 	terraformDir := filepath.Join(c.FoundationPath, BootstrapStep)
@@ -137,7 +153,7 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		Repo:                BootstrapRepo,
 		CustomTargetDirPath: "envs/shared",
 		GitConf:             bootstrapConf,
-		Envs:                []string{"production"},
+		Envs:                []string{"shared"},
 	}
 
 	err = deployStage(t, stageConf, s, c)
@@ -178,6 +194,8 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		CreateUniqueTagKey:                    tfvars.CreateUniqueTagKey,
 		AuditLogsTableDeleteContentsOnDestroy: tfvars.AuditLogsTableDeleteContentsOnDestroy,
 		LogExportStorageForceDestroy:          tfvars.LogExportStorageForceDestroy,
+		LogExportStorageLocation:              tfvars.LogExportStorageLocation,
+		BillingExportDatasetLocation:          tfvars.BillingExportDatasetLocation,
 	}
 
 	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, OrgStep, "envs", "shared", "terraform.tfvars"), orgTfvars)
@@ -193,7 +211,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		Step:          OrgStep,
 		Repo:          OrgRepo,
 		GitConf:       conf,
-		Envs:          []string{"production"},
+		Envs:          []string{"shared"},
 	}
 
 	return deployStage(t, stageConf, s, c)
@@ -410,7 +428,11 @@ func deployStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error 
 
 	for _, env := range sc.Envs {
 		err = s.RunStep(fmt.Sprintf("%s.%s", sc.Stage, env), func() error {
-			return applyEnv(t, sc.GitConf, sc.CICDProject, sc.DefaultRegion, sc.Repo, env)
+			aEnv := env
+			if env == "shared" {
+				aEnv = "production"
+			}
+			return applyEnv(t, sc.GitConf, sc.CICDProject, sc.DefaultRegion, sc.Repo, aEnv)
 		})
 		if err != nil {
 			return err

@@ -93,6 +93,30 @@ type ServerAddress struct {
 	ForwardingPath string `cty:"forwarding_path"`
 }
 
+type RequiredGroups struct {
+	GroupOrgAdmins           string `cty:"group_org_admins"`
+	GroupBillingAdmins       string `cty:"group_billing_admins"`
+	BillingDataUsers         string `cty:"billing_data_users"`
+	AuditDataUsers           string `cty:"audit_data_users"`
+	MonitoringWorkspaceUsers string `cty:"monitoring_workspace_users"`
+}
+
+type OptionalGroups struct {
+	GcpPlatformViewer     string `cty:"gcp_platform_viewer"`
+	GcpSecurityReviewer   string `cty:"gcp_security_reviewer"`
+	GcpNetworkViewer      string `cty:"gcp_network_viewer"`
+	GcpSccAdmin           string `cty:"gcp_scc_admin"`
+	GcpGlobalSecretsAdmin string `cty:"gcp_global_secrets_admin"`
+	GcpAuditViewer        string `cty:"gcp_audit_viewer"`
+}
+
+type Groups struct {
+	CreateGroups   bool           `cty:"create_groups"`
+	BillingProject string         `cty:"billing_project"`
+	RequiredGroups RequiredGroups `cty:"required_groups"`
+	OptionalGroups OptionalGroups `cty:"optional_groups"`
+}
+
 // GlobalTFVars contains all the configuration for the deploy
 type GlobalTFVars struct {
 	OrgID                                 string          `hcl:"org_id"`
@@ -102,6 +126,7 @@ type GlobalTFVars struct {
 	BillingDataUsers                      string          `hcl:"billing_data_users"`
 	MonitoringWorkspaceUsers              string          `hcl:"monitoring_workspace_users"`
 	AuditDataUsers                        string          `hcl:"audit_data_users"`
+	OrgProjectCreators                    []string        `hcl:"org_project_creators"`
 	DefaultRegion                         string          `hcl:"default_region"`
 	ParentFolder                          *string         `hcl:"parent_folder"`
 	Domain                                string          `hcl:"domain"`
@@ -115,6 +140,8 @@ type GlobalTFVars struct {
 	BucketForceDestroy                    *bool           `hcl:"bucket_force_destroy"`
 	AuditLogsTableDeleteContentsOnDestroy *bool           `hcl:"audit_logs_table_delete_contents_on_destroy"`
 	LogExportStorageForceDestroy          *bool           `hcl:"log_export_storage_force_destroy"`
+	LogExportStorageLocation              string          `hcl:"log_export_storage_location"`
+	BillingExportDatasetLocation          string          `hcl:"billing_export_dataset_location"`
 	EnableHubAndSpoke                     bool            `hcl:"enable_hub_and_spoke"`
 	EnableHubAndSpokeTransitivity         bool            `hcl:"enable_hub_and_spoke_transitivity"`
 	CreateUniqueTagKey                    bool            `hcl:"create_unique_tag_key"`
@@ -123,6 +150,8 @@ type GlobalTFVars struct {
 	CodeCheckoutPath                      string          `hcl:"code_checkout_path"`
 	FoundationCodePath                    string          `hcl:"foundation_code_path"`
 	ValidatorProjectId                    *string         `hcl:"validator_project_id"`
+	Groups                                *Groups         `hcl:"groups"`
+	InitialGroupConfig                    *string         `hcl:"initial_group_config"`
 }
 
 // HasValidatorProj checks if a Validator Project was provided
@@ -141,15 +170,18 @@ func (g GlobalTFVars) CheckString(s string) {
 }
 
 type BootstrapTfvars struct {
-	OrgID              string  `hcl:"org_id"`
-	BillingAccount     string  `hcl:"billing_account"`
-	GroupOrgAdmins     string  `hcl:"group_org_admins"`
-	GroupBillingAdmins string  `hcl:"group_billing_admins"`
-	DefaultRegion      string  `hcl:"default_region"`
-	ParentFolder       *string `hcl:"parent_folder"`
-	ProjectPrefix      *string `hcl:"project_prefix"`
-	FolderPrefix       *string `hcl:"folder_prefix"`
-	BucketForceDestroy *bool   `hcl:"bucket_force_destroy"`
+	OrgID              string   `hcl:"org_id"`
+	BillingAccount     string   `hcl:"billing_account"`
+	GroupOrgAdmins     string   `hcl:"group_org_admins"`
+	GroupBillingAdmins string   `hcl:"group_billing_admins"`
+	DefaultRegion      string   `hcl:"default_region"`
+	ParentFolder       *string  `hcl:"parent_folder"`
+	ProjectPrefix      *string  `hcl:"project_prefix"`
+	FolderPrefix       *string  `hcl:"folder_prefix"`
+	BucketForceDestroy *bool    `hcl:"bucket_force_destroy"`
+	OrgProjectCreators []string `hcl:"org_project_creators"`
+	Groups             *Groups  `hcl:"groups"`
+	InitialGroupConfig *string  `hcl:"initial_group_config"`
 }
 
 type OrgTfvars struct {
@@ -164,6 +196,8 @@ type OrgTfvars struct {
 	CreateUniqueTagKey                    bool     `hcl:"create_unique_tag_key"`
 	AuditLogsTableDeleteContentsOnDestroy *bool    `hcl:"audit_logs_table_delete_contents_on_destroy"`
 	LogExportStorageForceDestroy          *bool    `hcl:"log_export_storage_force_destroy"`
+	LogExportStorageLocation              string   `hcl:"log_export_storage_location"`
+	BillingExportDatasetLocation          string   `hcl:"billing_export_dataset_location"`
 }
 
 type EnvsTfvars struct {

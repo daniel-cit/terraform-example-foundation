@@ -174,7 +174,7 @@ func destroyStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error
 				if err != nil {
 					return err
 				}
-				err = destroyEnv(t, options, sc.CICDProject)
+				err = destroyEnv(t, options, sc.StageSA)
 				if err != nil {
 					return err
 				}
@@ -204,7 +204,7 @@ func destroyStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error
 			if err != nil {
 				return err
 			}
-			return destroyEnv(t, options, sc.CICDProject)
+			return destroyEnv(t, options, sc.StageSA)
 		})
 		if err != nil {
 			return err
