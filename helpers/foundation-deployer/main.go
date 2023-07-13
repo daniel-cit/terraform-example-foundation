@@ -222,6 +222,13 @@ func main() {
 			fmt.Printf("# Bootstrap step destroy failed. Error: %s\n", err.Error())
 			os.Exit(3)
 		}
+
+		// clean up the steps file
+		err = steps.DeleteStepsFile(cfg.stepsFile)
+		if err != nil {
+			fmt.Printf("# failed to delete state file %s. Error: %s\n", cfg.stepsFile, err.Error())
+			os.Exit(3)
+		}
 		return
 	}
 
@@ -244,6 +251,9 @@ func main() {
 		msg.PrintBuildMsg(bo.CICDProject, bo.DefaultRegion, conf.DisablePrompt)
 	}
 	msg.PrintQuotaMsg(bo.ProjectsSA, conf.DisablePrompt)
+	if globalTFVars.HasGroupsCreation() {
+		msg.PrintAdminGroupPermissionMsg(bo.BootstrapSA, conf.DisablePrompt)
+	}
 
 	// 1-org
 	msg.PrintStageMsg("Deploying 1-org stage")

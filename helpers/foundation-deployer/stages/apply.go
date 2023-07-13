@@ -156,7 +156,17 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		Envs:                []string{"shared"},
 	}
 
-	err = deployStage(t, stageConf, s, c)
+	// if groups creation is enable the helper will just push the code
+	// because Cloud Build build will fail until bootstrap
+	// service account is granted Group Admin role in the
+	// Google Workspace by a Super Admin.
+	// https://github.com/terraform-google-modules/terraform-google-group/blob/main/README.md#google-workspace-formerly-known-as-g-suite-roles
+	if tfvars.HasGroupsCreation() {
+		err = saveBootstrapCodeOnly(t, stageConf, s, c)
+	} else {
+		err = deployStage(t, stageConf, s, c)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -197,6 +207,31 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		LogExportStorageLocation:              tfvars.LogExportStorageLocation,
 		BillingExportDatasetLocation:          tfvars.BillingExportDatasetLocation,
 	}
+	if tfvars.HasGroupsCreation() {
+		orgTfvars.BillingDataUsers = (*tfvars.Groups).RequiredGroups.BillingDataUsers
+		orgTfvars.AuditDataUsers = (*tfvars.Groups).RequiredGroups.AuditDataUsers
+		orgTfvars.GcpGroups = GcpGroups{}
+		if *(*tfvars.Groups).OptionalGroups.GcpPlatformViewer != "" {
+			orgTfvars.GcpGroups.PlatformViewer = (*tfvars.Groups).OptionalGroups.GcpPlatformViewer
+		}
+		if *(*tfvars.Groups).OptionalGroups.GcpSecurityReviewer != "" {
+			orgTfvars.GcpGroups.SecurityReviewer = (*tfvars.Groups).OptionalGroups.GcpSecurityReviewer
+		}
+		if *(*tfvars.Groups).OptionalGroups.GcpNetworkViewer != "" {
+			orgTfvars.GcpGroups.NetworkViewer = (*tfvars.Groups).OptionalGroups.GcpNetworkViewer
+		}
+		if *(*tfvars.Groups).OptionalGroups.GcpSccAdmin != "" {
+			orgTfvars.GcpGroups.SccAdmin = (*tfvars.Groups).OptionalGroups.GcpSccAdmin
+		}
+		if *(*tfvars.Groups).OptionalGroups.GcpGlobalSecretsAdmin != "" {
+			orgTfvars.GcpGroups.GlobalSecretsAdmin = (*tfvars.Groups).OptionalGroups.GcpGlobalSecretsAdmin
+		}
+		if *(*tfvars.Groups).OptionalGroups.GcpAuditViewer != "" {
+			orgTfvars.GcpGroups.AuditViewer = (*tfvars.Groups).OptionalGroups.GcpAuditViewer
+		}
+	} else {
+		orgTfvars.GcpGroups = GcpGroups{}
+	}
 
 	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, OrgStep, "envs", "shared", "terraform.tfvars"), orgTfvars)
 	if err != nil {
@@ -223,7 +258,9 @@ func DeployEnvStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		MonitoringWorkspaceUsers: tfvars.MonitoringWorkspaceUsers,
 		RemoteStateBucket:        outputs.RemoteStateBucket,
 	}
-
+	if tfvars.HasGroupsCreation() {
+		envsTfvars.MonitoringWorkspaceUsers = (*tfvars.Groups).RequiredGroups.MonitoringWorkspaceUsers
+	}
 	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, EnvironmentsStep, "terraform.tfvars"), envsTfvars)
 	if err != nil {
 		return err
@@ -496,6 +533,53 @@ func planStage(t testing.TB, conf utils.GitRepo, project, region, repo string) e
 	}
 
 	return gcp.NewGCP().WaitBuildSuccess(t, project, region, repo, commitSha, fmt.Sprintf("Terraform %s plan build Failed.", repo), MaxBuildRetries)
+}
+
+func saveBootstrapCodeOnly(t testing.TB, sc StageConf, s steps.Steps, c CommonConf) error {
+
+	err := sc.GitConf.CheckoutBranch("plan")
+	if err != nil {
+		return err
+	}
+
+	err = s.RunStep(fmt.Sprintf("%s.copy-code", sc.Stage), func() error {
+		return copyStepCode(t, sc.GitConf, c.FoundationPath, c.CheckoutPath, sc.Repo, sc.Step, sc.CustomTargetDirPath)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = s.RunStep(fmt.Sprintf("%s.plan", sc.Stage), func() error {
+		err := sc.GitConf.CommitFiles(fmt.Sprintf("Initialize %s repo", sc.Repo))
+		if err != nil {
+			return err
+		}
+		return sc.GitConf.PushBranch("plan", "origin")
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, env := range sc.Envs {
+		err = s.RunStep(fmt.Sprintf("%s.%s", sc.Stage, env), func() error {
+			aEnv := env
+			if env == "shared" {
+				aEnv = "production"
+			}
+			err := sc.GitConf.CheckoutBranch(aEnv)
+			if err != nil {
+				return err
+			}
+			return sc.GitConf.PushBranch(aEnv, "origin")
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("end of", sc.Step, "deploy")
+	return nil
 }
 
 func applyEnv(t testing.TB, conf utils.GitRepo, project, region, repo, environment string) error {

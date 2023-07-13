@@ -68,6 +68,13 @@ type StageConf struct {
 	Envs                []string
 }
 
+// type GcpGroup struct {
+// 	Id string
+// }
+// type RequiredGroups struct {
+// 	map[string]GcpGroup
+// }
+
 type BootstrapOutputs struct {
 	RemoteStateBucket         string
 	RemoteStateBucketProjects string
@@ -77,6 +84,7 @@ type BootstrapOutputs struct {
 	ProjectsSA                string
 	EnvsSA                    string
 	OrgSA                     string
+	BootstrapSA               string
 }
 
 type InfraPipelineOutputs struct {
@@ -102,12 +110,12 @@ type RequiredGroups struct {
 }
 
 type OptionalGroups struct {
-	GcpPlatformViewer     string `cty:"gcp_platform_viewer"`
-	GcpSecurityReviewer   string `cty:"gcp_security_reviewer"`
-	GcpNetworkViewer      string `cty:"gcp_network_viewer"`
-	GcpSccAdmin           string `cty:"gcp_scc_admin"`
-	GcpGlobalSecretsAdmin string `cty:"gcp_global_secrets_admin"`
-	GcpAuditViewer        string `cty:"gcp_audit_viewer"`
+	GcpPlatformViewer     *string `cty:"gcp_platform_viewer"`
+	GcpSecurityReviewer   *string `cty:"gcp_security_reviewer"`
+	GcpNetworkViewer      *string `cty:"gcp_network_viewer"`
+	GcpSccAdmin           *string `cty:"gcp_scc_admin"`
+	GcpGlobalSecretsAdmin *string `cty:"gcp_global_secrets_admin"`
+	GcpAuditViewer        *string `cty:"gcp_audit_viewer"`
 }
 
 type Groups struct {
@@ -115,6 +123,15 @@ type Groups struct {
 	BillingProject string         `cty:"billing_project"`
 	RequiredGroups RequiredGroups `cty:"required_groups"`
 	OptionalGroups OptionalGroups `cty:"optional_groups"`
+}
+
+type GcpGroups struct {
+	PlatformViewer     *string `cty:"platform_viewer"`
+	SecurityReviewer   *string `cty:"security_reviewer"`
+	NetworkViewer      *string `cty:"network_viewer"`
+	SccAdmin           *string `cty:"scc_admin"`
+	GlobalSecretsAdmin *string `cty:"global_secrets_admin"`
+	AuditViewer        *string `cty:"audit_viewer"`
 }
 
 // GlobalTFVars contains all the configuration for the deploy
@@ -159,6 +176,11 @@ func (g GlobalTFVars) HasValidatorProj() bool {
 	return g.ValidatorProjectId != nil && *g.ValidatorProjectId != "" && *g.ValidatorProjectId != "EXISTING_PROJECT_ID"
 }
 
+// HasGroupsCreation checks if Groups creation is enabled
+func (g GlobalTFVars) HasGroupsCreation() bool {
+	return g.Groups != nil && (*g.Groups).CreateGroups
+}
+
 // CheckString checks if any of the string fields in the GlobalTFVars has the given string
 func (g GlobalTFVars) CheckString(s string) {
 	f := reflect.ValueOf(g)
@@ -185,19 +207,20 @@ type BootstrapTfvars struct {
 }
 
 type OrgTfvars struct {
-	DomainsToAllow                        []string `hcl:"domains_to_allow"`
-	EssentialContactsDomains              []string `hcl:"essential_contacts_domains_to_allow"`
-	BillingDataUsers                      string   `hcl:"billing_data_users"`
-	AuditDataUsers                        string   `hcl:"audit_data_users"`
-	SccNotificationName                   string   `hcl:"scc_notification_name"`
-	RemoteStateBucket                     string   `hcl:"remote_state_bucket"`
-	EnableHubAndSpoke                     bool     `hcl:"enable_hub_and_spoke"`
-	CreateACMAPolicy                      bool     `hcl:"create_access_context_manager_access_policy"`
-	CreateUniqueTagKey                    bool     `hcl:"create_unique_tag_key"`
-	AuditLogsTableDeleteContentsOnDestroy *bool    `hcl:"audit_logs_table_delete_contents_on_destroy"`
-	LogExportStorageForceDestroy          *bool    `hcl:"log_export_storage_force_destroy"`
-	LogExportStorageLocation              string   `hcl:"log_export_storage_location"`
-	BillingExportDatasetLocation          string   `hcl:"billing_export_dataset_location"`
+	DomainsToAllow                        []string  `hcl:"domains_to_allow"`
+	EssentialContactsDomains              []string  `hcl:"essential_contacts_domains_to_allow"`
+	BillingDataUsers                      string    `hcl:"billing_data_users"`
+	AuditDataUsers                        string    `hcl:"audit_data_users"`
+	SccNotificationName                   string    `hcl:"scc_notification_name"`
+	RemoteStateBucket                     string    `hcl:"remote_state_bucket"`
+	EnableHubAndSpoke                     bool      `hcl:"enable_hub_and_spoke"`
+	CreateACMAPolicy                      bool      `hcl:"create_access_context_manager_access_policy"`
+	CreateUniqueTagKey                    bool      `hcl:"create_unique_tag_key"`
+	AuditLogsTableDeleteContentsOnDestroy *bool     `hcl:"audit_logs_table_delete_contents_on_destroy"`
+	LogExportStorageForceDestroy          *bool     `hcl:"log_export_storage_force_destroy"`
+	LogExportStorageLocation              string    `hcl:"log_export_storage_location"`
+	BillingExportDatasetLocation          string    `hcl:"billing_export_dataset_location"`
+	GcpGroups                             GcpGroups `hcl:"gcp_groups"`
 }
 
 type EnvsTfvars struct {
@@ -253,6 +276,7 @@ func GetBootstrapStepOutputs(t testing.TB, foundationPath string) BootstrapOutpu
 		ProjectsSA:                terraform.Output(t, options, "projects_step_terraform_service_account_email"),
 		EnvsSA:                    terraform.Output(t, options, "environment_step_terraform_service_account_email"),
 		OrgSA:                     terraform.Output(t, options, "organization_step_terraform_service_account_email"),
+		BootstrapSA:               terraform.Output(t, options, "bootstrap_step_terraform_service_account_email"),
 	}
 }
 
