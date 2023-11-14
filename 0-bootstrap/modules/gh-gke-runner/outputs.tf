@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-provider "google-beta" {
-  user_project_override = true
-  billing_project       = var.groups.billing_project
+output "cluster_name" {
+  value = module.runner_cluster.name
 }
 
-# provider "helm" {
-#   kubernetes {
-#     host = local.cluster_host
-#     exec {
-#       api_version = "client.authentication.k8s.io/v1beta1"
-#       command     = "gke-gcloud-auth-plugin"
-#     }
-#   }
-# }
+output "cluster_membership_id" {
+  value = module.fleet_membership.cluster_membership_id
+}
+
+output "cluster_host" {
+  value = "https://connectgateway.googleapis.com/v1/projects/${data.google_project.project.number}/locations/global/gkeMemberships/${module.fleet_membership.cluster_membership_id}"
+}

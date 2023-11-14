@@ -195,6 +195,24 @@ variable "initial_group_config" {
 #   sensitive   = true
 # }
 
+# variable "enable_gcp_runners" {
+#   description = "(optional) set to true to create a GKE cluster to run GitHub actions locally if deploying in a GitHub Organization. If enabled, the 'gh_token' provided must be an organization token."
+#   type        = bool
+#   default     = false
+# }
+
+variable "cert_manager_version" {
+  description = "The Certificate Manager version. See https://github.com/cert-manager/cert-manager ."
+  type        = string
+  default     = "v1.13.2"
+}
+
+variable "actions_runner_controller_version" {
+  description = "The Actions Runner Controller version. See https://actions-runner-controller.github.io/actions-runner-controller ."
+  type        = string
+  default     = "v0.23.5"
+}
+
 /* ----------------------------------------
     Specific to jenkins_bootstrap module
    ---------------------------------------- */

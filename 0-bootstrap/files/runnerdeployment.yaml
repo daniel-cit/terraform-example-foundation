@@ -1,0 +1,9 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: foundation-runner-deploy
+spec:
+  replicas: 1
+  template:
+    spec:
+      organization: GITHUB_ORGANIZATION

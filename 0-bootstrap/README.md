@@ -285,9 +285,11 @@ Each step has instructions for this change.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| actions\_runner\_controller\_version | The Actions Runner Controller version. See https://actions-runner-controller.github.io/actions-runner-controller . | `string` | `"v0.23.5"` | no |
 | billing\_account | The ID of the billing account to associate projects with. | `string` | n/a | yes |
 | bucket\_force\_destroy | When deleting a bucket, this boolean option will delete all contained objects. If false, Terraform will fail to delete buckets which contain objects. | `bool` | `false` | no |
 | bucket\_prefix | Name prefix to use for state bucket created. | `string` | `"bkt"` | no |
+| cert\_manager\_version | The Certificate Manager version. See https://github.com/cert-manager/cert-manager . | `string` | `"v1.13.2"` | no |
 | default\_region | Default region to create resources where applicable. | `string` | `"us-central1"` | no |
 | folder\_prefix | Name prefix to use for folders created. Should be the same in all steps. | `string` | `"fldr"` | no |
 | group\_billing\_admins | Google Group for GCP Billing Administrators | `string` | n/a | yes |
