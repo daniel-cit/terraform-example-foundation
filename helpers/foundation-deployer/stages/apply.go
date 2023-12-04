@@ -197,6 +197,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		EssentialContactsDomains:              tfvars.EssentialContactsDomains,
 		BillingDataUsers:                      tfvars.BillingDataUsers,
 		AuditDataUsers:                        tfvars.AuditDataUsers,
+		MonitoringWorkspaceUsers:              tfvars.MonitoringWorkspaceUsers,
 		SccNotificationName:                   tfvars.SccNotificationName,
 		RemoteStateBucket:                     outputs.RemoteStateBucket,
 		EnableHubAndSpoke:                     tfvars.EnableHubAndSpoke,
@@ -210,6 +211,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 	if tfvars.HasGroupsCreation() {
 		orgTfvars.BillingDataUsers = (*tfvars.Groups).RequiredGroups.BillingDataUsers
 		orgTfvars.AuditDataUsers = (*tfvars.Groups).RequiredGroups.AuditDataUsers
+		orgTfvars.MonitoringWorkspaceUsers = (*tfvars.Groups).RequiredGroups.MonitoringWorkspaceUsers
 		orgTfvars.GcpGroups = GcpGroups{}
 		if *(*tfvars.Groups).OptionalGroups.GcpPlatformViewer != "" {
 			orgTfvars.GcpGroups.PlatformViewer = (*tfvars.Groups).OptionalGroups.GcpPlatformViewer

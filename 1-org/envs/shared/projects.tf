@@ -38,7 +38,12 @@ module "org_audit_logs" {
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
-  activate_apis            = ["logging.googleapis.com", "bigquery.googleapis.com", "billingbudgets.googleapis.com"]
+  activate_apis = [
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
+    "bigquery.googleapis.com",
+    "billingbudgets.googleapis.com"
+  ]
 
   labels = {
     environment       = "production"

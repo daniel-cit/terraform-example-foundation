@@ -99,6 +99,9 @@ locals {
     ],
     "org" = [
       "roles/storage.objectAdmin",
+      "roles/monitoring.admin",
+      "roles/monitoring.metricsScopesAdmin",
+      "roles/logging.viewer",
     ],
     "env" = [
       "roles/storage.objectAdmin"

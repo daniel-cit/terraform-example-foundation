@@ -1,0 +1,124 @@
+/**
+ * Copyright 2023 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+locals {
+  monitored_projects = {
+    seed_project = data.google_project.seed_project.number
+  }
+
+  monitoring_alert_emails = toset([var.monitoring_workspace_users])
+  monitored_projects_list = join(", ", [for k, v in local.monitored_projects : "\"projects/${v}\""])
+}
+
+data "google_project" "seed_project" {
+  project_id = local.seed_project_id
+}
+
+resource "google_monitoring_monitored_project" "projects_monitored" {
+  for_each = local.monitored_projects
+
+  metrics_scope = join("", ["locations/global/metricsScopes/", module.org_audit_logs.project_id])
+  name          = each.value
+}
+
+resource "time_sleep" "wait_for_propagation_adding_monitoring_project" {
+  create_duration = "60s"
+
+  depends_on = [google_monitoring_monitored_project.projects_monitored]
+}
+
+resource "google_logging_metric" "logging_metric" {
+  for_each = local.monitored_projects
+
+  name    = "set-bucket-iam-policy"
+  project = each.value
+  filter  = "resource.type=gcs_bucket AND protoPayload.methodName=\"storage.setIamPermissions\""
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+
+  depends_on = [time_sleep.wait_for_propagation_adding_monitoring_project]
+}
+
+resource "time_sleep" "wait_for_propagation" {
+  create_duration  = "180s"
+  destroy_duration = "180s"
+
+  depends_on = [google_logging_metric.logging_metric]
+}
+
+resource "google_monitoring_notification_channel" "email_channel" {
+  for_each = local.monitoring_alert_emails
+
+  project      = module.org_audit_logs.project_id
+  display_name = "Foundation default notification channel"
+  type         = "email"
+
+  labels = {
+    email_address = each.value
+  }
+}
+
+resource "time_sleep" "wait_for_propagation_email_channel" {
+  destroy_duration = "180s"
+
+  depends_on = [google_logging_metric.logging_metric]
+}
+
+resource "google_monitoring_alert_policy" "alert_policy" {
+  display_name = "GCS Bucket - Set IAM policy Alert"
+  combiner     = "AND"
+  project      = module.org_audit_logs.project_id
+
+  conditions {
+    display_name = "Set Bucket IAM policy custom metric"
+
+    condition_threshold {
+      filter          = "metric.type=\"logging.googleapis.com/user/set-bucket-iam-policy\" AND resource.type=\"gcs_bucket\""
+      duration        = "60s"
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0
+
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_SUM"
+      }
+
+      trigger {
+        count = 0
+      }
+    }
+  }
+
+  notification_channels = [for u in google_monitoring_notification_channel.email_channel : u.name]
+
+  depends_on = [
+    time_sleep.wait_for_propagation,
+    time_sleep.wait_for_propagation_email_channel,
+    google_monitoring_notification_channel.email_channel
+  ]
+}
+
+resource "google_monitoring_dashboard" "dashboard" {
+  project = module.org_audit_logs.project_id
+  dashboard_json = templatefile("${path.module}/templates/dashboard.json.tftpl",
+    {
+      alert_policy_name  = google_monitoring_alert_policy.alert_policy.name
+      monitored_projects = local.monitored_projects_list
+  })
+}
