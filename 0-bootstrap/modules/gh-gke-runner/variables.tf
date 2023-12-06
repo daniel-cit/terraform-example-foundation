@@ -15,79 +15,77 @@
  */
 
 variable "project_id" {
-  type        = string
   description = "The project id to deploy Github Runner"
+  type        = string
 }
 
 variable "cluster_name" {
-  type    = string
   default = "gke-b-gh-runner"
+  type    = string
 }
 
 variable "environment_code" {
-  type        = string
   description = "A short form of the folder level resources (environment) within the Google Cloud organization (ex. d)."
+  type        = string
 }
 
 variable "region" {
-  type        = string
   description = "The GCP region to deploy instances into"
+  type        = string
 }
 
 variable "private_service_connect_ip" {
-  type        = string
   description = "Internal IP to be used as the private service connect endpoint."
-}
-
-variable "subnet_ip" {
   type        = string
-  description = "IP range for the subnet"
 }
 
-variable "auth_subnet_ip" {
-  type = string
+variable "subnet_ip_cidr" {
+  description = "IP range for the subnet."
+  type        = string
 }
 
 variable "master_ipv4_cidr_block" {
-  type = string
+  description = "(Beta) The IP range in CIDR notation to use for the hosted master network"
+  type        = string
+  default     = "10.0.0.0/28"
 }
 
 variable "network_tag" {
-  type = string
-  description = "value"
-  default = "gh-runner-vm"
+  description = "Network tag to apply to instances to allow external access."
+  type        = string
+  default     = "gh-runner-vm"
 }
 
 variable "ip_range_pods_cidr" {
-  type        = string
   description = "The secondary ip range cidr to use for pods"
+  type        = string
 }
 
 variable "ip_range_services_cider" {
-  type        = string
   description = "The secondary ip range cidr to use for services"
+  type        = string
 }
 
 variable "firewall_enable_logging" {
-  type        = bool
   description = "Toggle firewall logging for VPC Firewalls."
+  type        = bool
   default     = true
 }
 
 variable "nat_enabled" {
-  type        = bool
   description = "Toggle creation of NAT cloud router."
+  type        = bool
   default     = false
 }
 
 variable "nat_bgp_asn" {
-  type        = number
   description = "BGP ASN for NAT cloud routes."
+  type        = number
   default     = 64514
 }
 
 variable "nat_num_addresses" {
-  type        = number
   description = "Number of external IPs to reserve for Cloud NAT."
+  type        = number
   default     = 2
 }

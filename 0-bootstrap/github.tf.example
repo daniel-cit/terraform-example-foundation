@@ -131,12 +131,11 @@ module "gh_gke_runner" {
   project_id                 = module.gh_cicd.project_id
   environment_code           = "b"
   region                     = var.default_region
-  subnet_ip                  = "10.3.0.0/24"
-  auth_subnet_ip             = "10.60.0.0/17"
+  subnet_ip_cidr             = "10.3.0.0/24"
+  master_ipv4_cidr_block     = "172.16.0.0/28"
   ip_range_pods_cidr         = "192.168.0.0/18"
   ip_range_services_cider    = "192.168.64.0/18"
   private_service_connect_ip = "10.10.64.5"
-  master_ipv4_cidr_block     = "172.16.0.0/28"
   nat_enabled                = true
 }
 

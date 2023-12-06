@@ -48,7 +48,7 @@ module "network" {
     {
       description           = "Subnet for GitHub Runner"
       subnet_name           = local.subnet_name
-      subnet_ip             = var.subnet_ip
+      subnet_ip             = var.subnet_ip_cidr
       subnet_region         = var.region
       subnet_private_access = "true"
       subnet_flow_logs      = "true"
@@ -68,6 +68,13 @@ module "network" {
     ]
   }
 
+}
+
+data "google_compute_subnetwork" "subnetwork" {
+  name       = local.subnet_name
+  project    = var.project_id
+  region     = var.region
+  depends_on = [module.network]
 }
 
 resource "google_dns_policy" "default_policy" {

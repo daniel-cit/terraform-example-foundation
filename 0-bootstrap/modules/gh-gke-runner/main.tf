@@ -44,7 +44,7 @@ module "runner_cluster" {
 
   master_authorized_networks = [
     {
-      cidr_block   = var.auth_subnet_ip
+      cidr_block   = data.google_compute_subnetwork.subnetwork.ip_cidr_range
       display_name = "VPC"
     },
   ]
