@@ -38,7 +38,7 @@ Also make sure that you have the following:
         - Variables: Read and Write
         - Workflows: Read and Write
 - if deploying optional Organization-level self-hosted runners, a Organization token configured with
-   - s
+   - TODO
 - A Google Cloud [organization](https://cloud.google.com/resource-manager/docs/creating-managing-organization).
 - A Google Cloud [billing account](https://cloud.google.com/billing/docs/how-to/manage-billing-account).
 - Cloud Identity or Google Workspace groups for organization and billing admins.

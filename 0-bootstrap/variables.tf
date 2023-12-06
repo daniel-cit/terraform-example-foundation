@@ -201,17 +201,17 @@ variable "initial_group_config" {
 #   default     = false
 # }
 
-variable "cert_manager_version" {
-  description = "The Certificate Manager version. See https://github.com/cert-manager/cert-manager ."
-  type        = string
-  default     = "v1.13.2"
-}
+# variable "cert_manager_version" {
+#   description = "The Certificate Manager version. See https://github.com/cert-manager/cert-manager ."
+#   type        = string
+#   default     = "v1.13.2"
+# }
 
-variable "actions_runner_controller_version" {
-  description = "The Actions Runner Controller version. See https://actions-runner-controller.github.io/actions-runner-controller ."
-  type        = string
-  default     = "v0.23.5"
-}
+# variable "actions_runner_controller_version" {
+#   description = "The Actions Runner Controller version. See https://actions-runner-controller.github.io/actions-runner-controller ."
+#   type        = string
+#   default     = "v0.23.5"
+# }
 
 /* ----------------------------------------
     Specific to jenkins_bootstrap module
