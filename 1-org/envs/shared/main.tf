@@ -32,6 +32,9 @@ locals {
   bootstrap_folder_name                         = data.terraform_remote_state.bootstrap.outputs.common_config.bootstrap_folder_name
   seed_project_id                               = data.terraform_remote_state.bootstrap.outputs.seed_project_id
   cloud_build_private_worker_pool_id            = try(data.terraform_remote_state.bootstrap.outputs.cloud_build_private_worker_pool_id, "")
+  cloudbuild_project_id                         = try(data.terraform_remote_state.bootstrap.outputs.cloudbuild_project_id, "")
+  cicd_project_id                               = try(data.terraform_remote_state.bootstrap.outputs.cicd_project_id, "")
+  cicd_project                                  = coalesce(local.cloudbuild_project_id, local.cicd_project_id)
 }
 
 data "terraform_remote_state" "bootstrap" {
