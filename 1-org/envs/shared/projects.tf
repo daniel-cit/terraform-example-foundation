@@ -23,6 +23,38 @@ locals {
   ]
 }
 
+module "monitoring" {
+  source  = "terraform-google-modules/project-factory/google"
+  version = "~> 14.0"
+
+  random_project_id           = true
+  random_project_id_length    = 4
+  default_service_account     = "deprivilege"
+  name                        = "${local.project_prefix}-c-monitoring"
+  org_id                      = local.org_id
+  billing_account             = local.billing_account
+  folder_id                   = google_folder.common.id
+  disable_services_on_destroy = false
+  activate_apis = [
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
+    "billingbudgets.googleapis.com"
+  ]
+
+  labels = {
+    environment       = "production"
+    application_name  = "org-monitoring"
+    billing_code      = "1234"
+    primary_contact   = "example1"
+    secondary_contact = "example2"
+    business_code     = "abcd"
+    env_code          = "p"
+  }
+  budget_alert_pubsub_topic   = var.project_budget.org_monitoring_alert_pubsub_topic
+  budget_alert_spent_percents = var.project_budget.org_monitoring_alert_spent_percents
+  budget_amount               = var.project_budget.org_monitoring_budget_amount
+}
+
 /******************************************
   Projects for log sinks
 *****************************************/
@@ -40,7 +72,6 @@ module "org_audit_logs" {
   folder_id                = google_folder.common.id
   activate_apis = [
     "logging.googleapis.com",
-    "monitoring.googleapis.com",
     "bigquery.googleapis.com",
     "billingbudgets.googleapis.com"
   ]
