@@ -86,7 +86,7 @@ output "optional_groups" {
 /* ----------------------------------------
     Specific to cloudbuild_module
    ---------------------------------------- */
-# Comment-out the cloudbuild_bootstrap module and its outputs if you want to use GitHub Actions, Jenkins, or Terraform Cloud instead of Cloud Build
+# Comment-out the cloudbuild_bootstrap module and its outputs if you want to use GitHub Actions, GitLab CI/CD, Terraform Cloud, or Jenkins instead of Cloud Build
 output "cloudbuild_project_id" {
   description = "Project where Cloud Build configuration and terraform container image will reside."
   value       = module.tf_source.cloudbuild_project_id
@@ -235,4 +235,18 @@ output "cloud_build_peered_network_id" {
 # output "hub_cluster_membership_id" {
 #   value = module.tfc_agent_gke[0].hub_cluster_membership_id
 #   description = "The ID of the cluster membership"
+# }
+
+/* ----------------------------------------
+    Specific to gitlab_bootstrap
+   ---------------------------------------- */
+# Un-comment gitlab_bootstrap and its outputs if you want to use GitLab CI/CD instead of Cloud Build
+# output "cicd_project_id" {
+#   description = "Project where the CI/CD infrastructure for GitLab CI/CD resides."
+#   value       = module.gitlab_cicd.project_id
+# }
+
+# output "projects_gcs_bucket_tfstate" {
+#   description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+#   value       = module.seed_bootstrap.gcs_bucket_tfstate
 # }

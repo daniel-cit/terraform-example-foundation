@@ -156,3 +156,23 @@ default_region = "us-central1"
 //  For GitHub Enterprise see: https://developer.hashicorp.com/terraform/cloud-docs/vcs/github-enterprise
 //  For GitLab.com see: https://developer.hashicorp.com/terraform/cloud-docs/vcs/gitlab-com
 //  For GitLab EE/CE see: https://developer.hashicorp.com/terraform/cloud-docs/vcs/gitlab-eece
+
+/* ----------------------------------------
+    Specific to gitlab_bootstrap
+   ---------------------------------------- */
+# Un-comment gitlab_bootstrap and its outputs if you want to use GitLab CI/CD instead of Cloud Build
+# gl_repos = {
+#     owner        = "YOUR-GITLAB-USER-OR-GROUP",
+#     bootstrap    = "YOUR-BOOTSTRAP-REPOSITORY",
+#     organization = "YOUR-ORGANIZATION-REPOSITORY",
+#     environments = "YOUR-ENVIRONMENTS-REPOSITORY",
+#     networks     = "YOUR-NETWORKS-REPOSITORY",
+#     projects     = "YOUR-PROJECTS-REPOSITORY",
+#     cicd_runner  = "YOUR-CICD-RUNNER-REPOSITORY",
+# }
+#
+#  to prevent saving the `gitlab_token` in plain text in this file,
+#  export the GitLab access token in the command line
+#  as an environment variable before running terraform.
+#  Run the following commnad in your shell:
+#   export TF_VAR_gitlab_token="YOUR-ACCESS-TOKEN"

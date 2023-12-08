@@ -229,7 +229,7 @@ function validate_bootstrap_step(){
     fi
 }
 
-# Checks if initial config was done for 0-bootstrap step in Terraform Cloud deploy
+# Checks if initial config was done for 0-bootstrap step using external repository
 function validate_bootstrap_step_external_repo(){
     SCRIPTS_DIR="$( dirname -- "$0"; )"
     FILE="$SCRIPTS_DIR/../../gcp-bootstrap/envs/shared/terraform.tfvars"
@@ -324,10 +324,10 @@ function main(){
 usage() {
     echo
     echo " Usage:"
-    echo "     $0 -o <organization id> -b <billing account id> -u <end user email>"
-    echo "         organization id          (required)"
-    echo "         billing account id       (required)"
-    echo "         end user email           (required)"
+    echo "     $0 -o <organization id> -b <billing account id> -u <end user email> [-e]"
+    echo "         organization id                   (required)"
+    echo "         billing account id                (required)"
+    echo "         end user email                    (required)"
     echo "         set -e if using an external repo  (optional)"
     echo
     exit 1
@@ -365,7 +365,7 @@ shift $((OPTIND -1))
 # Check for required input variables
 if [ -z "${ORGANIZATION_ID}" ] || [ -z "${BILLING_ACCOUNT}" ]|| [ -z "${END_USER_CREDENTIAL}" ]; then
   echo
-  echo " Error: -o <organization id>, -b <billing account id> and -u <end user email> required."
+  echo " Error: -o <organization id>, -b <billing account id> and -u <end user email> are required."
   usage
 fi
 
