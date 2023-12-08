@@ -39,9 +39,9 @@ func TestOrg(t *testing.T) {
 	backend_bucket := bootstrap.GetStringOutput("gcs_bucket_tfstate")
 
 	vars := map[string]interface{}{
-		"remote_state_bucket":                         backend_bucket,
-		"log_export_storage_force_destroy":            "true",
-		"cai_monitoring_kms_force_destroy":            "true",
+		"remote_state_bucket":              backend_bucket,
+		"log_export_storage_force_destroy": "true",
+		"cai_monitoring_kms_force_destroy": "true",
 	}
 
 	backendConfig := map[string]interface{}{
