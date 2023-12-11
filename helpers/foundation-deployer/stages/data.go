@@ -211,7 +211,6 @@ type OrgTfvars struct {
 	EssentialContactsDomains              []string  `hcl:"essential_contacts_domains_to_allow"`
 	BillingDataUsers                      string    `hcl:"billing_data_users"`
 	AuditDataUsers                        string    `hcl:"audit_data_users"`
-	MonitoringWorkspaceUsers              string    `hcl:"monitoring_workspace_users"`
 	SccNotificationName                   string    `hcl:"scc_notification_name"`
 	RemoteStateBucket                     string    `hcl:"remote_state_bucket"`
 	EnableHubAndSpoke                     bool      `hcl:"enable_hub_and_spoke"`
