@@ -30,11 +30,6 @@ variable "audit_data_users" {
   type        = string
 }
 
-variable "monitoring_workspace_users" {
-  description = "Google Workspace or Cloud Identity group that have access to Monitoring Workspaces."
-  type        = string
-}
-
 variable "domains_to_allow" {
   description = "The list of domains to allow users from in IAM. Used by Domain Restricted Sharing Organization Policy. Must include the domain of the organization you are deploying the foundation. To add other domains you must also grant access to these domains to the Terraform Service Account used in the deploy."
   type        = list(string)
@@ -146,6 +141,9 @@ variable "project_budget" {
     scc_notifications_budget_amount         = optional(number, 1000)
     scc_notifications_alert_spent_percents  = optional(list(number), [0.5, 0.75, 0.9, 0.95])
     scc_notifications_alert_pubsub_topic    = optional(string, null)
+    org_monitoring_budget_amount            = optional(number, 1000)
+    org_monitoring_alert_spent_percents     = optional(list(number), [0.5, 0.75, 0.9, 0.95])
+    org_monitoring_alert_pubsub_topic       = optional(string, null)
   })
   default = {}
 }

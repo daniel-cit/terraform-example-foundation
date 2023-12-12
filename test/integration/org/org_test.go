@@ -278,12 +278,12 @@ func TestOrg(t *testing.T) {
 			assert.Equal(metricFilter, metric.Get("filter").String(), fmt.Sprintf("metric set-bucket-iam-policy should have filter %s", metricFilter))
 
 			// check notification channel
-			notificationChannelName := org.GetStringOutput("notification_channel_name") //TODO add output
-			monitoringEmail := org.GetTFSetupStringOutput("monitoring_workspace_users"))
-			monitoringProjectID := org.GetStringOutput("org_audit_logs_project_id")
+			notificationChannelName := org.GetStringOutput("notification_channel_name")
+			monitoringTopic := org.GetStringOutput("org_monitoring_topic"))
+			monitoringProjectID := org.GetStringOutput("org_monitoring_project_id")
 			notificationChannel := gcloud.Runf(t, "alpha monitoring channels describe  \"%s\"  --project %s", notificationChannelName, monitoringProjectID)
 			assert.True(notificationChannel.Get("enabled").Bool(), fmt.Sprintf("notificationChannel %s should be enabled", notificationChannelName))
-			assert.Equal(monitoringEmail, notificationChannel.Get("labels.email_address").String(), fmt.Sprintf("metric set-bucket-iam-policy should have filter %s", metricFilter))
+			assert.Equal(monitoringTopic, notificationChannel.Get("labels.topic").String(), fmt.Sprintf("notification channel should have topic %s", monitoringTopic))
 
 			// check alert policy
 			// gcloud alpha monitoring policies describe "ALERT_POLICY_ID" --project MONITORING_PROJECT_ID --format json

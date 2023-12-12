@@ -15,22 +15,48 @@
  */
 
 locals {
-  monitored_projects = {
-    seed_project = data.google_project.seed_project.number
+  base_projects = {
+    seed_project      = data.google_project.seed_project.number
+    cicd_project      = data.google_project.cicd_project.number
+    audit_logs        = module.org_audit_logs.project_number
+    billing_logs      = module.org_billing_logs.project_number
+    secrets           = module.org_secrets.project_number
+    interconnect      = module.interconnect.project_number
+    scc_notifications = module.scc_notifications.project_number
+    dns_hub           = module.dns_hub.project_number
   }
 
-  monitoring_alert_emails = toset([var.monitoring_workspace_users])
+  monitored_projects = merge(local.base_projects,
+    var.enable_hub_and_spoke ?
+    {
+      base_network_hub       = module.base_network_hub[0].project_number
+      restricted_network_hub = module.restricted_network_hub[0].project_number
+    }
+    :
+    {}
+  )
+
   monitored_projects_list = join(", ", [for k, v in local.monitored_projects : "\"projects/${v}\""])
+}
+
+resource "random_string" "ending" {
+  length  = 4
+  special = false
+  upper   = false
 }
 
 data "google_project" "seed_project" {
   project_id = local.seed_project_id
 }
 
+data "google_project" "cicd_project" {
+  project_id = local.cicd_project
+}
+
 resource "google_monitoring_monitored_project" "projects_monitored" {
   for_each = local.monitored_projects
 
-  metrics_scope = join("", ["locations/global/metricsScopes/", module.org_audit_logs.project_id])
+  metrics_scope = join("", ["locations/global/metricsScopes/", module.org_monitoring.project_id])
   name          = each.value
 }
 
@@ -62,19 +88,26 @@ resource "time_sleep" "wait_for_propagation" {
   depends_on = [google_logging_metric.logging_metric]
 }
 
-resource "google_monitoring_notification_channel" "email_channel" {
-  for_each = local.monitoring_alert_emails
+//create topic
+module "pubsub_monitoring" {
+  source  = "terraform-google-modules/pubsub/google"
+  version = "~> 6.0"
 
-  project      = module.org_audit_logs.project_id
-  display_name = "Foundation default notification channel"
-  type         = "email"
+  topic      = "top-iam-monitoring-${random_string.ending.result}-event"
+  project_id = module.org_monitoring.project_id
+}
+
+resource "google_monitoring_notification_channel" "pubsub_channel" {
+  project      = module.org_monitoring.project_id
+  display_name = ""
+  type         = "pubsub"
 
   labels = {
-    email_address = each.value
+    topic = module.pubsub_monitoring.topic
   }
 }
 
-resource "time_sleep" "wait_for_propagation_email_channel" {
+resource "time_sleep" "wait_for_propagation_notification_channel" {
   destroy_duration = "180s"
 
   depends_on = [google_logging_metric.logging_metric]
@@ -83,7 +116,7 @@ resource "time_sleep" "wait_for_propagation_email_channel" {
 resource "google_monitoring_alert_policy" "alert_policy" {
   display_name = "GCS Bucket - Set IAM policy Alert"
   combiner     = "AND"
-  project      = module.org_audit_logs.project_id
+  project      = module.org_monitoring.project_id
 
   conditions {
     display_name = "Set Bucket IAM policy custom metric"
@@ -105,17 +138,17 @@ resource "google_monitoring_alert_policy" "alert_policy" {
     }
   }
 
-  notification_channels = [for u in google_monitoring_notification_channel.email_channel : u.name]
+  notification_channels = [google_monitoring_notification_channel.pubsub_channel.name]
 
   depends_on = [
     time_sleep.wait_for_propagation,
-    time_sleep.wait_for_propagation_email_channel,
-    google_monitoring_notification_channel.email_channel
+    time_sleep.wait_for_propagation_notification_channel,
+    google_monitoring_notification_channel.pubsub_channel
   ]
 }
 
 resource "google_monitoring_dashboard" "dashboard" {
-  project = module.org_audit_logs.project_id
+  project = module.org_monitoring.project_id
   dashboard_json = templatefile("${path.module}/templates/dashboard.json.tftpl",
     {
       alert_policy_name  = google_monitoring_alert_policy.alert_policy.name

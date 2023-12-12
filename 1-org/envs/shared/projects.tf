@@ -23,7 +23,7 @@ locals {
   ]
 }
 
-module "monitoring" {
+module "org_monitoring" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 14.0"
 
