@@ -14,6 +14,42 @@
  * limitations under the License.
  */
 
+locals {
+  monitored_projects = {
+    env_monitoring = module.monitoring_project.project_number
+    env_secrets    = module.env_secrets.project_number
+  }
+}
+
+
+resource "google_monitoring_monitored_project" "projects_monitored" {
+  for_each = local.monitored_projects
+
+  metrics_scope = join("", ["locations/global/metricsScopes/", local.org_monitoring_project_id])
+  name          = each.value
+}
+
+resource "time_sleep" "wait_for_propagation_adding_monitoring_project" {
+  create_duration = "60s"
+
+  depends_on = [google_monitoring_monitored_project.projects_monitored]
+}
+
+resource "google_logging_metric" "logging_metric" {
+  for_each = local.monitored_projects
+
+  name    = "set-bucket-iam-policy"
+  project = each.value
+  filter  = "resource.type=gcs_bucket AND protoPayload.methodName=\"storage.setIamPermissions\""
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+
+  depends_on = [time_sleep.wait_for_propagation_adding_monitoring_project]
+}
+
 /******************************************
   Projects for monitoring workspaces
 *****************************************/
@@ -50,3 +86,4 @@ module "monitoring_project" {
   budget_amount               = var.project_budget.monitoring_budget_amount
   budget_alert_spend_basis    = var.project_budget.monitoring_budget_alert_spend_basis
 }
+

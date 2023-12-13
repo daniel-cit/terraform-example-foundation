@@ -16,14 +16,20 @@
 
 locals {
   base_projects = {
-    seed_project      = data.google_project.seed_project.number
-    cicd_project      = data.google_project.cicd_project.number
-    audit_logs        = module.org_audit_logs.project_number
-    billing_logs      = module.org_billing_logs.project_number
-    secrets           = module.org_secrets.project_number
-    interconnect      = module.interconnect.project_number
-    scc_notifications = module.scc_notifications.project_number
-    dns_hub           = module.dns_hub.project_number
+    seed_project        = data.google_project.seed_project.number
+    cicd_project        = data.google_project.cicd_project.number
+    audit_logs          = module.org_audit_logs.project_number
+    billing_logs        = module.org_billing_logs.project_number
+    secrets             = module.org_secrets.project_number
+    interconnect        = module.interconnect.project_number
+    scc_notifications   = module.scc_notifications.project_number
+    dns_hub             = module.dns_hub.project_number
+    dev_base            = module.base_restricted_environment_network["development"].base_shared_vpc_project_number
+    dev_restricted      = module.base_restricted_environment_network["development"].restricted_shared_vpc_project_number
+    non_prod_base       = module.base_restricted_environment_network["non-production"].base_shared_vpc_project_number
+    non_prod_restricted = module.base_restricted_environment_network["non-production"].restricted_shared_vpc_project_number
+    prod_base           = module.base_restricted_environment_network["production"].base_shared_vpc_project_number
+    prod_restricted     = module.base_restricted_environment_network["production"].restricted_shared_vpc_project_number
   }
 
   monitored_projects = merge(local.base_projects,

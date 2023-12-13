@@ -59,6 +59,36 @@ module "infra_pipelines" {
   private_worker_pool_id      = local.cloud_build_private_worker_pool_id
 }
 
+resource "google_monitoring_monitored_project" "projects_monitored" {
+  count = local.enable_cloudbuild_deploy ? 1 : 0
+
+  metrics_scope = join("", ["locations/global/metricsScopes/", local.org_monitoring_project_id])
+  name          = module.app_infra_cloudbuild_project[0].project_number
+}
+
+resource "time_sleep" "wait_for_propagation_adding_monitoring_project" {
+  count = local.enable_cloudbuild_deploy ? 1 : 0
+
+  create_duration = "60s"
+
+  depends_on = [google_monitoring_monitored_project.projects_monitored[0]]
+}
+
+resource "google_logging_metric" "logging_metric" {
+  count = local.enable_cloudbuild_deploy ? 1 : 0
+
+  name    = "set-bucket-iam-policy"
+  project = module.app_infra_cloudbuild_project[0].project_number
+  filter  = "resource.type=gcs_bucket AND protoPayload.methodName=\"storage.setIamPermissions\""
+
+  metric_descriptor {
+    metric_kind = "DELTA"
+    value_type  = "INT64"
+  }
+
+  depends_on = [time_sleep.wait_for_propagation_adding_monitoring_project]
+}
+
 /**
  * When Jenkins CICD is used for deployment this resource
  * is created to terraform validation works.

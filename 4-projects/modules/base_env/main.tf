@@ -19,6 +19,7 @@ locals {
   billing_account                     = data.terraform_remote_state.bootstrap.outputs.common_config.billing_account
   project_prefix                      = data.terraform_remote_state.bootstrap.outputs.common_config.project_prefix
   projects_backend_bucket             = data.terraform_remote_state.bootstrap.outputs.projects_gcs_bucket_tfstate
+  org_monitoring_project_id           = data.terraform_remote_state.org.outputs.org_monitoring_project_id
   perimeter_name                      = data.terraform_remote_state.network_env.outputs.restricted_service_perimeter_name
   base_network_self_link              = data.terraform_remote_state.network_env.outputs.base_network_self_link
   base_subnets_self_links             = data.terraform_remote_state.network_env.outputs.base_subnets_self_links
@@ -37,6 +38,15 @@ data "terraform_remote_state" "bootstrap" {
   config = {
     bucket = var.remote_state_bucket
     prefix = "terraform/bootstrap/state"
+  }
+}
+
+data "terraform_remote_state" "org" {
+  backend = "gcs"
+
+  config = {
+    bucket = var.remote_state_bucket
+    prefix = "terraform/org/state"
   }
 }
 
