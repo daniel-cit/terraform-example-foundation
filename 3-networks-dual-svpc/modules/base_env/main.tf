@@ -15,14 +15,15 @@
  */
 
 locals {
-  restricted_project_id        = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].restricted_shared_vpc_project_id
-  restricted_project_number    = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].restricted_shared_vpc_project_number
-  base_project_id              = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].base_shared_vpc_project_id
-  interconnect_project_number  = data.terraform_remote_state.org.outputs.interconnect_project_number
-  dns_hub_project_id           = data.terraform_remote_state.org.outputs.dns_hub_project_id
-  organization_service_account = data.terraform_remote_state.bootstrap.outputs.organization_step_terraform_service_account_email
-  networks_service_account     = data.terraform_remote_state.bootstrap.outputs.networks_step_terraform_service_account_email
-  projects_service_account     = data.terraform_remote_state.bootstrap.outputs.projects_step_terraform_service_account_email
+  restricted_project_id         = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].restricted_shared_vpc_project_id
+  restricted_project_number     = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].restricted_shared_vpc_project_number
+  base_project_id               = data.terraform_remote_state.org.outputs.shared_vpc_projects[var.env].base_shared_vpc_project_id
+  interconnect_project_number   = data.terraform_remote_state.org.outputs.interconnect_project_number
+  org_monitoring_project_number = data.terraform_remote_state.org.outputs.org_monitoring_project_number
+  dns_hub_project_id            = data.terraform_remote_state.org.outputs.dns_hub_project_id
+  organization_service_account  = data.terraform_remote_state.bootstrap.outputs.organization_step_terraform_service_account_email
+  networks_service_account      = data.terraform_remote_state.bootstrap.outputs.networks_step_terraform_service_account_email
+  projects_service_account      = data.terraform_remote_state.bootstrap.outputs.projects_step_terraform_service_account_email
 
   dedicated_interconnect_egress_policy = var.enable_dedicated_interconnect ? [
     {
@@ -40,6 +41,40 @@ locals {
       }
     },
   ] : []
+
+  monitoring_ingress_policy = [
+    {
+      from = {
+        "sources" = {
+          "access_level" = ["*"]
+        }
+      }
+      to = {
+        "resources" = ["*"]
+        "operations" = {
+          "logging.googleapis.com" = {
+            "methods" = ["*"]
+          }
+        }
+      },
+    }
+  ]
+
+  monitoring_egress_policy = [
+    {
+      "from" = {
+        "identity_type" = "ANY_IDENTITY"
+      },
+      "to" = {
+        "resources" = ["projects/${local.org_monitoring_project_number}"]
+        "operations" = {
+          "monitoring.googleapis.com" = {
+            "methods" = ["*"]
+          }
+        }
+      }
+    },
+  ]
 
   bgp_asn_number = var.enable_partner_interconnect ? "16550" : "64514"
 
@@ -212,10 +247,16 @@ module "restricted_shared_vpc" {
   default_region1            = var.default_region1
   default_region2            = var.default_region2
   domain                     = var.domain
-  ingress_policies           = var.ingress_policies
+
+  ingress_policies = distinct(concat(
+    var.ingress_policies,
+    local.monitoring_ingress_policy,
+    []
+  ))
 
   egress_policies = distinct(concat(
     local.dedicated_interconnect_egress_policy,
+    local.monitoring_egress_policy,
     var.egress_policies
   ))
 

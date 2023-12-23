@@ -103,13 +103,20 @@ module "pubsub_monitoring" {
   project_id = module.org_monitoring.project_id
 }
 
+resource "google_pubsub_topic_iam_member" "publisher" {
+  project = module.org_monitoring.project_id
+  topic   = module.pubsub_monitoring.topic
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:service-${module.org_monitoring.project_number}@gcp-sa-monitoring-notification.iam.gserviceaccount.com"
+}
+
 resource "google_monitoring_notification_channel" "pubsub_channel" {
   project      = module.org_monitoring.project_id
   display_name = ""
   type         = "pubsub"
 
   labels = {
-    topic = module.pubsub_monitoring.topic
+    topic = module.pubsub_monitoring.id
   }
 }
 

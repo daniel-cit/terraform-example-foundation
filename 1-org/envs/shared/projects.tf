@@ -43,7 +43,8 @@ module "org_monitoring" {
   activate_apis = [
     "logging.googleapis.com",
     "monitoring.googleapis.com",
-    "billingbudgets.googleapis.com"
+    "billingbudgets.googleapis.com",
+    "pubsub.googleapis.com",
   ]
 
   labels = {

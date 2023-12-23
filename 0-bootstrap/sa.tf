@@ -73,7 +73,9 @@ locals {
       "roles/resourcemanager.folderAdmin",
     ],
     "env" = [
-      "roles/resourcemanager.folderAdmin"
+      "roles/resourcemanager.folderAdmin",
+      "roles/monitoring.metricsScopesAdmin",
+      "roles/monitoring.admin",
     ],
     "net" = [
       "roles/resourcemanager.folderViewer",
@@ -86,6 +88,8 @@ locals {
     "proj" = [
       "roles/resourcemanager.folderViewer",
       "roles/resourcemanager.folderIamAdmin",
+      "roles/monitoring.metricsScopesAdmin",
+      "roles/monitoring.admin",
       "roles/artifactregistry.admin",
       "roles/compute.networkAdmin",
       "roles/compute.xpnAdmin",
@@ -132,6 +136,11 @@ locals {
       "roles/resourcemanager.projectDeleter",
       "roles/dns.admin",
       "roles/iam.workloadIdentityPoolAdmin",
+    ],
+    "org" = [
+      "roles/monitoring.admin",
+      "roles/monitoring.metricsScopesAdmin",
+      "roles/logging.viewer",
     ],
   }
 

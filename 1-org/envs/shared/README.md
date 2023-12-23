@@ -52,6 +52,7 @@
 | org\_billing\_logs\_project\_id | The org billing logs project ID |
 | org\_id | The organization id |
 | org\_monitoring\_project\_id | The monitorings project ID |
+| org\_monitoring\_project\_number | The monitorings project Number |
 | org\_monitoring\_topic | The Pub/Sub topic used for the notification channel in the monitoring project. |
 | org\_secrets\_project\_id | The org secrets project ID |
 | parent\_resource\_id | The parent resource id |

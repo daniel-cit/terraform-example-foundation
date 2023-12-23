@@ -50,8 +50,13 @@ output "org_audit_logs_project_id" {
 }
 
 output "org_monitoring_project_id" {
-  value       = module.org_audit_logs.project_id
+  value       = module.org_monitoring.project_id
   description = "The monitorings project ID"
+}
+
+output "org_monitoring_project_number" {
+  value       = module.org_monitoring.project_number
+  description = "The monitorings project Number"
 }
 
 output "org_billing_logs_project_id" {

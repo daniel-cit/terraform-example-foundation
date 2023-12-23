@@ -6,25 +6,13 @@
     "columns": 48,
     "tiles": [
       {
-        "height": 16,
+        "height": 20,
         "widget": {
           "alertChart": {
             "name": "${alert_policy_name}"
           }
         },
-        "width": 24
-      },
-      {
-        "height": 16,
-        "widget": {
-          "logsPanel": {
-            "filter": "resource.type=\"gcs_bucket\"  AND protoPayload.methodName=\"storage.setIamPermissions\"\n",
-            "resourceNames": [${monitored_projects}]
-          },
-          "title": "Set Bucket IAM policy - Audit Logs"
-        },
-        "width": 24,
-        "xPos": 24
+        "width": 46
       }
     ]
   }
