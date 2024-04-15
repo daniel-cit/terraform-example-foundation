@@ -18,7 +18,7 @@ on:
     branches:
       - 'development'
       - 'production'
-      - 'non-production'
+      - 'nonproduction'
 
 env:
   PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -59,10 +59,10 @@ jobs:
         shell: bash
         run: |
           echo "Adding bucket information to backends"
-          for i in `find -name 'backend.tf'`
+          for i in `find . -name 'backend.tf'`
           do
-            sed -i "s/UPDATE_ME/${TF_BACKEND}/" $i
-            sed -i "s/UPDATE_PROJECTS_BACKEND/${TF_BACKEND}/" $i
+            sed -i'' -e "s/UPDATE_ME/${TF_BACKEND}/" $i
+            sed -i'' -e "s/UPDATE_PROJECTS_BACKEND/${TF_BACKEND}/" $i
           done
 
       - id: init

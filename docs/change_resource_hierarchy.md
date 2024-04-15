@@ -10,14 +10,14 @@ The current deployment scenario of Terraform Foundation Example blueprint consid
 | common | Contains projects with common resources used by the organization like logging and Security Command Center. |
 | network | Contains projects with common networks resources used by the organization like DNS Hub, hybrid connectivity, and Shared VPCs. |
 | production | Environment folder that contains projects with cloud resources that have been promoted into production. |
-| non-production | Environment folder that contains a replica of the production environment to let you test workloads before you put them into production. |
+| nonproduction | Environment folder that contains a replica of the production environment to let you test workloads before you put them into production. |
 | development | Environment folder that is used as a development and sandbox environment. |
 
 This document covers a scenario where you can have two or more levels of folders, both from the source code point of view and the Cloud Resource Manager point of view, with an environment-centric focus: `environments -> ... -> business units`.
 
 | Current Hierarchy | Changed Hierarchy |
 | --- | --- |
-| <pre>example-organization/<br>├── fldr-bootstrap<br>├── fldr-common<br>├── fldr-network<br>├── <b>fldr-development *</b><br>├── <b>fldr-non-production *</b><br>└── <b>fldr-production *</b><br></pre> | <pre>example-organization/<br>├── fldr-bootstrap<br>├── fldr-common<br>├── fldr-network<br>├── <b>fldr-development *</b><br>│   ├── finance<br>│   └── retail<br>├── <b>fldr-non-production *</b><br>│   ├── finance<br>│   └── retail<br>└── <b>fldr-production *</b><br>    ├── finance<br>    └── retail<br></pre> |
+| <pre>example-organization/<br>├── fldr-bootstrap<br>├── fldr-common<br>├── fldr-network<br>├── <b>fldr-development *</b><br>├── <b>fldr-nonproduction *</b><br>└── <b>fldr-production *</b><br></pre> | <pre>example-organization/<br>├── fldr-bootstrap<br>├── fldr-common<br>├── fldr-network<br>├── <b>fldr-development *</b><br>│   ├── finance<br>│   └── retail<br>├── <b>fldr-nonproduction *</b><br>│   ├── finance<br>│   └── retail<br>└── <b>fldr-production *</b><br>    ├── finance<br>    └── retail<br></pre> |
 
 ## Code Changes - Build Files
 
@@ -44,7 +44,7 @@ example-organization/
 ├── <b>development *</b>
 │   ├── finance
 │   └── retail
-├── <b>non-production *</b>
+├── <b>nonproduction *</b>
 │   ├── finance
 │   └── retail
 └── <b>production *</b>
@@ -175,22 +175,22 @@ example-organization/
     ...
     ```
 
-1. Create your source code folder hierarchy above environment folders (development, non-production, production). Remember to keep the source code environment folders as leaves (latest level) in the source code folder hierarchy because this is the way `tf-wrapper.sh` - the bash script helper - works to apply terraform configurations.
+1. Create your source code folder hierarchy above environment folders (development, nonproduction, production). Remember to keep the source code environment folders as leaves (latest level) in the source code folder hierarchy because this is the way `tf-wrapper.sh` - the bash script helper - works to apply terraform configurations.
 1. Manually duplicate your source folder hierarchy to match your needs.
 1. **(Optional)** To simplify the below changes renaming business_units here is helper script. **Remember to review the changes**. The below script assumes you are in `gcp-projects` folder:
 
     ```bash
-    for i in `find "./business_unit_1" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/bu1/<YOUR BUSINESS UNIT CODE>/" $i; done
+    for i in `find "./business_unit_1" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/bu1/<YOUR BUSINESS UNIT CODE>/" $i; done
 
-    for i in `find "./business_unit_1" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/business_unit_1/<YOUR BUSINESS UNIT NAME>/" $i; done
+    for i in `find "./business_unit_1" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/business_unit_1/<YOUR BUSINESS UNIT NAME>/" $i; done
 
-    for i in `find "./business_unit_2" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/bu2/<YOUR BUSINESS UNIT CODE>/" $i; done
+    for i in `find "./business_unit_2" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/bu2/<YOUR BUSINESS UNIT CODE>/" $i; done
 
-    for i in `find "./business_unit_2" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/business_unit_2/<YOUR BUSINESS UNIT NAME>/" $i; done
+    for i in `find "./business_unit_2" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/business_unit_2/<YOUR BUSINESS UNIT NAME>/" $i; done
 
-    for i in `find "./business_unit_<NEW BUSINESS UNIT NUMBER>" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/bu<NEW BUSINESS UNIT NUMBER>/<YOUR BUSINESS UNIT CODE>/" $i; done
+    for i in `find "./business_unit_<NEW BUSINESS UNIT NUMBER>" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/bu<NEW BUSINESS UNIT NUMBER>/<YOUR BUSINESS UNIT CODE>/" $i; done
 
-    for i in `find "./business_unit_<NEW BUSINESS UNIT NUMBER>" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i "s/business_unit_<NEW BUSINESS UNIT NUMBER>/<YOUR BUSINESS UNIT NAME>/" $i; done
+    for i in `find "./business_unit_<NEW BUSINESS UNIT NUMBER>" -type f -not -path "*/.terraform/*" -name '*.tf'`; do sed -i'' -e "s/business_unit_<NEW BUSINESS UNIT NUMBER>/<YOUR BUSINESS UNIT NAME>/" $i; done
     ```
 
 1. For this example, just rename folders business_unit_1 and business_unit_2 to your Business Units names, i.e: finance and retail, to match the example folder hierarchy.

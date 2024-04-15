@@ -39,9 +39,14 @@ output "common_folder_name" {
   description = "The common folder name"
 }
 
+output "network_folder_name" {
+  value       = google_folder.network.name
+  description = "The network folder name."
+}
+
 output "org_audit_logs_project_id" {
   value       = module.org_audit_logs.project_id
-  description = "The org audit logs project ID"
+  description = "The org audit logs project ID."
 }
 
 output "org_billing_logs_project_id" {
@@ -52,6 +57,11 @@ output "org_billing_logs_project_id" {
 output "org_secrets_project_id" {
   value       = module.org_secrets.project_id
   description = "The org secrets project ID"
+}
+
+output "org_kms_project_id" {
+  value       = module.org_kms.project_id
+  description = "The org Cloud Key Management Service (KMS) project ID"
 }
 
 output "interconnect_project_id" {
@@ -104,19 +114,29 @@ output "logs_export_storage_bucket_name" {
   description = "The storage bucket for destination of log exports"
 }
 
-output "logs_export_logbucket_name" {
-  value       = module.logs_export.logbucket_destination_name
-  description = "The log bucket for destination of log exports. See https://cloud.google.com/logging/docs/routing/overview#buckets"
+output "logs_export_project_logbucket_name" {
+  description = "The resource name for the Log Bucket created for the project destination."
+  value       = module.logs_export.project_logbucket_name
 }
 
-output "logs_export_bigquery_dataset_name" {
-  value       = module.logs_export.bigquery_destination_name
-  description = "The log bucket for destination of log exports. See https://cloud.google.com/logging/docs/routing/overview#buckets"
+output "logs_export_project_linked_dataset_name" {
+  description = "The resource name of the Log Bucket linked BigQuery dataset for the project destination."
+  value       = module.logs_export.project_linked_dataset_name
+}
+
+output "billing_sink_names" {
+  value       = module.logs_export.billing_sink_names
+  description = "The name of the sinks under billing account level."
 }
 
 output "tags" {
   value       = local.tags_output
-  description = "Tag Values to be applied on next steps"
+  description = "Tag Values to be applied on next steps."
+}
+
+output "shared_vpc_projects" {
+  value       = { for k, v in module.base_restricted_environment_network : k => v }
+  description = "Base and restricted shared VPC Projects info grouped by environment (development, nonproduction, production)."
 }
 
 output "cai_monitoring_artifact_registry" {

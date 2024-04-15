@@ -19,7 +19,7 @@ locals {
     environment = {
       shortname   = "environment${local.key_suffix}"
       description = "Environment identification"
-      values      = ["bootstrap", "production", "non-production", "development"]
+      values      = ["bootstrap", "production", "nonproduction", "development"]
     }
 
     # Create your own Tags based on the following template.
@@ -73,6 +73,11 @@ resource "google_tags_tag_value" "tag_values" {
 # For more details about how to use terraform binding resource see: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_binding
 resource "google_tags_tag_binding" "common_folder" {
   parent    = "//cloudresourcemanager.googleapis.com/${google_folder.common.id}"
+  tag_value = google_tags_tag_value.tag_values["environment_production"].id
+}
+
+resource "google_tags_tag_binding" "network_folder" {
+  parent    = "//cloudresourcemanager.googleapis.com/${google_folder.network.id}"
   tag_value = google_tags_tag_value.tag_values["environment_production"].id
 }
 

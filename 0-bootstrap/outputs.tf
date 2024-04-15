@@ -63,30 +63,21 @@ output "common_config" {
   }
 }
 
-output "group_org_admins" {
-  description = "Google Group for GCP Organization Administrators."
-  value       = var.groups.create_groups == true ? module.required_group["group_org_admins"].id : var.group_org_admins
-}
-
-output "group_billing_admins" {
-  description = "Google Group for GCP Billing Administrators."
-  value       = var.groups.create_groups == true ? module.required_group["group_billing_admins"].id : var.group_billing_admins
-}
-
 output "required_groups" {
   description = "List of Google Groups created that are required by the Example Foundation steps."
-  value       = var.groups.create_groups == true ? module.required_group : {}
+  value       = var.groups.create_required_groups == false ? tomap(var.groups.required_groups) : tomap({ for key, value in module.required_group : key => value.id })
 }
 
 output "optional_groups" {
   description = "List of Google Groups created that are optional to the Example Foundation steps."
-  value       = var.groups.create_groups == true ? module.optional_group : {}
+  value       = var.groups.create_optional_groups == false ? tomap(var.groups.optional_groups) : tomap({ for key, value in module.optional_group : key => value.id })
 }
 
 /* ----------------------------------------
     Specific to cloudbuild_module
    ---------------------------------------- */
-# Comment-out the cloudbuild_bootstrap module and its outputs if you want to use GitHub Actions or Jenkins instead of Cloud Build
+# Comment-out the cloudbuild_bootstrap module and its outputs if you want to use
+# GitHub Actions, GitLab CI/CD, Terraform Cloud, or Jenkins instead of Cloud Build
 output "cloudbuild_project_id" {
   description = "Project where Cloud Build configuration and terraform container image will reside."
   value       = module.tf_source.cloudbuild_project_id
@@ -194,4 +185,59 @@ output "cloud_build_peered_network_id" {
 # output "gcs_bucket_jenkins_artifacts" {
 #   description = "Bucket used to store Jenkins artifacts in Jenkins project."
 #   value       = module.jenkins_bootstrap.gcs_bucket_jenkins_artifacts
+# }
+
+/* ----------------------------------------
+    Specific to gitlab_bootstrap
+   ---------------------------------------- */
+# Un-comment gitlab_bootstrap and its outputs if you want to use GitLab CI/CD instead of Cloud Build
+# output "cicd_project_id" {
+#   description = "Project where the CI/CD infrastructure for GitLab CI/CD resides."
+#   value       = module.gitlab_cicd.project_id
+# }
+
+# output "projects_gcs_bucket_tfstate" {
+#   description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+#   value       = module.seed_bootstrap.gcs_bucket_tfstate
+# }
+
+/* ----------------------------------------
+    Specific to tfc_bootstrap
+   ---------------------------------------- */
+# Un-comment tfc_bootstrap and its outputs if you want to use Terraform Cloud instead of Cloud Build
+# output "cicd_project_id" {
+#   description = "Project where the CI/CD infrastructure for Terraform Cloud resides."
+#   value       = module.tfc_cicd.project_id
+# }
+#
+# output "tfc_org_name" {
+#   description = "Name of the TFC organization."
+#   value       = var.tfc_org_name
+# }
+
+/* ----------------------------------------
+    Specific to tfc_bootstrap with Terraform Cloud Agents
+   ---------------------------------------- */
+# Un-comment if you want to use Terraform Cloud Agents
+# (In other words, un-comment if you set enable_tfc_cloud_agents to true on .tfvars)
+
+# output "kubernetes_endpoint" {
+#   description = "The GKE cluster endpoint"
+#   sensitive   = true
+#   value       = module.tfc_agent_gke[0].kubernetes_endpoint
+# }
+
+# output "service_account" {
+#   description = "The default service account used for TFC agent nodes"
+#   value       = module.tfc_agent_gke[0].service_account
+# }
+
+# output "cluster_name" {
+#   description = "GKE cluster name"
+#   value       = module.tfc_agent_gke[0].cluster_name
+# }
+
+# output "hub_cluster_membership_id" {
+#   value = module.tfc_agent_gke[0].hub_cluster_membership_id
+#   description = "The ID of the cluster membership"
 # }

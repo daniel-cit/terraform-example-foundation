@@ -24,7 +24,10 @@ See [GLOSSARY.md](./GLOSSARY.md).
 - [Cannot assign requested address error in Cloud Shell](#cannot-assign-requested-address-error-in-cloud-shell)
 - [Error: Unsupported attribute](#error-unsupported-attribute)
 - [Error: Error adding network peering](#error-error-adding-network-peering)
+- [Error: Terraform deploy fails due to GitLab repositories not found](#terraform-deploy-fails-due-to-gitlab-repositories-not-found)
+- [Error: Gitlab pipelines access denied](#gitlab-pipelines-access-denied)
 - [Error: Unknown project id on 4-project step context](#error-unknown-project-id-on-4-project-step-context)
+- [Error: Error getting operation for committing purpose for TagValue](#error-error-getting-operation-for-committing-purpose-for-tagvalue)
 - - -
 
 ### Project quota exceeded
@@ -46,7 +49,7 @@ form to request a quota increase.
 
 In the support form,
 for the field **Email addresses that will be used to create projects**,
-use the email address of `terraform_service_account` that is created by the Terraform Example Foundation 0-bootstrap step.
+use the email address of `projects_step_terraform_service_account_email` that is created by the Terraform Example Foundation 0-bootstrap step.
 
 **Notes:**
 
@@ -269,7 +272,7 @@ You will need to mark some Terraform resources as **tainted** in order to trigge
 
 1. In a terminal, navigate to the path where the error is being reported.
 
-   For example, if the unknown project ID is `prj-bu1-p-sample-base-abcd`, you should go to ./gcp-projects/business_unit_1/production (`business_unit_1` due to `bu1` and `production` due to `p`, see the Security Foundations [naming conventions](https://cloud.google.com/architecture/security-foundations/using-example-terraform#naming_conventions) for more information on the projects naming guideline).
+   For example, if the unknown project ID is `prj-bu1-p-sample-base-shared`, you should go to ./gcp-projects/business_unit_1/production (`business_unit_1` due to `bu1` and `production` due to `p`, see [naming conventions](https://cloud.google.com/architecture/security-foundations/using-example-terraform#naming_conventions) for more information on the projects naming guideline).
 
    ```bash
    cd ./gcp-projects/<business_unit>/<environment>
@@ -303,7 +306,7 @@ Using the `production` environment for this example, the folder ID for the envir
    fldr-bootstrap       folders/PARENT_FOLDER  111111111111
    fldr-common          folders/PARENT_FOLDER  222222222222
    fldr-production      folders/PARENT_FOLDER  333333333333
-   fldr-non-production  folders/PARENT_FOLDER  444444444444
+   fldr-nonproduction  folders/PARENT_FOLDER  444444444444
    fldr-development     folders/PARENT_FOLDER  555555555555
    ```
 
@@ -334,6 +337,22 @@ This should complete successfully, if you encounter another similar error for an
 
    - Make sure you run the taint command just for the resources that contain the [number] at the end of the line returned by terraform state list step. You don't need to run for the groups (the resources that don't have the [] at the end).
 
+### Error: Error getting operation for committing purpose for TagValue
+
+**Error message:**
+
+```text
+Error: Error waiting to create TagValue: Error waiting for Creating TagValue: Error code 13, message: Error getting operation for committing purpose for TagValue: tagValues/{tag_value_id}
+```
+
+**Cause:**
+
+Sometimes when deploying a [google_tags_tag_value](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/tags_tag_value) the error occurs and Terraform is not able to finish the execution.
+
+**Solution:**
+
+1. This is a transient error and the deploy can be retried.
+1. A retry policy was added to prevent this error during the integration test.
 - - -
 
 ### Caller does not have permission in the Organization
@@ -428,7 +447,7 @@ You can get this information from step `0-bootstrap` by running the following co
 1. Update `backend.tf` with the remote state backend bucket you got on previously inside `<YOUR-REMOTE-STATE-BACKEND-BUCKET>`:
 
    ```bash
-   for i in `find -name 'backend.tf'`; do sed -i 's/UPDATE_ME/<YOUR-REMOTE-STATE-BACKEND-BUCKET>/' $i; done
+   for i in `find . -name 'backend.tf'`; do sed -i'' -e 's/UPDATE_ME/<YOUR-REMOTE-STATE-BACKEND-BUCKET>/' $i; done
    ```
 
 1. Navigate into `envs/development` where your terraform config files are in and run terraform init:
@@ -474,3 +493,41 @@ You can get this information from step `0-bootstrap` by running the following co
 **Terraform State lock possible causes:**
 
 - If you realize that the Terraform State lock was due to a build timeout increase the build timeout on [build configuration](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/build/cloudbuild-tf-apply.yaml#L15).
+
+### Terraform deploy fails due to GitLab repositories not found
+
+**Error message:**
+
+```text
+Error: POST https://gitlab.com/api/v4/projects/<GITLAB-ACCOUNT>/<GITLAB-REPOSITORY>/variables: 404 {message: 404 Project Not Found}
+
+```
+
+**Cause:**
+
+This message means that you are using a wrong Access Token or you have Access Token created in both Gitlab Account/Group and GitLab Repository.
+
+Only Personal Access Token under GitLab Account/Group should exist.
+
+**Solution:**
+
+Remove any Access Token from the GitLab repositories used by Google Secure Foundation Blueprint.
+
+### Gitlab pipelines access denied
+
+**Error message:**
+
+From the logs of your Pipeline job:
+
+```text
+Error response from daemon: pull access denied for registry.gitlab.com/<YOUR-GITLAB-ACCOUNT>/<YOUR-GITLAB-CICD-REPO>/terraform-gcloud, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+```
+
+**Cause:**
+
+The cause of this message is that the CI/CD repository has "Limit access to this project" enabled in the Token Access settings.
+
+**Solution:**
+
+Add all the projects/repositories to be used in the Terraform Example Foundation to the allow list available in
+`CI/CD Repo -> Settings -> CI/CD -> Token Access -> Allow CI job tokens from the following projects to access this project`.

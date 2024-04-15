@@ -17,24 +17,24 @@
 #Groups creation resources
 
 locals {
-  optional_groups_to_create = {
-    for key, value in var.groups.optional_groups : key => value
-    if value != "" && var.groups.create_groups == true
-  }
   required_groups_to_create = {
     for key, value in var.groups.required_groups : key => value
-    if var.groups.create_groups == true
+    if var.groups.create_required_groups == true
+  }
+  optional_groups_to_create = {
+    for key, value in var.groups.optional_groups : key => value
+    if value != "" && var.groups.create_optional_groups == true
   }
 }
 
 data "google_organization" "org" {
-  count        = var.groups.create_groups ? 1 : 0
+  count        = var.groups.create_required_groups || var.groups.create_optional_groups ? 1 : 0
   organization = var.org_id
 }
 
 module "required_group" {
   source   = "terraform-google-modules/group/google"
-  version  = "~> 0.4"
+  version  = "~> 0.6"
   for_each = local.required_groups_to_create
 
   id                   = each.value
@@ -46,7 +46,7 @@ module "required_group" {
 
 module "optional_group" {
   source   = "terraform-google-modules/group/google"
-  version  = "~> 0.4"
+  version  = "~> 0.6"
   for_each = local.optional_groups_to_create
 
   id                   = each.value

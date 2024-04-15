@@ -79,7 +79,24 @@ variable "default_region2" {
 }
 
 variable "subnets" {
-  type        = list(map(string))
+  type = list(object({
+    subnet_name                      = string
+    subnet_ip                        = string
+    subnet_region                    = string
+    subnet_private_access            = optional(string, "false")
+    subnet_private_ipv6_access       = optional(string)
+    subnet_flow_logs                 = optional(string, "false")
+    subnet_flow_logs_interval        = optional(string, "INTERVAL_5_SEC")
+    subnet_flow_logs_sampling        = optional(string, "0.5")
+    subnet_flow_logs_metadata        = optional(string, "INCLUDE_ALL_METADATA")
+    subnet_flow_logs_filter          = optional(string, "true")
+    subnet_flow_logs_metadata_fields = optional(list(string), [])
+    description                      = optional(string)
+    purpose                          = optional(string)
+    role                             = optional(string)
+    stack_type                       = optional(string)
+    ipv6_access_type                 = optional(string)
+  }))
   description = "The list of subnets being created"
   default     = []
 }
@@ -140,14 +157,10 @@ variable "restricted_services" {
   description = "List of services to restrict."
 }
 
-variable "allow_all_egress_ranges" {
-  description = "List of network ranges to which all egress traffic will be allowed"
-  default     = null
-}
-
-variable "allow_all_ingress_ranges" {
-  description = "List of network ranges from which all ingress traffic will be allowed"
-  default     = null
+variable "enable_all_vpc_internal_traffic" {
+  type        = bool
+  description = "Enable firewall policy rule to allow internal traffic (ingress and egress)."
+  default     = false
 }
 
 variable "egress_policies" {

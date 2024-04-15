@@ -55,7 +55,7 @@ resource "google_storage_bucket" "cloudbuild_bucket" {
 
 module "tf_workspace" {
   source   = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_workspace"
-  version  = "~> 6.4"
+  version  = "~> 7.0"
   for_each = toset(var.app_infra_repos)
 
   project_id = var.cloudbuild_project_id
@@ -84,7 +84,7 @@ module "tf_workspace" {
     "_DOCKER_TAG_VERSION_TERRAFORM" = var.terraform_docker_tag_version
   }
 
-  tf_apply_branches = ["development", "non\\-production", "production"]
+  tf_apply_branches = ["development", "nonproduction", "production"]
 
   depends_on = [
     google_sourcerepo_repository.app_infra_repo,

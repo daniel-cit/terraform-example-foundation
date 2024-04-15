@@ -21,10 +21,11 @@ module "hierarchical_firewall_policy" {
   name   = "common-firewall-rules"
   associations = [
     local.common_folder_name,
+    local.network_folder_name,
     local.bootstrap_folder_name,
     local.development_folder_name,
     local.production_folder_name,
-    local.non_production_folder_name,
+    local.nonproduction_folder_name,
   ]
   rules = {
     delegate-rfc1918-ingress = {

@@ -51,7 +51,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
   - Access to the Jenkins Controller Web UI
   - [SSH Agent Jenkins plugin](https://plugins.jenkins.io/ssh-agent) installed in your Jenkins Controller
   - Private IP address for the Jenkins Agent: usually assigned by your network administrator. You will use this IP for the GCE instance that will be created in the `prj-b-cicd` GCP Project in step [II. Create the SEED and CI/CD projects using Terraform](#ii-create-the-seed-and-cicd-projects-using-terraform).
-  - Access to create five Git repositories, one for each directory in this [monorepo](https://github.com/terraform-google-modules/terraform-example-foundation) (`0-bootstrap, 1-org, 2-environments, 3-networks, 4-projects`). These are usually private repositories that might be on-prem.
+  - Access to create five Git repositories, one for each directory in this [monorepo](https://github.com/terraform-google-modules/terraform-example-foundation) (`gcp-bootstrap, gcp-org, gcp-environments, gcp-networks, gcp-projects`). These are usually private repositories that might be on-prem.
 
 1. Generate a SSH key pair. In the Jenkins Controller host, use the `ssh-keygen` command to generate a SSH key pair.
    - You will need this key pair to enable authentication between the Controller and Agent. Although the key pair can be generated in any linux machine, it is recommended not to copy the secret private key from one host to another, so you probably want to do this in the Jenkins Controller host command line.
@@ -69,14 +69,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 
    - You will see an output similar to this:
 
-   ```text
-   -----BEGIN RSA PRIVATE KEY-----
-         copy your private key
-           from BEGIN to END
-      And configure a new
-     Jenkins Agent in the Web UI
-   -----END RSA PRIVATE KEY-----
-   ```
+      ![RSA private key example](./files/private_key_example.png)
 
 1. Configure a new SSH Jenkins Agent in the Jenkins Controller’s Web UI. You need the following information:
    - [SSH Agent Jenkins plugin](https://plugins.jenkins.io/ssh-agent/) installed in your Controller
@@ -88,34 +81,34 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
    - Note that although this infrastructure code is distributed to you as a [monorepo](https://github.com/terraform-google-modules/terraform-example-foundation), you will store the code in five different repositories, one for each directory:
 
    ```text
-   ./0-bootstrap
-   ./1-org
-   ./2-environments
-   ./3-networks
-   ./4-projects
+   ./gcp-bootstrap
+   ./gcp-org
+   ./gcp-environments
+   ./gcp-networks
+   ./gcp-projects
    ```
 
    - For simplicity, let's name your five repositories as follows:
 
    ```text
-   YOUR_NEW_REPO-0-bootstrap
-   YOUR_NEW_REPO-1-org
-   YOUR_NEW_REPO-2-environments
-   YOUR_NEW_REPO-3-networks
-   YOUR_NEW_REPO-4-projects
+   YOUR_NEW_REPO-gcp-bootstrap
+   YOUR_NEW_REPO-gcp-org
+   YOUR_NEW_REPO-gcp-environments
+   YOUR_NEW_REPO-gcp-networks
+   YOUR_NEW_REPO-gcp-projects
    ```
 
    - **Note:** Towards the end of these instructions, you will configure your Jenkins Controller with **new automatic pipelines only for the following repositories:**
 
    ```text
-   YOUR_NEW_REPO-1-org
-   YOUR_NEW_REPO-2-environments
-   YOUR_NEW_REPO-3-networks
-   YOUR_NEW_REPO-4-projects
+   YOUR_NEW_REPO-gcp-org
+   YOUR_NEW_REPO-gcp-environments
+   YOUR_NEW_REPO-gcp-networks
+   YOUR_NEW_REPO-gcp-projects
    ```
 
-   - **Note: there is no automatic pipeline needed for `YOUR_NEW_REPO-0-bootstrap`**
-   - In this 0-bootstrap section we only work with your new repository that is a copy of the directory `./0-bootstrap` (`YOUR_NEW_REPO-0-bootstrap`)
+   - **Note: there is no automatic pipeline needed for `YOUR_NEW_REPO-gcp-bootstrap`**
+   - In this 0-bootstrap section we only work with your new repository that is a copy of the directory `./0-bootstrap` (`YOUR_NEW_REPO-gcp-bootstrap`)
 
 1. Clone this mono-repository with:
 
@@ -126,20 +119,22 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 1. Clone the repository you created to host the `0-bootstrap` directory with:
 
    ```bash
-   git clone <YOUR_NEW_REPO-0-bootstrap> 0-bootstrap
+   git clone <YOUR_NEW_REPO-gcp-bootstrap> gcp-bootstrap
    ```
 
 1. Navigate into the freshly cloned repo and change to a new branch
 
    ```bash
-   cd 0-bootstrap
-   git checkout -b my-0-bootstrap
+   cd gcp-bootstrap
+   git checkout -b plan
    ```
 
 1. Copy contents of foundation to new repo (modify accordingly based on your current directory).
 
    ```bash
-   cp -RT ../terraform-example-foundation/0-bootstrap/ .
+   mkdir -p envs/shared
+   cp -RT ../terraform-example-foundation/0-bootstrap/ ./envs/shared
+   cd ./envs/shared
    ```
 
 1. Activate the Jenkins module and disable the Cloud Build module. This implies manually editing the following files:
@@ -149,7 +144,6 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
    mv ./cb.tf ./cb.tf.example
    ```
 
-   1. Comment-out the `cloudbuild_bootstrap` outputs in `./outputs.tf`
    1. Rename file `./jenkins.tf.example` to `./jenkins.tf`
 
    ```bash
@@ -158,6 +152,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 
    1. Un-comment the `jenkins_bootstrap` variables in `./variables.tf`
    1. Un-comment the `jenkins_bootstrap` outputs in `./outputs.tf`
+   1. Comment-out the `cloudbuild_bootstrap` outputs in `./outputs.tf`
 1. Rename `terraform.example.tfvars` to `terraform.tfvars` and update the file with values from your environment.
 
    ```bash
@@ -178,7 +173,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 1. Use the helper script [validate-requirements.sh](../scripts/validate-requirements.sh) to validate your environment:
 
    ```bash
-   ../scripts/validate-requirements.sh -o <ORGANIZATION_ID> -b <BILLING_ACCOUNT_ID> -u <END_USER_EMAIL>
+   ../../../terraform-example-foundation/scripts/validate-requirements.sh  -o <ORGANIZATION_ID> -b <BILLING_ACCOUNT_ID> -u <END_USER_EMAIL> -e
    ```
 
    **Note:** The script is not able to validate if the user is in a Cloud Identity or Google Workspace group with the required roles.
@@ -186,14 +181,16 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 1. Commit changes:
 
    ```bash
+   cd ../..
    git add .
    git commit -m 'Bootstrap configuration using jenkins_module'
    ```
 
-1. Push my-0-bootstrap branch to your repository YOUR_NEW_REPO-0-bootstrap with
+1. Push `plan` branch to your repository YOUR_NEW_REPO-gcp-bootstrap with
 
    ```bash
-   git push --set-upstream origin my-0-bootstrap
+   git push --set-upstream origin plan
+   cd ./envs/shared
    ```
 
 ### II. Create the SEED and CI/CD projects using Terraform
@@ -234,7 +231,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 
    ```bash
    mv backend.tf.example backend.tf
-   for i in `find -name 'backend.tf'`; do sed -i "s/UPDATE_ME/${backend_bucket}/" $i; done
+   for i in `find . -name 'backend.tf'`; do sed -i'' -e "s/UPDATE_ME/${backend_bucket}/" $i; done
    ```
 
 1. Re-run `terraform init` and agree to copy state to gcs when prompted
@@ -252,7 +249,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
    git commit -m 'Terraform Backend configuration using GCS'
    ```
 
-1. Push my-0-bootstrap branch to your repository YOUR_NEW_REPO-0-bootstrap with
+1. Push `plan` branch to your repository YOUR_NEW_REPO-gcp-bootstrap with
 
    ```bash
    git push
@@ -282,16 +279,16 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
   - You need to configure a **"Multibranch Pipeline"**. Note that the `Jenkinsfile` and `tf-wrapper.sh` files use the `$BRANCH_NAME` environment variable. **the `$BRANCH_NAME` variable is only available in Jenkins' Multibranch Pipelines**.
 - **Jenkinsfile:** A [Jenkinsfile](../build/Jenkinsfile) has been included which closely aligns with the Cloud Build pipeline. Additionally, the stage `TF wait for approval` which lets you confirm via Jenkins UI before proceeding with `terraform apply` has been disabled by default. It can be enabled by un-commenting that stage in the file.
 
-1. Create Multibranch pipelines for your new repos (`YOUR_NEW_REPO-1-org, YOUR_NEW_REPO-2-environments, YOUR_NEW_REPO-3-networks, YOUR_NEW_REPO-4-projects`).
-   - **DO NOT configure an automatic pipeline for your `YOUR_NEW_REPO-0-bootstrap` repository**
+1. Create Multibranch pipelines for your new repos (`YOUR_NEW_REPO-gcp-org, YOUR_NEW_REPO-gcp-environments, YOUR_NEW_REPO-gcp-networks, YOUR_NEW_REPO-gcp-projects`).
+   - **DO NOT configure an automatic pipeline for your `YOUR_NEW_REPO-gcp-bootstrap` repository**
 
 1. In your Jenkins Controller Web UI, **create Multibranch Pipelines only for the following repositories:**
 
    ```text
-   YOUR_NEW_REPO-1-org
-   YOUR_NEW_REPO-2-environments
-   YOUR_NEW_REPO-3-networks
-   YOUR_NEW_REPO-4-projects
+   YOUR_NEW_REPO-gcp-org
+   YOUR_NEW_REPO-gcp-environments
+   YOUR_NEW_REPO-gcp-networks
+   YOUR_NEW_REPO-gcp-projects
    ```
 
 1. Assuming your new Git repositories are private, you may need to configure new credentials In your Jenkins Controller web UI, so it can connect to the repositories.
@@ -305,15 +302,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Clone the repo you created manually in 0-bootstrap instructions.
 
    ```bash
-   git clone <YOUR_NEW_REPO-1-org>
+   git clone <YOUR_NEW_REPO-gcp-org> gcp-org
    ```
 
-1. Navigate into the repo and change to a non-production branch. All subsequent
-   steps assume you are running them from the <YOUR_NEW_REPO-1-org> directory. If
+1. Navigate into the repo and change to a nonproduction branch. All subsequent
+   steps assume you are running them from the `gcp-org` directory. If
    you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
-   cd YOUR_NEW_REPO_CLONE-1-org
+   cd gcp-org
    git checkout -b plan
    ```
 
@@ -327,7 +324,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    chmod 755 ./tf-wrapper.sh
    ```
 
-1. Update the variables located in the `environment {}` section of the `Jenkinsfile` with values from 0-bootstrap:
+1. Update the variables located in the `environment {}` section of the `Jenkinsfile` with values from gcp-bootstrap:
 
    ```text
    _TF_SA_EMAIL
@@ -335,20 +332,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    _PROJECT_ID (the CI/CD project ID)
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values.
 
    ```bash
-   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "_STATE_BUCKET_NAME = ${BACKEND_STATE_BUCKET_NAME}"
-   sed -i "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
+   sed -i'' -e "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
 
-   TERRAFORM_SA_EMAIL=$(terraform -chdir="../0-bootstrap/" output -raw organization_step_terraform_service_account_email)
+   TERRAFORM_SA_EMAIL=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw organization_step_terraform_service_account_email)
    echo "_TF_SA_EMAIL = ${TERRAFORM_SA_EMAIL}"
-   sed -i "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
+   sed -i'' -e "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
 
-   CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo "_PROJECT_ID = ${CICD_PROJECT_ID}"
-   sed -i "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
+   sed -i'' -e "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
    ```
 
 1. Rename `./envs/shared/terraform.example.tfvars` to `./envs/shared/terraform.tfvars`
@@ -360,7 +357,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Check if a Security Command Center Notification with the default name, **scc-notify**, already exists. If it exists, choose a different value for the `scc_notification_name` variable in the `./envs/shared/terraform.tfvars` file.
 
    ```bash
-   export ORGANIZATION_ID=$(terraform -chdir="../0-bootstrap/" output -json common_config | jq '.org_id' --raw-output)
+   export ORGANIZATION_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -json common_config | jq '.org_id' --raw-output)
    gcloud scc notifications describe "scc-notify" --organization=${ORGANIZATION_ID}
    ```
 
@@ -374,12 +371,12 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Update the `envs/shared/terraform.tfvars` file with values from your environment and 0-bootstrap step. If the previous step showed a numeric value, make sure to un-comment the variable `create_access_context_manager_access_policy = false`. See the shared folder [README.md](../1-org/envs/shared/README.md) for additional information on the values in the `terraform.tfvars` file.
 
    ```bash
-   export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   export backend_bucket=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
 
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
 
-   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
+   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i'' -e "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
    ```
 
 1. Commit changes.
@@ -401,7 +398,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b production
-   git push origin production
+   git push --set-upstream origin production
    ```
 
 1. Review the apply output in your Controller's web UI. (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -411,15 +408,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Clone the repo you created manually in 0-bootstrap.
 
    ```bash
-   git clone <YOUR_NEW_REPO-2-environments>
+   git clone <YOUR_NEW_REPO-gcp-environments> gcp-environments
    ```
 
-1. Navigate into the repo and change to a non-production branch. All subsequent
-   steps assume you are running them from the <YOUR_NEW_REPO-2-environments> directory. If
+1. Navigate into the repo and change to a nonproduction branch. All subsequent
+   steps assume you are running them from the `gcp-environments` directory. If
    you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
-   cd YOUR_NEW_REPO_CLONE-2-environments
+   cd gcp-environments
    git checkout -b plan
    ```
 
@@ -441,20 +438,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    _PROJECT_ID (the CI/CD project ID)
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values.
 
    ```bash
-   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "_STATE_BUCKET_NAME = ${BACKEND_STATE_BUCKET_NAME}"
-   sed -i "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
+   sed -i'' -e "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
 
-   TERRAFORM_SA_EMAIL=$(terraform -chdir="../0-bootstrap/" output -raw environment_step_terraform_service_account_email)
+   TERRAFORM_SA_EMAIL=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw environment_step_terraform_service_account_email)
    echo "_TF_SA_EMAIL = ${TERRAFORM_SA_EMAIL}"
-   sed -i "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
+   sed -i'' -e "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
 
-   CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo "_PROJECT_ID = ${CICD_PROJECT_ID}"
-   sed -i "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
+   sed -i'' -e "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
    ```
 
 1. Rename `terraform.example.tfvars` to `terraform.tfvars` and update the file with values from your environment and 0-bootstrap.
@@ -463,12 +460,12 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    mv terraform.example.tfvars terraform.tfvars
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values. See any of the envs folder [README.md](../2-environments/envs/production/README.md) files for additional information on the values in the `terraform.tfvars` file.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values. See any of the envs folder [README.md](../2-environments/envs/production/README.md) files for additional information on the values in the `terraform.tfvars` file.
 
    ```bash
-   export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   export backend_bucket=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./terraform.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./terraform.tfvars
    ```
 
 1. Commit changes.
@@ -490,15 +487,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b development
-   git push origin development
+   git push --set-upstream origin development
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. Merge changes to non-production with.
+1. Merge changes to nonproduction with.
 
    ```bash
-   git checkout -b non-production
-   git push origin non-production
+   git checkout -b nonproduction
+   git push --set-upstream origin nonproduction
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -506,7 +503,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b production
-   git push origin production
+   git push --set-upstream origin production
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -517,15 +514,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Clone the repo you created manually in 0-bootstrap.
 
    ```bash
-   git clone <YOUR_NEW_REPO-3-networks>
+   git clone <YOUR_NEW_REPO-gcp-networks> gcp-networks
    ```
 
-1. Navigate into the repo and change to a non-production branch. All subsequent
-   steps assume you are running them from the <YOUR_NEW_REPO-3-networks> directory. If
+1. Navigate into the repo and change to a nonproduction branch. All subsequent
+   steps assume you are running them from the `gcp-networks` directory. If
    you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
-   cd YOUR_NEW_REPO_CLONE-3-networks
+   cd gcp-networks
    git checkout -b plan
    ```
 
@@ -547,20 +544,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    _PROJECT_ID (the CI/CD project ID)
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values.
 
    ```bash
-   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "_STATE_BUCKET_NAME = ${BACKEND_STATE_BUCKET_NAME}"
-   sed -i "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
+   sed -i'' -e "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
 
-   TERRAFORM_SA_EMAIL=$(terraform -chdir="../0-bootstrap/" output -raw networks_step_terraform_service_account_email)
+   TERRAFORM_SA_EMAIL=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw networks_step_terraform_service_account_email)
    echo "_TF_SA_EMAIL = ${TERRAFORM_SA_EMAIL}"
-   sed -i "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
+   sed -i'' -e "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
 
-   CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo "_PROJECT_ID = ${CICD_PROJECT_ID}"
-   sed -i "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
+   sed -i'' -e "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
    ```
 
 1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `shared.auto.example.tfvars` to `shared.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
@@ -574,17 +571,17 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Update `common.auto.tfvars` file with values from your environment and bootstrap. See any of the envs folder [README.md](../3-networks-dual-svpc/envs/production/README.md) files for additional information on the values in the `common.auto.tfvars` file.
 1. Update `shared.auto.tfvars` file with the `target_name_server_addresses`.
 1. Update `access_context.auto.tfvars` file with the `access_context_manager_policy_id`.
-1. Use `terraform output` to get the backend bucket and networks step Terraform Service Account values from 0-bootstrap output.
+1. Use `terraform output` to get the backend bucket and networks step Terraform Service Account values from gcp-bootstrap output.
 
    ```bash
-   export ORGANIZATION_ID=$(terraform -chdir="../0-bootstrap/" output -json common_config | jq '.org_id' --raw-output)
+   export ORGANIZATION_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -json common_config | jq '.org_id' --raw-output)
    export ACCESS_CONTEXT_MANAGER_ID=$(gcloud access-context-manager policies list --organization ${ORGANIZATION_ID} --format="value(name)")
    echo "access_context_manager_policy_id = ${ACCESS_CONTEXT_MANAGER_ID}"
-   sed -i "s/ACCESS_CONTEXT_MANAGER_ID/${ACCESS_CONTEXT_MANAGER_ID}/" ./access_context.auto.tfvars
+   sed -i'' -e "s/ACCESS_CONTEXT_MANAGER_ID/${ACCESS_CONTEXT_MANAGER_ID}/" ./access_context.auto.tfvars
 
-   export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   export backend_bucket=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
    ```
 
 1. Commit changes.
@@ -594,21 +591,21 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    git commit -m 'Initialize networks repo'
    ```
 
-1. You must manually plan and apply the `shared` environment (only once) since the `development`, `non-production` and `production` environments depend on it.
+1. You must manually plan and apply the `shared` environment (only once) since the `development`, `nonproduction` and `production` environments depend on it.
 1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Also update `backend.tf` with your backend bucket from 0-bootstrap output.
+1. Also update `backend.tf` with your backend bucket from gcp-bootstrap output.
 
    ```bash
-   for i in `find -name 'backend.tf'`; do sed -i "s/UPDATE_ME/${backend_bucket}/" $i; done
+   for i in `find . -name 'backend.tf'`; do sed -i'' -e "s/UPDATE_ME/${backend_bucket}/" $i; done
    ```
 
-1. Use `terraform output` to get the Cloud Build project ID and the networks step Terraform Service Account from 0-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
+1. Use `terraform output` to get the Cloud Build project ID and the networks step Terraform Service Account from gcp-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
 
    ```bash
-   export CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   export CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo ${CICD_PROJECT_ID}
 
-   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../0-bootstrap/" output -raw networks_step_terraform_service_account_email)
+   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw networks_step_terraform_service_account_email)
    echo ${GOOGLE_IMPERSONATE_SERVICE_ACCOUNT}
    ```
 
@@ -643,24 +640,24 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b production
-   git push origin production
+   git push --set-upstream origin production
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. After production has been applied, apply development and non-production.
+1. After production has been applied, apply development and nonproduction.
 1. Merge changes to development
 
    ```bash
    git checkout -b development
-   git push origin development
+   git push --set-upstream origin development
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. Merge changes to non-production.
+1. Merge changes to nonproduction.
 
    ```bash
-   git checkout -b non-production
-   git push origin non-production
+   git checkout -b nonproduction
+   git push --set-upstream origin nonproduction
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -670,15 +667,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Clone the repo you created manually in 0-bootstrap.
 
    ```bash
-   git clone <YOUR_NEW_REPO-3-networks>
+   git clone <YOUR_NEW_REPO-gcp-networks> gcp-networks
    ```
 
-1. Navigate into the repo and change to a non-production branch. All subsequent
-   steps assume you are running them from the <YOUR_NEW_REPO-3-networks> directory. If
+1. Navigate into the repo and change to a nonproduction branch. All subsequent
+   steps assume you are running them from the `gcp-networks` directory. If
    you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
-   cd YOUR_NEW_REPO_CLONE-3-networks
+   cd gcp-networks
    git checkout -b plan
    ```
 
@@ -700,20 +697,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    _PROJECT_ID (the CI/CD project ID)
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values.
 
    ```bash
-   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "_STATE_BUCKET_NAME = ${BACKEND_STATE_BUCKET_NAME}"
-   sed -i "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
+   sed -i'' -e "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
 
-   TERRAFORM_SA_EMAIL=$(terraform -chdir="../0-bootstrap/" output -raw networks_step_terraform_service_account_email)
+   TERRAFORM_SA_EMAIL=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw networks_step_terraform_service_account_email)
    echo "_TF_SA_EMAIL = ${TERRAFORM_SA_EMAIL}"
-   sed -i "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
+   sed -i'' -e "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
 
-   CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo "_PROJECT_ID = ${CICD_PROJECT_ID}"
-   sed -i "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
+   sed -i'' -e "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
    ```
 
 1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `shared.auto.example.tfvars` to `shared.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
@@ -727,17 +724,17 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Update `common.auto.tfvars` file with values from your environment and bootstrap. See any of the envs folder [README.md](../3-networks-hub-and-spoke/envs/production/README.md) files for additional information on the values in the `common.auto.tfvars` file.
 1. Update `shared.auto.tfvars` file with the `target_name_server_addresses`.
 1. Update `access_context.auto.tfvars` file with the `access_context_manager_policy_id`.
-1. Use `terraform output` to get the backend bucket value from 0-bootstrap output.
+1. Use `terraform output` to get the backend bucket value from gcp-bootstrap output.
 
    ```bash
-   export ORGANIZATION_ID=$(terraform -chdir="../0-bootstrap/" output -json common_config | jq '.org_id' --raw-output)
+   export ORGANIZATION_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -json common_config | jq '.org_id' --raw-output)
    export ACCESS_CONTEXT_MANAGER_ID=$(gcloud access-context-manager policies list --organization ${ORGANIZATION_ID} --format="value(name)")
    echo "access_context_manager_policy_id = ${ACCESS_CONTEXT_MANAGER_ID}"
-   sed -i "s/ACCESS_CONTEXT_MANAGER_ID/${ACCESS_CONTEXT_MANAGER_ID}/" ./access_context.auto.tfvars
+   sed -i'' -e "s/ACCESS_CONTEXT_MANAGER_ID/${ACCESS_CONTEXT_MANAGER_ID}/" ./access_context.auto.tfvars
 
-   export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   export backend_bucket=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
    ```
 
 1. Commit changes.
@@ -747,21 +744,21 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    git commit -m 'Initialize networks repo'
    ```
 
-1. You must manually plan and apply the `shared` environment (only once) since the `development`, `non-production` and `production` environments depend on it.
+1. You must manually plan and apply the `shared` environment (only once) since the `development`, `nonproduction` and `production` environments depend on it.
 1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Also update `backend.tf` with your backend bucket from 0-bootstrap output.
+1. Also update `backend.tf` with your backend bucket from gcp-bootstrap output.
 
    ```bash
-   for i in `find -name 'backend.tf'`; do sed -i "s/UPDATE_ME/${backend_bucket}/" $i; done
+   for i in `find . -name 'backend.tf'`; do sed -i'' -e "s/UPDATE_ME/${backend_bucket}/" $i; done
    ```
 
-1. Use `terraform output` to get the Cloud Build project ID and the networks step Terraform Service Account from 0-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
+1. Use `terraform output` to get the Cloud Build project ID and the networks step Terraform Service Account from gcp-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
 
    ```bash
-   export CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   export CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo ${CICD_PROJECT_ID}
 
-   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../0-bootstrap/" output -raw networks_step_terraform_service_account_email)
+   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw networks_step_terraform_service_account_email)
    echo ${GOOGLE_IMPERSONATE_SERVICE_ACCOUNT}
    ```
 
@@ -796,24 +793,24 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b production
-   git push origin production
+   git push --set-upstream origin production
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. After production has been applied, apply development and non-production.
+1. After production has been applied, apply development and nonproduction.
 1. Merge changes to development
 
    ```bash
    git checkout -b development
-   git push origin development
+   git push --set-upstream origin development
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. Merge changes to non-production.
+1. Merge changes to nonproduction.
 
    ```bash
-   git checkout -b non-production
-   git push origin non-production
+   git checkout -b nonproduction
+   git push --set-upstream origin nonproduction
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -823,15 +820,15 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Clone the repo you created manually in 0-bootstrap.
 
    ```bash
-   git clone <YOUR_NEW_REPO-4-projects>
+   git clone <YOUR_NEW_REPO-gcp-projects> gcp-projects
    ```
 
-1. Navigate into the repo and change to a non-production branch. All subsequent
-   steps assume you are running them from the <YOUR_NEW_REPO-4-projects> directory. If
+1. Navigate into the repo and change to a nonproduction branch. All subsequent
+   steps assume you are running them from the `gcp-projects` directory. If
    you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
-   cd YOUR_NEW_REPO_CLONE-4-projects
+   cd gcp-projects
    git checkout -b plan
    ```
 
@@ -853,20 +850,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    _PROJECT_ID (the CI/CD project ID)
    ```
 
-1. You can re-run `terraform output` in the 0-bootstrap directory to find these values.
+1. You can re-run `terraform output` in the gcp-bootstrap directory to find these values.
 
    ```bash
-   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   BACKEND_STATE_BUCKET_NAME=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "_STATE_BUCKET_NAME = ${BACKEND_STATE_BUCKET_NAME}"
-   sed -i "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
+   sed -i'' -e "s/BACKEND_STATE_BUCKET_NAME/${BACKEND_STATE_BUCKET_NAME}/" ./Jenkinsfile
 
-   TERRAFORM_SA_EMAIL=$(terraform -chdir="../0-bootstrap/" output -raw projects_step_terraform_service_account_email)
+   TERRAFORM_SA_EMAIL=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw projects_step_terraform_service_account_email)
    echo "_TF_SA_EMAIL = ${TERRAFORM_SA_EMAIL}"
-   sed -i "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
+   sed -i'' -e "s/TERRAFORM_SA_EMAIL/${TERRAFORM_SA_EMAIL}/" ./Jenkinsfile
 
-   CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo "_PROJECT_ID = ${CICD_PROJECT_ID}"
-   sed -i "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
+   sed -i'' -e "s/CICD_PROJECT_ID/${CICD_PROJECT_ID}/" ./Jenkinsfile
    ```
 
 1. Rename `auto.example.tfvars` files to `auto.tfvars`.
@@ -875,18 +872,18 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    mv common.auto.example.tfvars common.auto.tfvars
    mv shared.auto.example.tfvars shared.auto.tfvars
    mv development.auto.example.tfvars development.auto.tfvars
-   mv non-production.auto.example.tfvars non-production.auto.tfvars
+   mv nonproduction.auto.example.tfvars nonproduction.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
    ```
 
-1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `non-production.auto.tfvars`, and `production.auto.tfvars` files.
+1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
 1. See any of the shared folder [README.md](../4-projects/business_unit_1/shared/README.md) files for additional information on the values in the `shared.auto.tfvars` file.
-1. Use `terraform output` to get the backend bucket value from 0-bootstrap output.
+1. Use `terraform output` to get the backend bucket value from gcp-bootstrap output.
 
    ```bash
-   export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
+   export backend_bucket=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./common.auto.tfvars
    ```
 
 1. Commit changes.
@@ -896,20 +893,20 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    git commit -m 'Initialize projects repo'
    ```
 
-1. Also update `backend.tf` with your backend bucket from 0-bootstrap output.
+1. Also update `backend.tf` with your backend bucket from gcp-bootstrap output.
 
    ```bash
-   for i in `find -name 'backend.tf'`; do sed -r -i "s/UPDATE_ME|UPDATE_PROJECTS_BACKEND/${backend_bucket}/" $i; done
+   for i in `find . -name 'backend.tf'`; do sed -r -i "s/UPDATE_ME|UPDATE_PROJECTS_BACKEND/${backend_bucket}/" $i; done
    ```
 
-1. You need to manually plan and apply only once the `shared` environments since `development`, `non-production`, and `production` depend on it.
-1. Use `terraform output` to get the Cloud Build project ID and the projects step Terraform Service Account from 0-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
+1. You need to manually plan and apply only once the `shared` environments since `development`, `nonproduction`, and `production` depend on it.
+1. Use `terraform output` to get the Cloud Build project ID and the projects step Terraform Service Account from gcp-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
 
    ```bash
-   export CICD_PROJECT_ID=$(terraform -chdir="../0-bootstrap/" output -raw cicd_project_id)
+   export CICD_PROJECT_ID=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw cicd_project_id)
    echo ${CICD_PROJECT_ID}
 
-   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../0-bootstrap/" output -raw projects_step_terraform_service_account_email)
+   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../gcp-bootstrap/envs/shared" output -raw projects_step_terraform_service_account_email)
    echo ${GOOGLE_IMPERSONATE_SERVICE_ACCOUNT}
    ```
 
@@ -944,7 +941,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b production
-   git push origin production
+   git push --set-upstream origin production
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
@@ -953,16 +950,16 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
    ```bash
    git checkout -b development
-   git push origin development
+   git push --set-upstream origin development
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
-1. After development has been applied, apply non-production.
-1. Merge changes to non-production branch.
+1. After development has been applied, apply nonproduction.
+1. Merge changes to nonproduction branch.
 
    ```bash
-   git checkout -b non-production
-   git push origin non-production
+   git checkout -b nonproduction
+   git push --set-upstream origin nonproduction
    ```
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).

@@ -15,27 +15,18 @@
  */
 
 locals {
-  restricted_project_id             = data.terraform_remote_state.environments_env.outputs.restricted_shared_vpc_project_id
-  restricted_project_number         = data.terraform_remote_state.environments_env.outputs.restricted_shared_vpc_project_number
-  base_project_id                   = data.terraform_remote_state.environments_env.outputs.base_shared_vpc_project_id
-  dns_hub_project_id                = data.terraform_remote_state.org.outputs.dns_hub_project_id
-  base_net_hub_project_id           = data.terraform_remote_state.org.outputs.base_net_hub_project_id
-  restricted_net_hub_project_id     = data.terraform_remote_state.org.outputs.restricted_net_hub_project_id
-  restricted_net_hub_project_number = data.terraform_remote_state.org.outputs.restricted_net_hub_project_number
-  bgp_asn_number                    = var.enable_partner_interconnect ? "16550" : "64514"
-  enable_transitivity               = var.enable_hub_and_spoke_transitivity
-  networks_service_account          = data.terraform_remote_state.bootstrap.outputs.networks_step_terraform_service_account_email
-  projects_service_account          = data.terraform_remote_state.bootstrap.outputs.projects_step_terraform_service_account_email
+  bgp_asn_number      = var.enable_partner_interconnect ? "16550" : "64514"
+  enable_transitivity = var.enable_hub_and_spoke_transitivity
 
   /*
    * Base network ranges
    */
-  base_subnet_aggregates = ["10.0.0.0/16", "10.1.0.0/16", "100.64.0.0/16", "100.65.0.0/16"]
+  base_subnet_aggregates = ["10.0.0.0/18", "10.1.0.0/18", "100.64.0.0/18", "100.65.0.0/18"]
   base_hub_subnet_ranges = ["10.0.0.0/24", "10.1.0.0/24"]
   /*
    * Restricted network ranges
    */
-  restricted_subnet_aggregates = ["10.8.0.0/16", "10.9.0.0/16", "100.72.0.0/16", "100.73.0.0/16"]
+  restricted_subnet_aggregates = ["10.8.0.0/18", "10.9.0.0/18", "100.72.0.0/18", "100.73.0.0/18"]
   restricted_hub_subnet_ranges = ["10.8.0.0/24", "10.9.0.0/24"]
 
   supported_restricted_service = [
@@ -166,33 +157,6 @@ locals {
   restricted_services = length(var.custom_restricted_services) != 0 ? var.custom_restricted_services : local.supported_restricted_service
 }
 
-data "terraform_remote_state" "bootstrap" {
-  backend = "gcs"
-
-  config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/bootstrap/state"
-  }
-}
-
-data "terraform_remote_state" "org" {
-  backend = "gcs"
-
-  config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/org/state"
-  }
-}
-
-data "terraform_remote_state" "environments_env" {
-  backend = "gcs"
-
-  config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/environments/${var.env}"
-  }
-}
-
 /******************************************
  Restricted shared VPC
 *****************************************/
@@ -207,40 +171,70 @@ module "restricted_shared_vpc" {
   environment_code                  = var.environment_code
   access_context_manager_policy_id  = var.access_context_manager_policy_id
   restricted_services               = local.restricted_services
-  members                           = distinct(concat(["serviceAccount:${local.networks_service_account}", "serviceAccount:${local.projects_service_account}"], var.perimeter_additional_members))
-  private_service_cidr              = var.restricted_private_service_cidr
-  private_service_connect_ip        = var.restricted_private_service_connect_ip
-  ingress_policies                  = var.ingress_policies
-  egress_policies                   = var.egress_policies
-  bgp_asn_subnet                    = local.bgp_asn_number
-  default_region1                   = var.default_region1
-  default_region2                   = var.default_region2
-  domain                            = var.domain
-  mode                              = "spoke"
+  members = distinct(concat([
+    "serviceAccount:${local.networks_service_account}",
+    "serviceAccount:${local.projects_service_account}",
+    "serviceAccount:${local.organization_service_account}",
+  ], var.perimeter_additional_members))
+  private_service_cidr       = var.restricted_private_service_cidr
+  private_service_connect_ip = var.restricted_private_service_connect_ip
+  ingress_policies           = var.ingress_policies
+  egress_policies            = var.egress_policies
+  bgp_asn_subnet             = local.bgp_asn_number
+  default_region1            = var.default_region1
+  default_region2            = var.default_region2
+  domain                     = var.domain
+  mode                       = "spoke"
 
   subnets = [
     {
-      subnet_name           = "sb-${var.environment_code}-shared-restricted-${var.default_region1}"
-      subnet_ip             = var.restricted_subnet_primary_ranges[var.default_region1]
-      subnet_region         = var.default_region1
-      subnet_private_access = "true"
-      subnet_flow_logs      = true
-      description           = "First ${var.env} subnet example."
+      subnet_name                      = "sb-${var.environment_code}-shared-restricted-${var.default_region1}"
+      subnet_ip                        = var.restricted_subnet_primary_ranges[var.default_region1]
+      subnet_region                    = var.default_region1
+      subnet_private_access            = "true"
+      subnet_flow_logs                 = true
+      subnet_flow_logs_interval        = var.restricted_vpc_flow_logs.aggregation_interval
+      subnet_flow_logs_sampling        = var.restricted_vpc_flow_logs.flow_sampling
+      subnet_flow_logs_metadata        = var.restricted_vpc_flow_logs.metadata
+      subnet_flow_logs_metadata_fields = var.restricted_vpc_flow_logs.metadata_fields
+      subnet_flow_logs_filter          = var.restricted_vpc_flow_logs.filter_expr
+      description                      = "First ${var.env} subnet example."
     },
     {
-      subnet_name           = "sb-${var.environment_code}-shared-restricted-${var.default_region2}"
-      subnet_ip             = var.restricted_subnet_primary_ranges[var.default_region2]
-      subnet_region         = var.default_region2
-      subnet_private_access = "true"
-      subnet_flow_logs      = true
-      description           = "Second ${var.env} subnet example."
+      subnet_name                      = "sb-${var.environment_code}-shared-restricted-${var.default_region2}"
+      subnet_ip                        = var.restricted_subnet_primary_ranges[var.default_region2]
+      subnet_region                    = var.default_region2
+      subnet_private_access            = "true"
+      subnet_flow_logs                 = true
+      subnet_flow_logs_interval        = var.restricted_vpc_flow_logs.aggregation_interval
+      subnet_flow_logs_sampling        = var.restricted_vpc_flow_logs.flow_sampling
+      subnet_flow_logs_metadata        = var.restricted_vpc_flow_logs.metadata
+      subnet_flow_logs_metadata_fields = var.restricted_vpc_flow_logs.metadata_fields
+      subnet_flow_logs_filter          = var.restricted_vpc_flow_logs.filter_expr
+      description                      = "Second ${var.env} subnet example."
+    },
+    {
+      subnet_name      = "sb-${var.environment_code}-shared-restricted-${var.default_region1}-proxy"
+      subnet_ip        = var.restricted_subnet_proxy_ranges[var.default_region1]
+      subnet_region    = var.default_region1
+      subnet_flow_logs = false
+      description      = "First ${var.env} proxy-only subnet example."
+      role             = "ACTIVE"
+      purpose          = "REGIONAL_MANAGED_PROXY"
+    },
+    {
+      subnet_name      = "sb-${var.environment_code}-shared-restricted-${var.default_region2}-proxy"
+      subnet_ip        = var.restricted_subnet_proxy_ranges[var.default_region2]
+      subnet_region    = var.default_region2
+      subnet_flow_logs = false
+      description      = "Second ${var.env} proxy-only subnet example."
+      role             = "ACTIVE"
+      purpose          = "REGIONAL_MANAGED_PROXY"
     }
   ]
   secondary_ranges = {
     "sb-${var.environment_code}-shared-restricted-${var.default_region1}" = var.restricted_subnet_secondary_ranges[var.default_region1]
   }
-  allow_all_ingress_ranges = local.enable_transitivity ? local.restricted_hub_subnet_ranges : null
-  allow_all_egress_ranges  = local.enable_transitivity ? local.restricted_subnet_aggregates : null
 }
 
 /******************************************
@@ -264,25 +258,51 @@ module "base_shared_vpc" {
 
   subnets = [
     {
-      subnet_name           = "sb-${var.environment_code}-shared-base-${var.default_region1}"
-      subnet_ip             = var.base_subnet_primary_ranges[var.default_region1]
-      subnet_region         = var.default_region1
-      subnet_private_access = "true"
-      subnet_flow_logs      = true
-      description           = "First ${var.env} subnet example."
+      subnet_name                      = "sb-${var.environment_code}-shared-base-${var.default_region1}"
+      subnet_ip                        = var.base_subnet_primary_ranges[var.default_region1]
+      subnet_region                    = var.default_region1
+      subnet_private_access            = "true"
+      subnet_flow_logs                 = true
+      subnet_flow_logs_interval        = var.base_vpc_flow_logs.aggregation_interval
+      subnet_flow_logs_sampling        = var.base_vpc_flow_logs.flow_sampling
+      subnet_flow_logs_metadata        = var.base_vpc_flow_logs.metadata
+      subnet_flow_logs_metadata_fields = var.base_vpc_flow_logs.metadata_fields
+      subnet_flow_logs_filter          = var.base_vpc_flow_logs.filter_expr
+      description                      = "First ${var.env} subnet example."
     },
     {
-      subnet_name           = "sb-${var.environment_code}-shared-base-${var.default_region2}"
-      subnet_ip             = var.base_subnet_primary_ranges[var.default_region2]
-      subnet_region         = var.default_region2
-      subnet_private_access = "true"
-      subnet_flow_logs      = true
-      description           = "Second ${var.env} subnet example."
+      subnet_name                      = "sb-${var.environment_code}-shared-base-${var.default_region2}"
+      subnet_ip                        = var.base_subnet_primary_ranges[var.default_region2]
+      subnet_region                    = var.default_region2
+      subnet_private_access            = "true"
+      subnet_flow_logs                 = true
+      subnet_flow_logs_interval        = var.base_vpc_flow_logs.aggregation_interval
+      subnet_flow_logs_sampling        = var.base_vpc_flow_logs.flow_sampling
+      subnet_flow_logs_metadata        = var.base_vpc_flow_logs.metadata
+      subnet_flow_logs_metadata_fields = var.base_vpc_flow_logs.metadata_fields
+      subnet_flow_logs_filter          = var.base_vpc_flow_logs.filter_expr
+      description                      = "Second ${var.env} subnet example."
+    },
+    {
+      subnet_name      = "sb-${var.environment_code}-shared-base-${var.default_region1}-proxy"
+      subnet_ip        = var.base_subnet_proxy_ranges[var.default_region1]
+      subnet_region    = var.default_region1
+      description      = "First ${var.env} proxy-only subnet example."
+      subnet_flow_logs = false
+      role             = "ACTIVE"
+      purpose          = "REGIONAL_MANAGED_PROXY"
+    },
+    {
+      subnet_name      = "sb-${var.environment_code}-shared-base-${var.default_region2}-proxy"
+      subnet_ip        = var.base_subnet_proxy_ranges[var.default_region2]
+      subnet_region    = var.default_region2
+      description      = "Second ${var.env} proxy-only subnet example."
+      subnet_flow_logs = false
+      role             = "ACTIVE"
+      purpose          = "REGIONAL_MANAGED_PROXY"
     }
   ]
   secondary_ranges = {
     "sb-${var.environment_code}-shared-base-${var.default_region1}" = var.base_subnet_secondary_ranges[var.default_region1]
   }
-  allow_all_ingress_ranges = local.enable_transitivity ? local.base_hub_subnet_ranges : null
-  allow_all_egress_ranges  = local.enable_transitivity ? local.base_subnet_aggregates : null
 }

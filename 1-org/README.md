@@ -21,7 +21,7 @@ organizational policy.</td>
 </tr>
 <tr>
 <td><a href="../2-environments"><span style="white-space: nowrap;">2-environments</span></a></td>
-<td>Sets up development, non-production, and production environments within the
+<td>Sets up development, nonproduction, and production environments within the
 Google Cloud organization that you've created.</td>
 </tr>
 <tr>
@@ -81,7 +81,7 @@ to Bigquery and Pub/Sub. This will result in additional charges for those copies
 
 - This module implements but does not enable [bucket policy retention](https://cloud.google.com/storage/docs/bucket-lock) for organization logs. If needed, enable a retention policy by configuring the `log_export_storage_retention_policy` variable.
 
-- This module implements but does not enable [object versioning](https://cloud.google.com/storage/docs/object-versioning) for organization logs. If needed, enable object versioning by setting the `audit_logs_table_delete_contents_on_destroy` variable to true.
+- This module implements but does not enable [object versioning](https://cloud.google.com/storage/docs/object-versioning) for organization logs. If needed, enable object versioning by setting the `log_export_storage_versioning` variable to true.
 
 - Bucket policy retention and object versioning are **mutually exclusive**.
 
@@ -99,14 +99,15 @@ commands. The `-T` flag is required for Linux, but causes problems for MacOS.
 | gcp_scc_admin | Product updates and security | Org Admins |
 | gcp_security_reviewer | Security and technical | Org Admins |
 
-This module creates and applies [tags](https://cloud.google.com/resource-manager/docs/tags/tags-overview) to common and bootstrap folders. These tags are also applied to environment folders of step [2-environments](../2-environments/README.md). You can create your own tags by editing the `local.tags` map in `tags.tf` and following the commented template. The following table describes details about the tags that are applied to resources:
+This module creates and applies [tags](https://cloud.google.com/resource-manager/docs/tags/tags-overview) to common, network, and bootstrap folders. These tags are also applied to environment folders of step [2-environments](../2-environments/README.md). You can create your own tags by editing the `local.tags` map in `tags.tf` and following the commented template. The following table describes details about the tags that are applied to resources:
 
 | Resource | Type | Step | Tag Key | Tag Value |
 |----------|------|------|---------|-----------|
 | bootstrap | folder | 1-org | environment | bootstrap |
 | common | folder | 1-org | environment | production |
+| network | folder | 1-org | environment | production |
 | enviroment development | folder | [2-environments](../2-environments/README.md) | environment | development |
-| enviroment non-production | folder | [2-environments](../2-environments/README.md) | environment | non-production |
+| enviroment nonproduction | folder | [2-environments](../2-environments/README.md) | environment | nonproduction |
 | enviroment production | folder | [2-environments](../2-environments/README.md) | environment | production |
 
 ### Deploying with Cloud Build
@@ -125,7 +126,7 @@ If required, run `terraform output cloudbuild_project_id` in the `0-bootstrap` f
    **Note:** The message `warning: You appear to have cloned an empty repository.` is
    normal and can be ignored.
 
-1. Navigate into the repo, change to a non-production branch, and copy the contents of foundation to the new repo.
+1. Navigate into the repo, change to a nonproduction branch, and copy the contents of foundation to the new repo.
    All subsequent steps assume you are running them from the `gcp-org` directory.
    If you run them from another directory, adjust your copy paths accordingly.
 
@@ -165,9 +166,9 @@ If required, run `terraform output cloudbuild_project_id` in the `0-bootstrap` f
    export backend_bucket=$(terraform -chdir="../terraform-example-foundation/0-bootstrap/" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
 
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
 
-   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
+   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i'' -e "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
    ```
 
 1. Commit changes.
@@ -247,9 +248,9 @@ Change into the `1-org` folder, copy the Terraform wrapper script, and ensure it
    export backend_bucket=$(terraform -chdir="../0-bootstrap/" output -raw gcs_bucket_tfstate)
    echo "remote_state_bucket = ${backend_bucket}"
 
-   sed -i "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
+   sed -i'' -e "s/REMOTE_STATE_BUCKET/${backend_bucket}/" ./envs/shared/terraform.tfvars
 
-   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
+   if [ ! -z "${ACCESS_CONTEXT_MANAGER_ID}" ]; then sed -i'' -e "s=//create_access_context_manager_access_policy=create_access_context_manager_access_policy=" ./envs/shared/terraform.tfvars; fi
    ```
 
 You can now deploy your environment (production) using this script.

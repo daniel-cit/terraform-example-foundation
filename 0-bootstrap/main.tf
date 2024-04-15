@@ -28,13 +28,10 @@ locals {
     "serviceAccount:${google_service_account.terraform-env-sa["net"].email}",
     "serviceAccount:${google_service_account.terraform-env-sa["proj"].email}",
   ]
-  org_project_creators = distinct(concat(var.org_project_creators, local.step_terraform_sa))
-  parent               = var.parent_folder != "" ? "folders/${var.parent_folder}" : "organizations/${var.org_id}"
+  parent = var.parent_folder != "" ? "folders/${var.parent_folder}" : "organizations/${var.org_id}"
   org_admins_org_iam_permissions = var.org_policy_admin_role == true ? [
     "roles/orgpolicy.policyAdmin", "roles/resourcemanager.organizationAdmin", "roles/billing.user"
   ] : ["roles/resourcemanager.organizationAdmin", "roles/billing.user"]
-  group_org_admins     = var.groups.create_groups ? module.required_group["group_org_admins"].id : var.group_org_admins
-  group_billing_admins = var.groups.create_groups ? module.required_group["group_billing_admins"].id : var.group_billing_admins
 }
 
 resource "google_folder" "bootstrap" {
@@ -44,7 +41,7 @@ resource "google_folder" "bootstrap" {
 
 module "seed_bootstrap" {
   source  = "terraform-google-modules/bootstrap/google"
-  version = "~> 6.3"
+  version = "~> 7.0"
 
   org_id                         = var.org_id
   folder_id                      = google_folder.bootstrap.id
@@ -52,15 +49,18 @@ module "seed_bootstrap" {
   state_bucket_name              = "${var.bucket_prefix}-${var.project_prefix}-b-seed-tfstate"
   force_destroy                  = var.bucket_force_destroy
   billing_account                = var.billing_account
-  group_org_admins               = local.group_org_admins
-  group_billing_admins           = local.group_billing_admins
+  group_org_admins               = var.groups.required_groups.group_org_admins
+  group_billing_admins           = var.groups.required_groups.group_billing_admins
   default_region                 = var.default_region
-  org_project_creators           = local.org_project_creators
+  org_project_creators           = local.step_terraform_sa
   sa_enable_impersonation        = true
   create_terraform_sa            = false
   parent_folder                  = var.parent_folder == "" ? "" : local.parent
   org_admins_org_iam_permissions = local.org_admins_org_iam_permissions
   project_prefix                 = var.project_prefix
+  encrypt_gcs_bucket_tfstate     = true
+  key_rotation_period            = "7776000s"
+  kms_prevent_destroy            = !var.bucket_tfstate_kms_force_destroy
 
   project_labels = {
     environment       = "bootstrap"
@@ -68,8 +68,9 @@ module "seed_bootstrap" {
     billing_code      = "1234"
     primary_contact   = "example1"
     secondary_contact = "example2"
-    business_code     = "abcd"
+    business_code     = "shared"
     env_code          = "b"
+    vpc               = "none"
   }
 
   activate_apis = [

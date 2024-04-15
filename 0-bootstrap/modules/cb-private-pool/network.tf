@@ -20,7 +20,7 @@ locals {
 
 module "peered_network" {
   source  = "terraform-google-modules/network/google"
-  version = "~> 7.0"
+  version = "~> 9.0"
   count   = var.private_worker_pool.create_peered_network ? 1 : 0
 
   project_id                             = var.project_id
@@ -29,12 +29,17 @@ module "peered_network" {
 
   subnets = [
     {
-      subnet_name           = "sb-b-cbpools-${var.private_worker_pool.region}"
-      subnet_ip             = var.private_worker_pool.peered_network_subnet_ip
-      subnet_region         = var.private_worker_pool.region
-      subnet_private_access = "true"
-      subnet_flow_logs      = "true"
-      description           = "Peered subnet for Cloud Build private pool"
+      subnet_name                      = "sb-b-cbpools-${var.private_worker_pool.region}"
+      subnet_ip                        = var.private_worker_pool.peered_network_subnet_ip
+      subnet_region                    = var.private_worker_pool.region
+      subnet_private_access            = "true"
+      subnet_flow_logs                 = "true"
+      subnet_flow_logs_interval        = var.vpc_flow_logs.aggregation_interval
+      subnet_flow_logs_sampling        = var.vpc_flow_logs.flow_sampling
+      subnet_flow_logs_metadata        = var.vpc_flow_logs.metadata
+      subnet_flow_logs_metadata_fields = var.vpc_flow_logs.metadata_fields
+      subnet_flow_logs_filter          = var.vpc_flow_logs.filter_expr
+      description                      = "Peered subnet for Cloud Build private pool"
     }
   ]
 
@@ -85,7 +90,7 @@ resource "google_compute_network_peering_routes_config" "peering_routes" {
 
 module "firewall_rules" {
   source  = "terraform-google-modules/network/google//modules/firewall-rules"
-  version = "~> 7.0"
+  version = "~> 9.0"
   count   = var.private_worker_pool.enable_network_peering ? 1 : 0
 
   project_id   = var.project_id

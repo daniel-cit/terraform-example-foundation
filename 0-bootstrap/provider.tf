@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ provider "google-beta" {
   billing_project       = var.groups.billing_project
 }
 
+# If you are using GitHub Runners, un-comment this block
 # provider "helm" {
 #   kubernetes {
 #     host = local.cluster_host
@@ -26,5 +27,15 @@ provider "google-beta" {
 #       api_version = "client.authentication.k8s.io/v1beta1"
 #       command     = "gke-gcloud-auth-plugin"
 #     }
+#   }
+# }
+
+# If you are using Terraform Cloud Agents, un-comment this block after the first apply according README instructions
+# provider "kubernetes" {
+#   host = "https://connectgateway.googleapis.com/v1/projects/${module.tfc_cicd.project_number}/locations/global/gkeMemberships/${module.tfc_agent_gke[0].hub_cluster_membership_id}"
+
+#   exec {
+#     api_version = "client.authentication.k8s.io/v1beta1"
+#     command     = "gke-gcloud-auth-plugin"
 #   }
 # }

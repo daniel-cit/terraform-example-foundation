@@ -85,7 +85,7 @@ func TestProjects(t *testing.T) {
 			restrictedNetwork: fmt.Sprintf("vpc-d-shared-restricted%s", networkMode),
 		},
 		{
-			name:              "bu1_non-production",
+			name:              "bu1_nonproduction",
 			repo:              "bu1-example-app",
 			baseDir:           "../../../4-projects/business_unit_1/%s",
 			baseNetwork:       fmt.Sprintf("vpc-n-shared-base%s", networkMode),
@@ -106,7 +106,7 @@ func TestProjects(t *testing.T) {
 			restrictedNetwork: fmt.Sprintf("vpc-d-shared-restricted%s", networkMode),
 		},
 		{
-			name:              "bu2_non-production",
+			name:              "bu2_nonproduction",
 			repo:              "bu2-example-app",
 			baseDir:           "../../../4-projects/business_unit_2/%s",
 			baseNetwork:       fmt.Sprintf("vpc-n-shared-base%s", networkMode),
@@ -120,7 +120,9 @@ func TestProjects(t *testing.T) {
 			restrictedNetwork: fmt.Sprintf("vpc-p-shared-restricted%s", networkMode),
 		},
 	} {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
 			env := testutils.GetLastSplitElement(tt.name, "_")
 			netVars := map[string]interface{}{
@@ -165,6 +167,7 @@ func TestProjects(t *testing.T) {
 						"base_shared_vpc_project",
 						"floating_project",
 						"peering_project",
+						"env_kms_project",
 						"restricted_shared_vpc_project",
 					} {
 						projectID := projects.GetStringOutput(projectOutput)

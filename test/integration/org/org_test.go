@@ -39,10 +39,9 @@ func TestOrg(t *testing.T) {
 	backend_bucket := bootstrap.GetStringOutput("gcs_bucket_tfstate")
 
 	vars := map[string]interface{}{
-		"remote_state_bucket":                         backend_bucket,
-		"log_export_storage_force_destroy":            "true",
-		"audit_logs_table_delete_contents_on_destroy": "true",
-		"cai_monitoring_kms_force_destroy":            "true",
+		"remote_state_bucket":              backend_bucket,
+		"log_export_storage_force_destroy": "true",
+		"cai_monitoring_kms_force_destroy": "true",
 	}
 
 	backendConfig := map[string]interface{}{
@@ -102,6 +101,11 @@ func TestOrg(t *testing.T) {
 			folder := gcloud.Runf(t, "resource-manager folders describe %s", commonFolder)
 			assert.Equal("fldr-common", folder.Get("displayName").String(), "folder fldr-common should have been created")
 
+			// creation of network folder
+			networkFolder := testutils.GetLastSplitElement(org.GetStringOutput("network_folder_name"), "/")
+			folderOP := gcloud.Runf(t, "resource-manager folders describe %s", networkFolder)
+			assert.Equal("fldr-network", folderOP.Get("displayName").String(), "folder fldr-network should have been created")
+
 			// check tags applied to common and bootstrap folder
 			commonConfig := terraform.OutputMap(t, bootstrap.GetTFOptions(), "common_config")
 			bootstrapFolder := testutils.GetLastSplitElement(commonConfig["bootstrap_folder_name"], "/")
@@ -114,6 +118,11 @@ func TestOrg(t *testing.T) {
 				{
 					folderId:   commonFolder,
 					folderName: "common",
+					value:      "production",
+				},
+				{
+					folderId:   networkFolder,
+					folderName: "network",
 					value:      "production",
 				},
 				{
@@ -138,7 +147,6 @@ func TestOrg(t *testing.T) {
 			for _, booleanConstraint := range []string{
 				"constraints/compute.disableNestedVirtualization",
 				"constraints/compute.disableSerialPortAccess",
-				"constraints/compute.disableGuestAttributesAccess",
 				"constraints/compute.skipDefaultNetworkCreation",
 				"constraints/compute.restrictXpnProjectLienRemoval",
 				"constraints/sql.restrictPublicIp",
@@ -201,36 +209,78 @@ func TestOrg(t *testing.T) {
 			assert.Equal(billingDatasetFullName, billingDataset.Get("id").String(), fmt.Sprintf("dataset %s should exist", billingDatasetFullName))
 
 			auditLogsProjectID := org.GetStringOutput("org_audit_logs_project_id")
+			auditLogsProjectNumber := gcloud.Runf(t, "projects describe %s", auditLogsProjectID).Get("projectNumber").String()
 
-			auditLogsDatasetName := "audit_logs"
-			auditLogsDatasetFullName := fmt.Sprintf("%s:%s", auditLogsProjectID, auditLogsDatasetName)
-			auditLogsDataset := gcloud.Runf(t, "alpha bq datasets describe %s --project %s", auditLogsDatasetName, auditLogsProjectID)
-			assert.Equal(auditLogsDatasetFullName, auditLogsDataset.Get("id").String(), fmt.Sprintf("dataset %s should exist", auditLogsDatasetFullName))
-
+			// Bucket destination
 			logsExportStorageBucketName := org.GetStringOutput("logs_export_storage_bucket_name")
 			gcAlphaOpts := gcloud.WithCommonArgs([]string{"--project", auditLogsProjectID, "--json"})
 			bkt := gcloud.Run(t, fmt.Sprintf("alpha storage ls --buckets gs://%s", logsExportStorageBucketName), gcAlphaOpts).Array()[0]
 			assert.Equal(logsExportStorageBucketName, bkt.Get("metadata.id").String(), fmt.Sprintf("Bucket %s should exist", logsExportStorageBucketName))
 
-			logsExportLogBktName := org.GetStringOutput("logs_export_logbucket_name")
-			defaultRegion := commonConfig["default_region"]
-			logBktFullName := fmt.Sprintf("projects/%s/locations/%s/buckets/%s", auditLogsProjectID, defaultRegion, logsExportLogBktName)
-			logBktDetails := gcloud.Runf(t, fmt.Sprintf("logging buckets describe %s --location=%s --project=%s", logsExportLogBktName, defaultRegion, auditLogsProjectID))
-			assert.Equal(logBktFullName, logBktDetails.Get("name").String(), "log bucket name should match")
-
+			// Pub/Sub destination
 			logsExportTopicName := org.GetStringOutput("logs_export_pubsub_topic")
 			logsExportTopicFullName := fmt.Sprintf("projects/%s/topics/%s", auditLogsProjectID, logsExportTopicName)
 			logsExportTopic := gcloud.Runf(t, "pubsub topics describe %s --project %s", logsExportTopicName, auditLogsProjectID)
 			assert.Equal(logsExportTopicFullName, logsExportTopic.Get("name").String(), fmt.Sprintf("topic %s should have been created", logsExportTopicName))
 
+			// Project destination
+			prjLogsExportLogBktName := org.GetStringOutput("logs_export_project_logbucket_name")
+			defaultRegion := commonConfig["default_region"]
+			prjLogBktFullName := fmt.Sprintf("projects/%s/locations/%s/buckets/%s", auditLogsProjectID, defaultRegion, prjLogsExportLogBktName)
+			prjLogBktDetails := gcloud.Runf(t, fmt.Sprintf("logging buckets describe %s --location=%s --project=%s", prjLogsExportLogBktName, defaultRegion, auditLogsProjectID))
+			assert.Equal(prjLogBktFullName, prjLogBktDetails.Get("name").String(), "log bucket name should match")
+
+			prjLinkedDatasetID := "ds_c_prj_aggregated_logs_analytics"
+			prjLinkedDsName := org.GetStringOutput("logs_export_project_linked_dataset_name")
+			prjLinkedDs := gcloud.Runf(t, "logging links describe %s --bucket=%s --location=%s --project=%s", prjLinkedDatasetID, prjLogsExportLogBktName, defaultRegion, auditLogsProjectID)
+			assert.Equal(prjLinkedDsName, prjLinkedDs.Get("name").String(), "log bucket linked dataset name should match")
+			prjBigqueryDatasetID := fmt.Sprintf("bigquery.googleapis.com/projects/%s/datasets/%s", auditLogsProjectNumber, prjLinkedDatasetID)
+			assert.Equal(prjBigqueryDatasetID, prjLinkedDs.Get("bigqueryDataset.datasetId").String(), "log bucket BigQuery dataset ID should match")
+
+			// add filter exclusion
+			prjLogsExportDefaultSink := gcloud.Runf(t, "logging sinks describe _Default --project=%s", auditLogsProjectID)
+			exclusions := prjLogsExportDefaultSink.Get("exclusions").Array()
+			assert.NotEmpty(exclusions, fmt.Sprintf("exclusion list for _Default sink in project %s must not be empty", auditLogsProjectID))
+			exclusionFilter := fmt.Sprintf("-logName : \"/%s/\"",auditLogsProjectID)
+			assert.Equal(exclusions[0].Get("filter").String(), exclusionFilter)
+
+
 			// logging sinks
-			mainLogsFilter := []string{
+			logsFilter := []string{
 				"logName: /logs/cloudaudit.googleapis.com%2Factivity",
 				"logName: /logs/cloudaudit.googleapis.com%2Fsystem_event",
 				"logName: /logs/cloudaudit.googleapis.com%2Fdata_access",
+				"logName: /logs/cloudaudit.googleapis.com%2Faccess_transparency",
+				"logName: /logs/cloudaudit.googleapis.com%2Fpolicy",
 				"logName: /logs/compute.googleapis.com%2Fvpc_flows",
 				"logName: /logs/compute.googleapis.com%2Ffirewall",
-				"logName: /logs/cloudaudit.googleapis.com%2Faccess_transparency",
+				"logName: /logs/dns.googleapis.com%2Fdns_queries",
+			}
+
+			// Log Sink
+			for _, sink := range []struct {
+				name        string
+				destination string
+			}{
+				{
+					name:        "sk-c-logging-bkt",
+					destination: fmt.Sprintf("storage.googleapis.com/%s", logsExportStorageBucketName),
+				},
+				{
+					name:        "sk-c-logging-pub",
+					destination: fmt.Sprintf("pubsub.googleapis.com/projects/%s/topics/%s", auditLogsProjectID, logsExportTopicName),
+				},
+				{
+					name:        "sk-c-logging-prj",
+					destination: fmt.Sprintf("logging.googleapis.com/projects/%s", auditLogsProjectID),
+				},
+			} {
+				logSink := gcloud.Runf(t, "logging sinks describe %s --folder %s", sink.name, parentFolder)
+				assert.True(logSink.Get("includeChildren").Bool(), fmt.Sprintf("sink %s should include children", sink.name))
+				assert.Equal(sink.destination, logSink.Get("destination").String(), fmt.Sprintf("sink %s should have destination %s", sink.name, sink.destination))
+				for _, filter := range logsFilter {
+					assert.Contains(logSink.Get("filter").String(), filter, fmt.Sprintf("sink %s should include filter %s", sink.name, filter))
+				}
 			}
 
 			// CAI Monitoring
@@ -267,40 +317,56 @@ func TestOrg(t *testing.T) {
 			// Log Sink
 			for _, sink := range []struct {
 				name        string
-				hasFilter   bool
 				destination string
 			}{
 				{
 					name:        "sk-c-logging-bkt",
-					hasFilter:   false,
 					destination: fmt.Sprintf("storage.googleapis.com/%s", logsExportStorageBucketName),
 				},
 				{
-					name:        "sk-c-logging-logbkt",
-					hasFilter:   false,
-					destination: fmt.Sprintf("logging.googleapis.com/%s", logBktFullName),
+					name:        "sk-c-logging-prj",
+					destination: fmt.Sprintf("logging.googleapis.com/projects/%s", auditLogsProjectID),
 				},
 				{
 					name:        "sk-c-logging-pub",
-					hasFilter:   true,
 					destination: fmt.Sprintf("pubsub.googleapis.com/projects/%s/topics/%s", auditLogsProjectID, logsExportTopicName),
-				},
-				{
-					name:        "sk-c-logging-bq",
-					hasFilter:   true,
-					destination: fmt.Sprintf("bigquery.googleapis.com/projects/%s/datasets/%s", auditLogsProjectID, auditLogsDatasetName),
 				},
 			} {
 				logSink := gcloud.Runf(t, "logging sinks describe %s --folder %s", sink.name, parentFolder)
 				assert.True(logSink.Get("includeChildren").Bool(), fmt.Sprintf("sink %s should include children", sink.name))
 				assert.Equal(sink.destination, logSink.Get("destination").String(), fmt.Sprintf("sink %s should have destination %s", sink.name, sink.destination))
-				if sink.hasFilter {
-					for _, filter := range mainLogsFilter {
-						assert.Contains(logSink.Get("filter").String(), filter, fmt.Sprintf("sink %s should include filter %s", sink.name, filter))
-					}
-				} else {
-					assert.Equal("", logSink.Get("filter").String(), fmt.Sprintf("sink %s should not have a filter", sink.name))
+				for _, filter := range logsFilter {
+					assert.Contains(logSink.Get("filter").String(), filter, fmt.Sprintf("sink %s should include filter %s", sink.name, filter))
 				}
+
+			}
+
+			// Log Sink billing
+			billingAccount := org.GetTFSetupStringOutput("billing_account")
+			billingSinkNames := terraform.OutputMap(t, org.GetTFOptions(), "billing_sink_names")
+			billingPRJSinkName := billingSinkNames["prj"]
+			billingPUBSinkName := billingSinkNames["pub"]
+			billingSTOSinkName := billingSinkNames["sto"]
+
+			for _, sinkBilling := range []struct {
+				name        string
+				destination string
+			}{
+				{
+					name:        billingSTOSinkName,
+					destination: fmt.Sprintf("storage.googleapis.com/%s", logsExportStorageBucketName),
+				},
+				{
+					name:        billingPRJSinkName,
+					destination: fmt.Sprintf("logging.googleapis.com/projects/%s", auditLogsProjectID),
+				},
+				{
+					name:        billingPUBSinkName,
+					destination: fmt.Sprintf("pubsub.googleapis.com/projects/%s/topics/%s", auditLogsProjectID, logsExportTopicName),
+				},
+			} {
+				logSinkBilling := gcloud.Runf(t, "logging sinks describe %s --billing-account %s", sinkBilling.name, billingAccount)
+				assert.Equal(sinkBilling.destination, logSinkBilling.Get("destination").String(), fmt.Sprintf("sink %s should have destination %s", sinkBilling.name, sinkBilling.destination))
 			}
 
 			// hub and spoke infrastructure
@@ -337,6 +403,13 @@ func TestOrg(t *testing.T) {
 						"logging.googleapis.com",
 						"bigquery.googleapis.com",
 						"billingbudgets.googleapis.com",
+					},
+				},
+				{
+					output: "org_kms_project_id",
+					apis: []string{
+						"logging.googleapis.com",
+						"cloudkms.googleapis.com",
 					},
 				},
 				{
@@ -379,6 +452,52 @@ func TestOrg(t *testing.T) {
 				enabledAPIS := gcloud.Runf(t, "services list --project %s", projectID).Array()
 				listApis := testutils.GetResultFieldStrSlice(enabledAPIS, "config.name")
 				assert.Subset(listApis, projectOutput.apis, "APIs should have been enabled")
+			}
+			// shared vpc projects
+			for _, envName := range []string{
+				"development",
+				"nonproduction",
+				"production",
+			} {
+				for _, projectEnvOutput := range []struct {
+					projectOutput string
+					apis          []string
+				}{
+					{
+						projectOutput: "base_shared_vpc_project_id",
+						apis: []string{
+							"compute.googleapis.com",
+							"dns.googleapis.com",
+							"servicenetworking.googleapis.com",
+							"container.googleapis.com",
+							"logging.googleapis.com",
+							"billingbudgets.googleapis.com",
+						},
+					},
+					{
+						projectOutput: "restricted_shared_vpc_project_id",
+						apis: []string{
+							"compute.googleapis.com",
+							"dns.googleapis.com",
+							"servicenetworking.googleapis.com",
+							"container.googleapis.com",
+							"logging.googleapis.com",
+							"cloudresourcemanager.googleapis.com",
+							"accesscontextmanager.googleapis.com",
+							"billingbudgets.googleapis.com",
+						},
+					},
+				} {
+					envProj := terraform.OutputMapOfObjects(t, org.GetTFOptions(), "shared_vpc_projects")[envName].(map[string]interface{})
+					projectID := envProj[projectEnvOutput.projectOutput]
+					prj := gcloud.Runf(t, "projects describe %s", projectID)
+					assert.Equal(projectID, prj.Get("projectId").String(), fmt.Sprintf("project %s should exist", projectID))
+					assert.Equal("ACTIVE", prj.Get("lifecycleState").String(), fmt.Sprintf("project %s should be ACTIVE", projectID))
+
+					enabledAPIS := gcloud.Runf(t, "services list --project %s", projectID).Array()
+					listApis := testutils.GetResultFieldStrSlice(enabledAPIS, "config.name")
+					assert.Subset(listApis, projectEnvOutput.apis, "APIs should have been enabled")
+				}
 			}
 		})
 	org.Test()

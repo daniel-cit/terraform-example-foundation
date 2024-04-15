@@ -198,3 +198,11 @@ resource "helm_release" "actions_runner_controller" {
 
   depends_on = [time_sleep.wait_cert_manager]
 }
+
+resource "google_service_account_iam_member" "self_impersonate" {
+  for_each = local.granular_sa
+
+  service_account_id = google_service_account.terraform-env-sa[each.key].id
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+}
