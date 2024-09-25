@@ -319,20 +319,38 @@ func DeployNetworksStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 	return deployStage(t, stageConf, s, c)
 }
 
-func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
-	// shared
-	sharedTfvars := ProjSharedTfvars{
-		DefaultRegion: tfvars.DefaultRegion,
+func DeployInfraPipelineStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
+
+	infraPipelineTfvars := InfraPipelineTfvars{
+		DefaultRegion:     tfvars.DefaultRegion,
+		RemoteStateBucket: outputs.RemoteStateBucket,
 	}
-	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, ProjectsStep, "shared.auto.tfvars"), sharedTfvars)
+
+	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, OrgStep, "envs", "shared", "terraform.tfvars"), infraPipelineTfvars)
 	if err != nil {
 		return err
 	}
+
+	conf := utils.CloneCSR(t, InfraPipelineRepo, filepath.Join(c.CheckoutPath, InfraPipelineRepo), outputs.CICDProject, c.Logger)
+	stageConf := StageConf{
+		Stage:         InfraPipelineRepo,
+		CICDProject:   outputs.CICDProject,
+		DefaultRegion: outputs.DefaultRegion,
+		Step:          InfraPipelineStep,
+		Repo:          InfraPipelineRepo,
+		GitConf:       conf,
+		Envs:          []string{"shared"},
+	}
+
+	return deployStage(t, stageConf, s, c)
+}
+
+func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs BootstrapOutputs, c CommonConf) error {
 	// common
 	commonTfvars := ProjCommonTfvars{
 		RemoteStateBucket: outputs.RemoteStateBucket,
 	}
-	err = utils.WriteTfvars(filepath.Join(c.FoundationPath, ProjectsStep, "common.auto.tfvars"), commonTfvars)
+	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, ProjectsStep, "common.auto.tfvars"), commonTfvars)
 	if err != nil {
 		return err
 	}
@@ -354,13 +372,11 @@ func DeployProjectsStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outpu
 	conf := utils.CloneCSR(t, ProjectsRepo, filepath.Join(c.CheckoutPath, ProjectsRepo), outputs.CICDProject, c.Logger)
 	stageConf := StageConf{
 		Stage:         ProjectsRepo,
-		StageSA:       outputs.ProjectsSA,
 		CICDProject:   outputs.CICDProject,
 		DefaultRegion: outputs.DefaultRegion,
 		Step:          ProjectsStep,
 		Repo:          ProjectsRepo,
 		GitConf:       conf,
-		HasManualStep: true,
 		GroupingUnits: []string{"business_unit_1"},
 		Envs:          []string{"production", "nonproduction", "development"},
 	}
@@ -387,10 +403,10 @@ func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, out
 		}
 	}
 	//prepare policies repo
-	gcpPoliciesPath := filepath.Join(c.CheckoutPath, "gcp-policies-app-infra")
+	gcpPoliciesPath := filepath.Join(c.CheckoutPath, "gcp-policies-project-infra")
 	policiesConf := utils.CloneCSR(t, PoliciesRepo, gcpPoliciesPath, outputs.InfraPipeProj, c.Logger)
 	policiesBranch := "main"
-	err = s.RunStep("bu1-example-app.gcp-policies-app-infra", func() error {
+	err = s.RunStep("bu1-example-app.gcp-policies-project-infra", func() error {
 		return preparePoliciesRepo(policiesConf, policiesBranch, c.FoundationPath, gcpPoliciesPath)
 	})
 	if err != nil {

@@ -16,46 +16,46 @@
 
 output "default_region" {
   description = "Default region to create resources where applicable."
-  value       = module.main.default_region
+  value       = try(module.infra_pipelines[0].default_region, "")
 }
 
-output "cloudbuild_project_id" {
-  value = module.main.project_id
+output "project_id" {
+  value = try(module.app_infra_cloudbuild_project[0].project_id, "")
 }
 
 output "terraform_service_accounts" {
   description = "APP Infra Pipeline Terraform Accounts."
-  value       = module.main.terraform_service_accounts
+  value       = try(module.infra_pipelines[0].terraform_service_accounts, {})
 }
 
 output "repos" {
   description = "CSRs to store source code"
-  value       = module.main.repos
+  value       = try(module.infra_pipelines[0].repos, toset([]))
 }
 
 output "artifact_buckets" {
   description = "GCS Buckets to store Cloud Build Artifacts"
-  value       = module.main.artifact_buckets
+  value       = try(module.infra_pipelines[0].artifact_buckets, {})
 }
 
 output "state_buckets" {
   description = "GCS Buckets to store TF state"
-  value       = module.main.state_buckets
+  value       = try(module.infra_pipelines[0].state_buckets, {})
 }
 
 output "log_buckets" {
   description = "GCS Buckets to store Cloud Build logs"
-  value       = module.main.log_buckets
+  value       = try(module.infra_pipelines[0].log_buckets, {})
 }
 
 output "plan_triggers_id" {
   description = "CB plan triggers"
-  value       = module.main.plan_triggers_id
+  value       = try(module.infra_pipelines[0].plan_triggers_id, [])
 }
 
 output "apply_triggers_id" {
   description = "CB apply triggers"
-  value       = module.main.apply_triggers_id
+  value       = try(module.infra_pipelines[0].apply_triggers_id, [])
 }
 
 output "enable_cloudbuild_deploy" {

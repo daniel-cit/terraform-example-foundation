@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appinfra
+package project_infra
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAppInfra(t *testing.T) {
+func TestProjectInfra(t *testing.T) {
 
 	bootstrap := tft.NewTFBlueprintTest(t,
 		tft.WithTFDir("../../../0-bootstrap"),
@@ -35,13 +35,13 @@ func TestAppInfra(t *testing.T) {
 		"remote_state_bucket": projects_backend_bucket,
 	}
 
-	shared := tft.NewTFBlueprintTest(t,
-		tft.WithTFDir("../../../4-projects/business_unit_1/shared"),
+	infraPipeline := tft.NewTFBlueprintTest(t,
+		tft.WithTFDir("../../../4-infra-pipeline/business_unit_1/shared"),
 	)
 
 	// Configure impersonation for test execution
-	terraformSA := terraform.OutputMap(t, shared.GetTFOptions(), "terraform_service_accounts")["bu1-example-app"]
-	backend_bucket := terraform.OutputMap(t, shared.GetTFOptions(), "state_buckets")["bu1-example-app"]
+	terraformSA := terraform.OutputMap(t, infraPipeline.GetTFOptions(), "terraform_service_accounts")["bu1-example-app"]
+	backend_bucket := terraform.OutputMap(t, infraPipeline.GetTFOptions(), "state_buckets")["bu1-example-app"]
 	utils.SetEnv(t, "GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", terraformSA)
 	backendConfig := map[string]interface{}{
 		"bucket": backend_bucket,
@@ -61,7 +61,7 @@ func TestAppInfra(t *testing.T) {
 			)
 
 			appInfra := tft.NewTFBlueprintTest(t,
-				tft.WithTFDir(fmt.Sprintf("../../../5-app-infra/business_unit_1/%s", envName)),
+				tft.WithTFDir(fmt.Sprintf("../../../5-project-infra/business_unit_1/%s", envName)),
 				tft.WithBackendConfig(backendConfig),
 				tft.WithPolicyLibraryPath("/workspace/policy-library", projects.GetStringOutput("base_shared_vpc_project")),
 				tft.WithVars(vars),

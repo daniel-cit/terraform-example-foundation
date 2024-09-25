@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,7 @@
  */
 
 locals {
-  repo_names = ["bu1-example-app"]
-
-  environment       = "common"
-  env_code          = element(split("", local.environment), 0)
-  business_code     = "bu1"
-  primary_contact   = "example@example.com"
-  secondary_contact = "example2@example.com"
-  billing_code      = "1234"
+  env_code = element(split("", var.environment), 0)
 }
 
 module "app_infra_cloudbuild_project" {
@@ -32,28 +25,20 @@ module "app_infra_cloudbuild_project" {
 
   random_project_id        = true
   random_project_id_length = 4
-  name                     = "${local.project_prefix}-${local.env_code}-${local.business_code}-${"infra-pipeline"}"
+  name                     = "${local.project_prefix}-${local.env_code}-${var.business_code}-infra-pipeline"
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = local.common_folder_name
 
-  activate_apis = [
-    "cloudbuild.googleapis.com",
-    "sourcerepo.googleapis.com",
-    "cloudkms.googleapis.com",
-    "iam.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "billingbudgets.googleapis.com"
-  ]
+  activate_apis = distinct(concat(var.activate_apis, ["billingbudgets.googleapis.com"]))
 
   labels = {
-    environment       = local.environment
+    environment       = var.environment
     application_name  = "app-infra-pipelines"
-    billing_code      = local.billing_code
-    primary_contact   = element(split("@", local.primary_contact), 0)
-    secondary_contact = element(split("@", local.secondary_contact), 0)
-    business_code     = local.business_code
+    billing_code      = var.billing_code
+    primary_contact   = element(split("@", var.primary_contact), 0)
+    secondary_contact = element(split("@", var.secondary_contact), 0)
+    business_code     = var.business_code
     env_code          = local.env_code
     vpc               = "none"
   }
@@ -66,7 +51,7 @@ module "app_infra_cloudbuild_project" {
 
 
 module "infra_pipelines" {
-  source = "../../modules/infra_pipelines"
+  source = "../infra_pipelines"
   count  = local.enable_cloudbuild_deploy ? 1 : 0
 
   org_id                      = local.org_id
@@ -75,7 +60,7 @@ module "infra_pipelines" {
   remote_tfstate_bucket       = local.projects_remote_bucket_tfstate
   billing_account             = local.billing_account
   default_region              = var.default_region
-  app_infra_repos             = local.repo_names
+  app_infra_repos             = var.repo_names
   private_worker_pool_id      = local.cloud_build_private_worker_pool_id
 }
 

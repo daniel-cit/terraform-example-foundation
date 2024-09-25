@@ -39,7 +39,7 @@
 | base\_subnets\_self\_links | The self-links of subnets from base environment. |
 | bucket | The created storage bucket. |
 | floating\_project | Project sample floating project. |
-| iap\_firewall\_tags | The security tags created for IAP (SSH and RDP) firewall rules and to be used on the VM created on step 5-app-infra on the peering network project. |
+| iap\_firewall\_tags | The security tags created for IAP (SSH and RDP) firewall rules and to be used on the VM created on step 5-project-infra on the peering network project. |
 | keyring | The name of the keyring. |
 | keys | List of created key names. |
 | peering\_complete | Output to be used as a module dependency. |

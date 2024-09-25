@@ -127,6 +127,19 @@ func DestroyNetworksStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs,
 	return destroyStage(t, stageConf, s, c)
 }
 
+func DestroyInfraPipelineStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
+	stageConf := StageConf{
+		Stage:         InfraPipelineRepo,
+		StageSA:       outputs.InfraPipelineSA,
+		CICDProject:   outputs.CICDProject,
+		Step:          InfraPipelineStep,
+		Repo:          InfraPipelineRepo,
+		GroupingUnits: []string{"envs"},
+		Envs:          []string{"shared"},
+	}
+	return destroyStage(t, stageConf, s, c)
+}
+
 func DestroyProjectsStage(t testing.TB, s steps.Steps, outputs BootstrapOutputs, c CommonConf) error {
 	stageConf := StageConf{
 		Stage:         ProjectsRepo,

@@ -99,7 +99,7 @@ Version 1.5.7 is the last version before the license model change. To use a late
   - [3-networks-dual-svpc](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-dual-svpc)
   - [3-networks-hub-and-spoke](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke)
   - [4-projects](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects)
-  - [5-app-infra](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-app-infra)
+  - [5-project-infra](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-project-infra)
 
 ### Location
 
@@ -176,7 +176,7 @@ For these extra check you need at least the roles *Security Center Notification 
     └── gcp-networks
     └── gcp-org
     └── gcp-policies
-    └── gcp-policies-app-infra
+    └── gcp-policies-project-infra
     └── gcp-projects
     └── global.tfvars
     └── terraform-example-foundation

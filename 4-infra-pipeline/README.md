@@ -1,4 +1,4 @@
-# 4-projects
+# 4-infra-pipeline //TODO
 
 This repo is part of a multi-part guide that shows how to configure and deploy
 the example.com reference architecture described in

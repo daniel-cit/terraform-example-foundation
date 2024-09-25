@@ -52,7 +52,7 @@ variable "tfc_org_name" {
 }
 
 variable "instance_region" {
-  description = "Region which the peered subnet will be created (Should be same region as the VM that will be created on step 5-app-infra on the peering project)."
+  description = "Region which the peered subnet will be created (Should be same region as the VM that will be created on step 5-project-infra on the peering project)."
   type        = string
   default     = null
 }

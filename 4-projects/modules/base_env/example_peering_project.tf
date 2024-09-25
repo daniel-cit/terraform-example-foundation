@@ -41,7 +41,7 @@ module "peering_project" {
   project_prefix  = local.project_prefix
 
   // Enabling Cloud Build Deploy to use Service Accounts during the build and give permissions to the SA.
-  // The permissions will be the ones necessary for the deployment of the step 5-app-infra
+  // The permissions will be the ones necessary for the deployment of the step 5-project-infra
   enable_cloudbuild_deploy = local.enable_cloudbuild_deploy
 
   // A map of Service Accounts to use on the infra pipeline (Cloud Build)
@@ -49,7 +49,7 @@ module "peering_project" {
   app_infra_pipeline_service_accounts = local.app_infra_pipeline_service_accounts
 
   // Map for the roles where the key is the repository name ("${var.business_code}-example-app")
-  // and the value is the list of roles that this SA need to deploy step 5-app-infra
+  // and the value is the list of roles that this SA need to deploy step 5-project-infra
   sa_roles = {
     "${var.business_code}-example-app" = [
       "roles/compute.instanceAdmin.v1",

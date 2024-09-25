@@ -20,11 +20,12 @@ locals {
   parent_id   = var.parent_folder == "" ? var.org_id : var.parent_folder
 
   granular_sa = {
-    "bootstrap" = "Foundation Bootstrap SA. Managed by Terraform.",
-    "org"       = "Foundation Organization SA. Managed by Terraform.",
-    "env"       = "Foundation Environment SA. Managed by Terraform.",
-    "net"       = "Foundation Network SA. Managed by Terraform.",
-    "proj"      = "Foundation Projects SA. Managed by Terraform.",
+    "bootstrap"      = "Foundation Bootstrap SA. Managed by Terraform.",
+    "org"            = "Foundation Organization SA. Managed by Terraform.",
+    "env"            = "Foundation Environment SA. Managed by Terraform.",
+    "net"            = "Foundation Network SA. Managed by Terraform.",
+    "infra-pipeline" = "Foundation Project Infra SA. Managed by Terraform.",
+    "proj"           = "Foundation Projects SA. Managed by Terraform.",
   }
 
   common_roles = [
@@ -58,6 +59,9 @@ locals {
       "roles/accesscontextmanager.policyAdmin",
       "roles/compute.xpnAdmin",
     ], local.common_roles)),
+    "infra-pipeline" = distinct(concat([
+      "roles/serviceusage.serviceUsageConsumer",
+    ], local.common_roles)),
     "proj" = distinct(concat([
       "roles/accesscontextmanager.policyAdmin",
       "roles/resourcemanager.organizationAdmin",
@@ -84,9 +88,11 @@ locals {
       "roles/compute.orgSecurityResourceAdmin",
       "roles/dns.admin",
     ],
+    "infra-pipeline" = [
+      "roles/artifactregistry.admin",
+    ],
     "proj" = [
       "roles/resourcemanager.folderAdmin",
-      "roles/artifactregistry.admin",
       "roles/compute.networkAdmin",
       "roles/compute.xpnAdmin",
     ],
@@ -107,6 +113,9 @@ locals {
       "roles/storage.objectAdmin"
     ],
     "net" = [
+      "roles/storage.objectAdmin",
+    ],
+    "infra-pipeline" = [
       "roles/storage.objectAdmin",
     ],
     "proj" = [

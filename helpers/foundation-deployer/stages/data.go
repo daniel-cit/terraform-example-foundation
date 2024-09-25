@@ -28,20 +28,22 @@ import (
 )
 
 const (
-	PoliciesRepo     = "gcp-policies"
-	BootstrapRepo    = "gcp-bootstrap"
-	OrgRepo          = "gcp-org"
-	EnvironmentsRepo = "gcp-environments"
-	NetworksRepo     = "gcp-networks"
-	ProjectsRepo     = "gcp-projects"
-	AppInfraRepo     = "bu1-example-app"
-	BootstrapStep    = "0-bootstrap"
-	OrgStep          = "1-org"
-	EnvironmentsStep = "2-environments"
-	HubAndSpokeStep  = "3-networks-hub-and-spoke"
-	DualSvpcStep     = "3-networks-dual-svpc"
-	ProjectsStep     = "4-projects"
-	AppInfraStep     = "5-app-infra"
+	PoliciesRepo      = "gcp-policies"
+	BootstrapRepo     = "gcp-bootstrap"
+	OrgRepo           = "gcp-org"
+	EnvironmentsRepo  = "gcp-environments"
+	NetworksRepo      = "gcp-networks"
+	InfraPipelineRepo = "gcp-infra-pipeline"
+	ProjectsRepo      = "gcp-projects"
+	AppInfraRepo      = "bu1-example-app"
+	BootstrapStep     = "0-bootstrap"
+	OrgStep           = "1-org"
+	EnvironmentsStep  = "2-environments"
+	HubAndSpokeStep   = "3-networks-hub-and-spoke"
+	DualSvpcStep      = "3-networks-dual-svpc"
+	InfraPipelineStep = "4-infra-pipeline"
+	ProjectsStep      = "4-projects"
+	AppInfraStep      = "5-project-infra"
 )
 
 type CommonConf struct {
@@ -74,6 +76,7 @@ type BootstrapOutputs struct {
 	CICDProject               string
 	DefaultRegion             string
 	NetworkSA                 string
+	InfraPipelineSA           string
 	ProjectsSA                string
 	EnvsSA                    string
 	OrgSA                     string
@@ -240,13 +243,13 @@ type NetSharedTfvars struct {
 type NetAccessContextTfvars struct {
 	AccessContextManagerPolicyID string `hcl:"access_context_manager_policy_id"`
 }
+type InfraPipelineTfvars struct {
+	RemoteStateBucket string `hcl:"remote_state_bucket"`
+	DefaultRegion     string `hcl:"default_region"`
+}
 
 type ProjCommonTfvars struct {
 	RemoteStateBucket string `hcl:"remote_state_bucket"`
-}
-
-type ProjSharedTfvars struct {
-	DefaultRegion string `hcl:"default_region"`
 }
 
 type ProjEnvTfvars struct {

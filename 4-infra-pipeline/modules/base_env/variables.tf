@@ -47,3 +47,48 @@ variable "tfc_org_name" {
   type        = string
   default     = ""
 }
+
+variable "repo_names" {
+  description = "value"
+  type        = list(string)
+}
+
+
+variable "application_name" {
+  description = "The name of application where GCP resources relate"
+  type        = string
+}
+
+variable "billing_code" {
+  description = "The code that's used to provide chargeback information"
+  type        = string
+}
+
+variable "primary_contact" {
+  description = "The primary email contact for the project"
+  type        = string
+}
+
+variable "secondary_contact" {
+  description = "The secondary email contact for the project"
+  type        = string
+  default     = ""
+}
+
+variable "business_code" {
+  description = "The code that describes which business unit owns the project"
+  type        = string
+  default     = "shared"
+}
+
+variable "activate_apis" {
+  description = "The api to activate for the GCP project"
+  type        = list(string)
+  default     = []
+}
+
+variable "environment" {
+  description = "The environment the single project belongs to"
+  type        = string
+}
+

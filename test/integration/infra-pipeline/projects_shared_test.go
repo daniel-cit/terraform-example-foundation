@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package projectsshared
+package infra_pipeline
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ import (
 	"github.com/terraform-google-modules/terraform-example-foundation/test/integration/testutils"
 )
 
-func TestProjectsShared(t *testing.T) {
+func TestInfraPipeline(t *testing.T) {
 
 	bootstrap := tft.NewTFBlueprintTest(t,
 		tft.WithTFDir("../../../0-bootstrap"),
@@ -44,7 +44,7 @@ func TestProjectsShared(t *testing.T) {
 		"bucket": projects_backend_bucket,
 	}
 
-	var sharedApisEnabled = []string{
+	var infraPipelineApisEnabled = []string{
 		"cloudbuild.googleapis.com",
 		"sourcerepo.googleapis.com",
 		"cloudkms.googleapis.com",
@@ -58,56 +58,56 @@ func TestProjectsShared(t *testing.T) {
 		{
 			name:  "bu1",
 			repo:  "bu1-example-app",
-			tfDir: "../../../4-projects/business_unit_1/shared",
+			tfDir: "../../../4-infra-pipeline/business_unit_1/shared",
 		},
 	} {
 		tts := tts
 		t.Run(tts.name, func(t *testing.T) {
 			t.Parallel()
 
-			sharedVars := map[string]interface{}{
+			infraPipelineVars := map[string]interface{}{
 				"remote_state_bucket": backend_bucket,
 			}
 
-			shared := tft.NewTFBlueprintTest(t,
+			infraPipeline := tft.NewTFBlueprintTest(t,
 				tft.WithTFDir(tts.tfDir),
-				tft.WithVars(sharedVars),
+				tft.WithVars(infraPipelineVars),
 				tft.WithBackendConfig(backendConfig),
 				tft.WithRetryableTerraformErrors(testutils.RetryableTransientErrors, 1, 2*time.Minute),
 				tft.WithPolicyLibraryPath("/workspace/policy-library", bootstrap.GetTFSetupStringOutput("project_id")),
 			)
 
-			shared.DefineVerify(
+			infraPipeline.DefineVerify(
 				func(assert *assert.Assertions) {
 					// perform default verification ensuring Terraform reports no additional changes on an applied blueprint
-					shared.DefaultVerify(assert)
+					infraPipeline.DefaultVerify(assert)
 
-					projectID := shared.GetStringOutput("cloudbuild_project_id")
+					projectID := infraPipeline.GetStringOutput("cloudbuild_project_id")
 					prj := gcloud.Runf(t, "projects describe %s", projectID)
 					assert.Equal("ACTIVE", prj.Get("lifecycleState").String(), fmt.Sprintf("project %s should be ACTIVE", projectID))
 
 					enabledAPIS := gcloud.Runf(t, "services list --project %s", projectID).Array()
 					listApis := testutils.GetResultFieldStrSlice(enabledAPIS, "config.name")
-					assert.Subset(listApis, sharedApisEnabled, "APIs should have been enabled")
+					assert.Subset(listApis, infraPipelineApisEnabled, "APIs should have been enabled")
 
 					// validate buckets
 					gcAlphaOpts := gcloud.WithCommonArgs([]string{"--project", projectID, "--json"})
-					artifactBktName := terraform.OutputMap(t, shared.GetTFOptions(), "artifact_buckets")[tts.repo]
+					artifactBktName := terraform.OutputMap(t, infraPipeline.GetTFOptions(), "artifact_buckets")[tts.repo]
 					artifactBkt := gcloud.Run(t, fmt.Sprintf("alpha storage ls --buckets gs://%s", artifactBktName), gcAlphaOpts).Array()[0]
 					assert.True(artifactBkt.Exists(), "bucket %s should exist", artifactBktName)
 					assert.Equal(artifactBktName, fmt.Sprintf("bkt-%s-%s-artifacts", projectID, tts.repo))
 
-					logBktName := terraform.OutputMap(t, shared.GetTFOptions(), "log_buckets")[tts.repo]
+					logBktName := terraform.OutputMap(t, infraPipeline.GetTFOptions(), "log_buckets")[tts.repo]
 					logBkt := gcloud.Run(t, fmt.Sprintf("alpha storage ls --buckets gs://%s", logBktName), gcAlphaOpts).Array()[0]
 					assert.True(logBkt.Exists(), "bucket %s should exist", logBktName)
 					assert.Equal(logBktName, fmt.Sprintf("bkt-%s-%s-logs", projectID, tts.repo))
 
-					stateBktName := terraform.OutputMap(t, shared.GetTFOptions(), "state_buckets")[tts.repo]
+					stateBktName := terraform.OutputMap(t, infraPipeline.GetTFOptions(), "state_buckets")[tts.repo]
 					stateBkt := gcloud.Run(t, fmt.Sprintf("alpha storage ls --buckets gs://%s", stateBktName), gcAlphaOpts).Array()[0]
 					assert.True(stateBkt.Exists(), "bucket %s should exist", stateBktName)
 					assert.Equal(stateBktName, fmt.Sprintf("bkt-%s-%s-state", projectID, tts.repo))
 				})
-			shared.Test()
+			infraPipeline.Test()
 		})
 
 	}

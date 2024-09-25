@@ -44,7 +44,7 @@ hub-and-spoke network model. It also sets up the global DNS hub.</td>
  which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
-<td><a href="../5-app-infra">5-app-infra</a></td>
+<td><a href="../5-project-infra">5-project-infra</a></td>
 <td>Deploy a <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
 </tr>
 </tbody>

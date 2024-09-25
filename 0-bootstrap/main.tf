@@ -27,6 +27,7 @@ locals {
     "serviceAccount:${google_service_account.terraform-env-sa["env"].email}",
     "serviceAccount:${google_service_account.terraform-env-sa["net"].email}",
     "serviceAccount:${google_service_account.terraform-env-sa["proj"].email}",
+    "serviceAccount:${google_service_account.terraform-env-sa["proj"].email}",
   ]
   parent = var.parent_folder != "" ? "folders/${var.parent_folder}" : "organizations/${var.org_id}"
   org_admins_org_iam_permissions = var.org_policy_admin_role == true ? [

@@ -45,6 +45,10 @@ locals {
       source       = "gcp-networks",
       state_bucket = local.default_state_bucket_self_link,
     },
+    "infra-pipeline" = {
+      source       = "gcp-infra-pipeline",
+      state_bucket = local.gcp_projects_state_bucket_self_link,
+    },
     "proj" = {
       source       = "gcp-projects",
       state_bucket = local.gcp_projects_state_bucket_self_link,
