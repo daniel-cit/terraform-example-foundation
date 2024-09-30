@@ -4,7 +4,7 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | gcs\_custom\_placement\_config | Configuration of the bucket's custom location in a dual-region bucket setup. If the bucket is designated a single or multi-region, the variable are null. | <pre>object({<br>    data_locations = list(string)<br>  })</pre> | `null` | no |
-| instance\_region | Region which the peered subnet will be created (Should be same region as the VM that will be created on step 5-project-infra on the peering project). | `string` | `null` | no |
+| instance\_region | Region which the peered subnet will be created (Should be same region as the VM that will be created on step 6-project-infra on the peering project). | `string` | `null` | no |
 | location\_gcs | Case-Sensitive Location for GCS Bucket (Should be same region as the KMS Keyring) | `string` | `null` | no |
 | location\_kms | Case-Sensitive Location for KMS Keyring (Should be same region as the GCS Bucket) | `string` | `null` | no |
 | peering\_module\_depends\_on | List of modules or resources peering module depends on. | `list(any)` | `[]` | no |
@@ -22,7 +22,7 @@
 | bucket | The created storage bucket. |
 | default\_region | The default region for the project. |
 | floating\_project | Project sample floating project. |
-| iap\_firewall\_tags | The security tags created for IAP (SSH and RDP) firewall rules and to be used on the VM created on step 5-project-infra on the peering network project. |
+| iap\_firewall\_tags | The security tags created for IAP (SSH and RDP) firewall rules and to be used on the VM created on step 6-project-infra on the peering network project. |
 | keyring | The name of the keyring. |
 | keys | List of created key names. |
 | peering\_complete | Output to be used as a module dependency. |

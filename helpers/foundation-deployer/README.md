@@ -99,7 +99,7 @@ Version 1.5.7 is the last version before the license model change. To use a late
   - [3-networks-dual-svpc](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-dual-svpc)
   - [3-networks-hub-and-spoke](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke)
   - [4-projects](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects)
-  - [5-project-infra](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-project-infra)
+  - [6-project-infra](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/6-project-infra)
 
 ### Location
 

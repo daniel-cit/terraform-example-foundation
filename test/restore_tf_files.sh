@@ -107,19 +107,19 @@ function projects(){
 
 function appinfra(){
     # restore backend configs in main module
-    mv 5-project-infra/business_unit_1/development/backend.tf.disabled 5-project-infra/business_unit_1/development/backend.tf
-    mv 5-project-infra/business_unit_1/nonproduction/backend.tf.disabled 5-project-infra/business_unit_1/nonproduction/backend.tf
-    mv 5-project-infra/business_unit_1/production/backend.tf.disabled 5-project-infra/business_unit_1/production/backend.tf
+    mv 6-project-infra/business_unit_1/development/backend.tf.disabled 6-project-infra/business_unit_1/development/backend.tf
+    mv 6-project-infra/business_unit_1/nonproduction/backend.tf.disabled 6-project-infra/business_unit_1/nonproduction/backend.tf
+    mv 6-project-infra/business_unit_1/production/backend.tf.disabled 6-project-infra/business_unit_1/production/backend.tf
 
     # restore ENVS.auto.tfvars in main module
-    mv 5-project-infra/business_unit_1/development/bu1-development.auto.tfvars.disabled 5-project-infra/business_unit_1/development/bu1-development.auto.tfvars
-    mv 5-project-infra/business_unit_1/nonproduction/bu1-nonproduction.auto.tfvars.disabled 5-project-infra/business_unit_1/nonproduction/bu1-nonproduction.auto.tfvars
-    mv 5-project-infra/business_unit_1/production/bu1-production.auto.tfvars.disabled 5-project-infra/business_unit_1/production/bu1-production.auto.tfvars
+    mv 6-project-infra/business_unit_1/development/bu1-development.auto.tfvars.disabled 6-project-infra/business_unit_1/development/bu1-development.auto.tfvars
+    mv 6-project-infra/business_unit_1/nonproduction/bu1-nonproduction.auto.tfvars.disabled 6-project-infra/business_unit_1/nonproduction/bu1-nonproduction.auto.tfvars
+    mv 6-project-infra/business_unit_1/production/bu1-production.auto.tfvars.disabled 6-project-infra/business_unit_1/production/bu1-production.auto.tfvars
 
     # restore common.auto.tfvars in main module
-    mv 5-project-infra/business_unit_1/development/common.auto.tfvars.disabled 5-project-infra/business_unit_1/development/common.auto.tfvars
-    mv 5-project-infra/business_unit_1/nonproduction/common.auto.tfvars.disabled 5-project-infra/business_unit_1/nonproduction/common.auto.tfvars
-    mv 5-project-infra/business_unit_1/production/common.auto.tfvars.disabled 5-project-infra/business_unit_1/production/common.auto.tfvars
+    mv 6-project-infra/business_unit_1/development/common.auto.tfvars.disabled 6-project-infra/business_unit_1/development/common.auto.tfvars
+    mv 6-project-infra/business_unit_1/nonproduction/common.auto.tfvars.disabled 6-project-infra/business_unit_1/nonproduction/common.auto.tfvars
+    mv 6-project-infra/business_unit_1/production/common.auto.tfvars.disabled 6-project-infra/business_unit_1/production/common.auto.tfvars
 }
 
 

@@ -43,7 +43,7 @@ const (
 	DualSvpcStep      = "3-networks-dual-svpc"
 	InfraPipelineStep = "4-infra-pipeline"
 	ProjectsStep      = "4-projects"
-	AppInfraStep      = "5-project-infra"
+	AppInfraStep      = "6-project-infra"
 )
 
 type CommonConf struct {

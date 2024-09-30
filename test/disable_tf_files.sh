@@ -76,9 +76,9 @@ function projects(){
 
 function appinfra(){
     # disable common.auto.tfvars in main module
-    mv 5-project-infra/business_unit_1/development/common.auto.tfvars 5-project-infra/business_unit_1/development/common.auto.tfvars.disabled
-    mv 5-project-infra/business_unit_1/nonproduction/common.auto.tfvars  5-project-infra/business_unit_1/nonproduction/common.auto.tfvars.disabled
-    mv 5-project-infra/business_unit_1/production/common.auto.tfvars  5-project-infra/business_unit_1/production/common.auto.tfvars.disabled
+    mv 6-project-infra/business_unit_1/development/common.auto.tfvars 6-project-infra/business_unit_1/development/common.auto.tfvars.disabled
+    mv 6-project-infra/business_unit_1/nonproduction/common.auto.tfvars  6-project-infra/business_unit_1/nonproduction/common.auto.tfvars.disabled
+    mv 6-project-infra/business_unit_1/production/common.auto.tfvars  6-project-infra/business_unit_1/production/common.auto.tfvars.disabled
 }
 
 

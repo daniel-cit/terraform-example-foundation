@@ -1,4 +1,4 @@
-# 5-project-infra
+# 6-project-infra
 
 This repo is part of a multi-part guide that shows how to configure and deploy
 the example.com reference architecture described in
@@ -43,7 +43,7 @@ Hub and Spoke network model. It also sets up the global DNS hub</td>
  which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
-<td>5-project-infra (this file)</td>
+<td>6-project-infra (this file)</td>
 <td>Deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
 </tr>
 </tbody>
@@ -133,7 +133,7 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
    cd bu1-example-app
    git checkout -b plan
 
-   cp -RT ../terraform-example-foundation/5-project-infra/ .
+   cp -RT ../terraform-example-foundation/6-project-infra/ .
    cp ../terraform-example-foundation/build/cloudbuild-tf-* .
    cp ../terraform-example-foundation/build/tf-wrapper.sh .
    chmod 755 ./tf-wrapper.sh
@@ -194,10 +194,10 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
 
 ### Run Terraform locally
 
-1. The next instructions assume that you are at the same level of the `terraform-example-foundation` folder. Change into `5-project-infra` folder, copy the Terraform wrapper script and ensure it can be executed.
+1. The next instructions assume that you are at the same level of the `terraform-example-foundation` folder. Change into `6-project-infra` folder, copy the Terraform wrapper script and ensure it can be executed.
 
    ```bash
-   cd terraform-example-foundation/5-project-infra
+   cd terraform-example-foundation/6-project-infra
    cp ../build/tf-wrapper.sh .
    chmod 755 ./tf-wrapper.sh
    ```
@@ -243,7 +243,7 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
    ```
 
 We will now deploy each of our environments (development/production/nonproduction) using this script.
-When using Cloud Build or Jenkins as your CI/CD tool, each environment corresponds to a branch in the repository for the `5-project-infra` step. Only the corresponding environment is applied.
+When using Cloud Build or Jenkins as your CI/CD tool, each environment corresponds to a branch in the repository for the `6-project-infra` step. Only the corresponding environment is applied.
 
 To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
 

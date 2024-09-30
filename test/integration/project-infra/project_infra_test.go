@@ -61,7 +61,7 @@ func TestProjectInfra(t *testing.T) {
 			)
 
 			appInfra := tft.NewTFBlueprintTest(t,
-				tft.WithTFDir(fmt.Sprintf("../../../5-project-infra/business_unit_1/%s", envName)),
+				tft.WithTFDir(fmt.Sprintf("../../../6-project-infra/business_unit_1/%s", envName)),
 				tft.WithBackendConfig(backendConfig),
 				tft.WithPolicyLibraryPath("/workspace/policy-library", projects.GetStringOutput("base_shared_vpc_project")),
 				tft.WithVars(vars),

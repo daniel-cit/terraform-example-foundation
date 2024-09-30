@@ -161,8 +161,8 @@ func main() {
 	// destroy stages
 	if cfg.destroy {
 		// Note: destroy is only terraform destroy, local directories are not deleted.
-		// 5-project-infra
-		msg.PrintStageMsg("Destroying 5-project-infra stage")
+		// 6-project-infra
+		msg.PrintStageMsg("Destroying 6-project-infra stage")
 		err = s.RunDestroyStep("bu1-example-app", func() error {
 			io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
 			return stages.DestroyExampleAppStage(t, s, io, conf)
@@ -321,8 +321,8 @@ func main() {
 		os.Exit(3)
 	}
 
-	// 5-project-infra
-	msg.PrintStageMsg("Deploying 5-project-infra stage")
+	// 6-project-infra
+	msg.PrintStageMsg("Deploying 6-project-infra stage")
 	io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
 	io.RemoteStateBucket = bo.RemoteStateBucketProjects
 

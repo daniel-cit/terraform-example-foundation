@@ -31,7 +31,7 @@ module "base_shared_vpc_project" {
 
   // The roles defined in "sa_roles" will be used to grant the necessary permissions
   // to deploy the resources, a Compute Engine instance for each environment, defined
-  // in 5-project-infra step (5-project-infra/modules/env_base/main.tf).
+  // in 6-project-infra step (6-project-infra/modules/env_base/main.tf).
   // The roles are grouped by the repository name ("${var.business_code}-example-app") used to create the Cloud Build workspace
   // (https://github.com/terraform-google-modules/terraform-google-bootstrap/tree/master/modules/tf_cloudbuild_workspace)
   // in the 4-projects shared environment of each business unit.

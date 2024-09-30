@@ -44,7 +44,7 @@ Hub and Spoke network model. It also sets up the global DNS hub</td>
  which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
-<td><a href="../5-project-infra">5-project-infra</a></td>
+<td><a href="../6-project-infra">6-project-infra</a></td>
 <td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
 </tr>
 </tbody>
@@ -62,7 +62,7 @@ For each business unit, a shared `infra-pipeline` project is created along with 
 This step follows the same [conventions](https://github.com/terraform-google-modules/terraform-example-foundation#branching-strategy) as the Foundation pipeline deployed in [0-bootstrap](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md).
 A custom [workspace](https://github.com/terraform-google-modules/terraform-google-bootstrap/blob/master/modules/tf_cloudbuild_workspace/README.md) (`bu1-example-app`) is created by this pipeline and necessary roles are granted to the Terraform Service Account of this workspace by enabling variable `sa_roles` as shown in this [example](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects/modules/base_env/example_base_shared_vpc_project.tf).
 
-This pipeline is utilized to deploy resources in projects across development/nonproduction/production in step [5-project-infra](../5-project-infra/README.md).
+This pipeline is utilized to deploy resources in projects across development/nonproduction/production in step [6-project-infra](../6-project-infra/README.md).
 Other Workspaces can also be created to isolate deployments if needed.
 
 ## Prerequisites
@@ -225,7 +225,7 @@ For example, to create a new business unit similar to business_unit_1, run the f
    unset GOOGLE_IMPERSONATE_SERVICE_ACCOUNT
    ```
 
-1. You can now move to the instructions in the [5-project-infra](../5-project-infra/README.md) step.
+1. You can now move to the instructions in the [6-project-infra](../6-project-infra/README.md) step.
 
 ### Deploying with Jenkins
 
