@@ -56,10 +56,10 @@ function shared(){
 
 function projectsshared(){
     # disable shared.auto.tfvars
-    mv 4-projects/business_unit_1/shared/shared.auto.tfvars  4-projects/business_unit_1/shared/shared.auto.tfvars.disabled
+    mv 4-infra-pipeline/business_unit_1/shared/shared.auto.tfvars  4-infra-pipeline/business_unit_1/shared/shared.auto.tfvars.disabled
 
     # disable common.auto.tfvars
-    mv 4-projects/business_unit_1/shared/common.auto.tfvars 4-projects/business_unit_1/shared/common.auto.tfvars.disabled
+    mv 4-infra-pipeline/business_unit_1/shared/common.auto.tfvars 4-infra-pipeline/business_unit_1/shared/common.auto.tfvars.disabled
 }
 
 function projects(){

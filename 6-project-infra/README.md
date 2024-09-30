@@ -224,10 +224,10 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
    member="user:$(gcloud auth list --filter="status=ACTIVE" --format="value(account)")"
    echo ${member}
 
-   project_id=$(terraform -chdir="../4-projects/business_unit_1/shared/" output -raw cloudbuild_project_id)
+   project_id=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -raw cloudbuild_project_id)
    echo ${project_id}
 
-   terraform_sa=$(terraform -chdir="../4-projects/business_unit_1/shared/" output -json terraform_service_accounts | jq '."bu1-example-app"' --raw-output)
+   terraform_sa=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -json terraform_service_accounts | jq '."bu1-example-app"' --raw-output)
    echo ${terraform_sa}
 
    gcloud iam service-accounts add-iam-policy-binding ${terraform_sa} --project ${project_id} --member="${member}" --role="roles/iam.serviceAccountTokenCreator"
@@ -236,7 +236,7 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
 1. Update `backend.tf` with your bucket from the infra pipeline output.
 
    ```bash
-   export backend_bucket=$(terraform -chdir="../4-projects/business_unit_1/shared/" output -json state_buckets | jq '."bu1-example-app"' --raw-output)
+   export backend_bucket=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -json state_buckets | jq '."bu1-example-app"' --raw-output)
    echo "backend_bucket = ${backend_bucket}"
 
    for i in `find . -name 'backend.tf'`; do sed -i'' -e "s/UPDATE_APP_INFRA_BUCKET/${backend_bucket}/" $i; done
@@ -250,10 +250,10 @@ To use the `validate` option of the `tf-wrapper.sh` script, please follow the [i
 1. Use `terraform output` to get the Infra Pipeline Project ID from 4-projects output.
 
    ```bash
-   export INFRA_PIPELINE_PROJECT_ID=$(terraform -chdir="../4-projects/business_unit_1/shared/" output -raw cloudbuild_project_id)
+   export INFRA_PIPELINE_PROJECT_ID=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -raw cloudbuild_project_id)
    echo ${INFRA_PIPELINE_PROJECT_ID}
 
-   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../4-projects/business_unit_1/shared/" output -json terraform_service_accounts | jq '."bu1-example-app"' --raw-output)
+   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -json terraform_service_accounts | jq '."bu1-example-app"' --raw-output)
    echo ${GOOGLE_IMPERSONATE_SERVICE_ACCOUNT}
    ```
 

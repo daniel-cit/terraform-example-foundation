@@ -352,7 +352,7 @@ Some variables used to deploy the steps have default values, check those **befor
 - Step 2-environments: The READMEs of the environments [development](./2-environments/envs/development/README.md#Inputs), [nonproduction](./2-environments/envs/nonproduction/README.md#Inputs), and [production](./2-environments/envs/production/README.md#Inputs)
 - Step 3-networks-dual-svpc: The READMEs of the environments [shared](./3-networks-dual-svpc/envs/shared/README.md#inputs), [development](./3-networks-dual-svpc/envs/development/README.md#Inputs), [nonproduction](./3-networks/envs/nonproduction/README.md#Inputs), and [production](./3-networks/envs/production/README.md#Inputs)
 - Step 3-networks-hub-and-spoke: The READMEs of the environments [shared](./3-networks-hub-and-spoke/envs/shared/README.md#inputs), [development](./3-networks-hub-and-spoke/envs/development/README.md#Inputs), [nonproduction](./3-networks/envs/nonproduction/README.md#Inputs), and [production](./3-networks/envs/production/README.md#Inputs)
-- Step 4-projects: The READMEs of the environments [shared](./4-projects/business_unit_1/shared/README.md#inputs), [development](./4-projects/business_unit_1/development/README.md#Inputs), [nonproduction](./4-projects/business_unit_1/nonproduction/README.md#Inputs), and [production](./4-projects/business_unit_1/production/README.md#Inputs)
+- Step 4-projects: The READMEs of the environments [shared](./4-infra-pipeline/business_unit_1/shared/README.md#inputs), [development](./4-projects/business_unit_1/development/README.md#Inputs), [nonproduction](./4-projects/business_unit_1/nonproduction/README.md#Inputs), and [production](./4-projects/business_unit_1/production/README.md#Inputs)
 
 ## Errata summary
 

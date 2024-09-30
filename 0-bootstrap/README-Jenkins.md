@@ -916,7 +916,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    ```
 
 1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
-1. See any of the shared folder [README.md](../4-projects/business_unit_1/shared/README.md) files for additional information on the values in the `shared.auto.tfvars` file.
+1. See any of the shared folder [README.md](../4-infra-pipeline/business_unit_1/shared/README.md) files for additional information on the values in the `shared.auto.tfvars` file.
 1. Use `terraform output` to get the backend bucket value from gcp-bootstrap output.
 
    ```bash
