@@ -46,7 +46,7 @@ module "peering_project" {
 
   // A map of Service Accounts to use on the infra pipeline (Cloud Build)
   // Where the key is the repository name ("${var.business_code}-example-app")
-  app_infra_pipeline_service_accounts = local.app_infra_pipeline_service_accounts
+  project_infra_pipeline_service_accounts = local.project_infra_pipeline_service_accounts
 
   // Map for the roles where the key is the repository name ("${var.business_code}-example-app")
   // and the value is the list of roles that this SA need to deploy step 6-project-infra

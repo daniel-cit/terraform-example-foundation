@@ -4,7 +4,6 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | activate\_apis | The api to activate for the GCP project | `list(string)` | `[]` | no |
-| app\_infra\_pipeline\_service\_accounts | The Service Accounts from App Infra Pipeline. | `map(string)` | `{}` | no |
 | application\_name | The name of application where GCP resources relate | `string` | n/a | yes |
 | billing\_account | The ID of the billing account to associated this project with | `string` | n/a | yes |
 | billing\_code | The code that's used to provide chargeback information | `string` | n/a | yes |
@@ -15,6 +14,7 @@
 | org\_id | The organization id for the associated services | `string` | n/a | yes |
 | primary\_contact | The primary email contact for the project | `string` | n/a | yes |
 | project\_budget | Budget configuration.<br>  budget\_amount: The amount to use as the budget.<br>  alert\_spent\_percents: A list of percentages of the budget to alert on when threshold is exceeded.<br>  alert\_pubsub\_topic: The name of the Cloud Pub/Sub topic where budget related messages will be published, in the form of `projects/{project_id}/topics/{topic_id}`.<br>  alert\_spend\_basis: The type of basis used to determine if spend has passed the threshold. Possible choices are `CURRENT_SPEND` or `FORECASTED_SPEND` (default). | <pre>object({<br>    budget_amount        = optional(number, 1000)<br>    alert_spent_percents = optional(list(number), [1.2])<br>    alert_pubsub_topic   = optional(string, null)<br>    alert_spend_basis    = optional(string, "FORECASTED_SPEND")<br>  })</pre> | `{}` | no |
+| project\_infra\_pipeline\_service\_accounts | The Service Accounts from App Infra Pipeline. | `map(string)` | `{}` | no |
 | project\_prefix | Name prefix to use for projects created. | `string` | `"prj"` | no |
 | project\_suffix | The name of the GCP project. Max 16 characters with 3 character business unit code. | `string` | n/a | yes |
 | sa\_roles | A list of roles to give the Service Account from App Infra Pipeline. | `map(list(string))` | `{}` | no |

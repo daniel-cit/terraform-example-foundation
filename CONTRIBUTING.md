@@ -35,9 +35,9 @@ Eight Blueprint tests are defined and should be executed in serial order:
 - `envs`
 - `shared`
 - `networks`
-- `projects-shared`
+- `infra-pipeline`
 - `projects`
-- `app-infra`
+- `project-infra`
 
 ### Test Environment
 

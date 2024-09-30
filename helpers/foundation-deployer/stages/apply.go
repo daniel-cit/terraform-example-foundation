@@ -398,7 +398,7 @@ func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, out
 	}
 	// update backend bucket
 	for _, e := range []string{"production", "nonproduction", "development"} {
-		err = utils.ReplaceStringInFile(filepath.Join(c.FoundationPath, AppInfraStep, "business_unit_1", e, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
+		err = utils.ReplaceStringInFile(filepath.Join(c.FoundationPath, AppInfraStep, "business_unit_1", e, "backend.tf"), "UPDATE_PROJECT_INFRA_BUCKET", outputs.StateBucket)
 		if err != nil {
 			return err
 		}

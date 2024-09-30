@@ -18,7 +18,7 @@ locals {
   env_code = element(split("", var.environment), 0)
 }
 
-module "app_infra_cloudbuild_project" {
+module "project_infra_cloudbuild_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 16.0"
   count   = local.enable_cloudbuild_deploy ? 1 : 0
@@ -55,12 +55,12 @@ module "infra_pipelines" {
   count  = local.enable_cloudbuild_deploy ? 1 : 0
 
   org_id                      = local.org_id
-  cloudbuild_project_id       = module.app_infra_cloudbuild_project[0].project_id
+  cloudbuild_project_id       = module.project_infra_cloudbuild_project[0].project_id
   cloud_builder_artifact_repo = local.cloud_builder_artifact_repo
   remote_tfstate_bucket       = local.projects_remote_bucket_tfstate
   billing_account             = local.billing_account
   default_region              = var.default_region
-  app_infra_repos             = var.repo_names
+  project_infra_repos         = var.repo_names
   private_worker_pool_id      = local.cloud_build_private_worker_pool_id
 }
 

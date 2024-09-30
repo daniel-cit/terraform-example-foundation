@@ -143,7 +143,7 @@ variable "project_prefix" {
   default     = "prj"
 }
 
-variable "app_infra_pipeline_service_accounts" {
+variable "project_infra_pipeline_service_accounts" {
   description = "The Service Accounts from App Infra Pipeline."
   type        = map(string)
   default     = {}

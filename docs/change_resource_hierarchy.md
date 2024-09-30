@@ -229,7 +229,7 @@ example-organization/
     }
     ...
 
-    module "app_infra_cloudbuild_project" {
+    module "project_infra_cloudbuild_project" {
 
         /* 🟢 Review module path */
         source = "../../modules/single_project"

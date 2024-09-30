@@ -39,7 +39,7 @@ variable "billing_account" {
   type        = string
 }
 
-variable "app_infra_repos" {
+variable "project_infra_repos" {
   description = "A list of Cloud Source Repos to be created to hold app infra Terraform configs."
   type        = list(string)
 }

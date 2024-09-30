@@ -17,7 +17,7 @@
 locals {
   env_code = element(split("", var.environment), 0)
   source_repos = setintersection(
-    toset(keys(var.app_infra_pipeline_service_accounts)),
+    toset(keys(var.project_infra_pipeline_service_accounts)),
     toset(keys(var.sa_roles))
   )
   pipeline_roles = var.enable_cloudbuild_deploy ? flatten([
@@ -26,7 +26,7 @@ locals {
       {
         repo = repo
         role = role
-        sa   = var.app_infra_pipeline_service_accounts[repo]
+        sa   = var.project_infra_pipeline_service_accounts[repo]
       }
     ]
   ]) : []
@@ -38,7 +38,7 @@ locals {
         repo   = repo
         subnet = element(split("/", subnet), index(split("/", subnet), "subnetworks", ) + 1, )
         region = element(split("/", subnet), index(split("/", subnet), "regions") + 1, )
-        sa     = var.app_infra_pipeline_service_accounts[repo]
+        sa     = var.project_infra_pipeline_service_accounts[repo]
       }
     ]
   ]) : []
@@ -81,7 +81,7 @@ module "project" {
 }
 
 # Additional roles to the App Infra Pipeline service account
-resource "google_project_iam_member" "app_infra_pipeline_sa_roles" {
+resource "google_project_iam_member" "project_infra_pipeline_sa_roles" {
   for_each = { for pr in local.pipeline_roles : "${pr.repo}-${pr.sa}-${pr.role}" => pr }
 
   project = module.project.project_id
@@ -90,7 +90,7 @@ resource "google_project_iam_member" "app_infra_pipeline_sa_roles" {
 }
 
 resource "google_folder_iam_member" "folder_network_viewer" {
-  for_each = var.app_infra_pipeline_service_accounts
+  for_each = var.project_infra_pipeline_service_accounts
 
   folder = var.folder_id
   role   = "roles/compute.networkViewer"

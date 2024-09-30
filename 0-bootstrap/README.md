@@ -386,6 +386,7 @@ Each step has instructions for this change.
 | gcs\_bucket\_cloudbuild\_artifacts | Bucket used to store Cloud Build artifacts in cicd project. |
 | gcs\_bucket\_cloudbuild\_logs | Bucket used to store Cloud Build logs in cicd project. |
 | gcs\_bucket\_tfstate | Bucket used for storing terraform state for Foundations Pipelines in Seed Project. |
+| infra\_pipeline\_step\_terraform\_service\_account\_email | Projects Step Terraform Account |
 | networks\_step\_terraform\_service\_account\_email | Networks Step Terraform Account |
 | optional\_groups | List of Google Groups created that are optional to the Example Foundation steps. |
 | organization\_step\_terraform\_service\_account\_email | Organization Step Terraform Account |
