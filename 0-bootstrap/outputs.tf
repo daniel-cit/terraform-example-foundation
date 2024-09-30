@@ -24,6 +24,11 @@ output "bootstrap_step_terraform_service_account_email" {
   value       = google_service_account.terraform-env-sa["bootstrap"].email
 }
 
+output "infra_pipeline_step_terraform_service_account_email" {
+  description = "Projects Step Terraform Account"
+  value       = google_service_account.terraform-env-sa["infra-pipeline"].email
+}
+
 output "projects_step_terraform_service_account_email" {
   description = "Projects Step Terraform Account"
   value       = google_service_account.terraform-env-sa["proj"].email

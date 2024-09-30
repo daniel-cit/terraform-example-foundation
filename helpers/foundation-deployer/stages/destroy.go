@@ -134,7 +134,7 @@ func DestroyInfraPipelineStage(t testing.TB, s steps.Steps, outputs BootstrapOut
 		CICDProject:   outputs.CICDProject,
 		Step:          InfraPipelineStep,
 		Repo:          InfraPipelineRepo,
-		GroupingUnits: []string{"envs"},
+		GroupingUnits: []string{"business_unit_1"},
 		Envs:          []string{"shared"},
 	}
 	return destroyStage(t, stageConf, s, c)

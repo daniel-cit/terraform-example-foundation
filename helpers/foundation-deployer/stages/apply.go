@@ -326,7 +326,7 @@ func DeployInfraPipelineStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, 
 		RemoteStateBucket: outputs.RemoteStateBucket,
 	}
 
-	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, OrgStep, "envs", "shared", "terraform.tfvars"), infraPipelineTfvars)
+	err := utils.WriteTfvars(filepath.Join(c.FoundationPath, InfraPipelineStep, "business_unit_1", "shared", "terraform.tfvars"), infraPipelineTfvars)
 	if err != nil {
 		return err
 	}
@@ -339,6 +339,7 @@ func DeployInfraPipelineStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, 
 		Step:          InfraPipelineStep,
 		Repo:          InfraPipelineRepo,
 		GitConf:       conf,
+		GroupingUnits: []string{"business_unit_1"},
 		Envs:          []string{"shared"},
 	}
 

@@ -61,6 +61,7 @@ locals {
     ], local.common_roles)),
     "infra-pipeline" = distinct(concat([
       "roles/serviceusage.serviceUsageConsumer",
+      "roles/resourcemanager.organizationAdmin",
     ], local.common_roles)),
     "proj" = distinct(concat([
       "roles/accesscontextmanager.policyAdmin",
@@ -90,6 +91,7 @@ locals {
     ],
     "infra-pipeline" = [
       "roles/artifactregistry.admin",
+      "roles/resourcemanager.folderAdmin",
     ],
     "proj" = [
       "roles/resourcemanager.folderAdmin",

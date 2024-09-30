@@ -183,6 +183,17 @@ func main() {
 			os.Exit(3)
 		}
 
+		// infra-pipeline
+		msg.PrintStageMsg("Destroying infra-pipeline stage")
+		err = s.RunDestroyStep("gcp-infra-pipeline", func() error {
+			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
+			return stages.DestroyInfraPipelineStage(t, s, bo, conf)
+		})
+		if err != nil {
+			fmt.Printf("# Infra Pipeline step destroy failed. Error: %s\n", err.Error())
+			os.Exit(3)
+		}
+
 		// 3-networks
 		msg.PrintStageMsg("Destroying 3-networks stage")
 		err = s.RunDestroyStep("gcp-networks", func() error {
@@ -285,6 +296,16 @@ func main() {
 	})
 	if err != nil {
 		fmt.Printf("# Networks step failed. Error: %s\n", err.Error())
+		os.Exit(3)
+	}
+
+	// Infra Pipeline
+	msg.PrintStageMsg("Deploying infra-pipeline stage")
+	err = s.RunStep("gcp-infra-pipeline", func() error {
+		return stages.DeployInfraPipelineStage(t, s, globalTFVars, bo, conf)
+	})
+	if err != nil {
+		fmt.Printf("# Infra Pipeline step failed. Error: %s\n", err.Error())
 		os.Exit(3)
 	}
 

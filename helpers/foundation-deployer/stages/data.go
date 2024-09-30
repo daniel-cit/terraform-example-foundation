@@ -275,6 +275,7 @@ func GetBootstrapStepOutputs(t testing.TB, foundationPath string) BootstrapOutpu
 		DefaultRegion:             terraform.OutputMap(t, options, "common_config")["default_region"],
 		NetworkSA:                 terraform.Output(t, options, "networks_step_terraform_service_account_email"),
 		ProjectsSA:                terraform.Output(t, options, "projects_step_terraform_service_account_email"),
+		InfraPipelineSA:           terraform.Output(t, options, "infra_pipeline_step_terraform_service_account_email"),
 		EnvsSA:                    terraform.Output(t, options, "environment_step_terraform_service_account_email"),
 		OrgSA:                     terraform.Output(t, options, "organization_step_terraform_service_account_email"),
 		BootstrapSA:               terraform.Output(t, options, "bootstrap_step_terraform_service_account_email"),
@@ -284,7 +285,7 @@ func GetBootstrapStepOutputs(t testing.TB, foundationPath string) BootstrapOutpu
 
 func GetInfraPipelineOutputs(t testing.TB, checkoutPath, workspace string) InfraPipelineOutputs {
 	options := &terraform.Options{
-		TerraformDir: filepath.Join(checkoutPath, "gcp-projects", "business_unit_1", "shared"),
+		TerraformDir: filepath.Join(checkoutPath, InfraPipelineRepo, "business_unit_1", "shared"),
 		Logger:       logger.Discard,
 		NoColor:      true,
 	}
