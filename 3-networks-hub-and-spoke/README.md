@@ -37,15 +37,17 @@ up the global DNS hub.</td>
 found on step 3-networks-dual-svpc, but here the architecture will be based on the
 Hub and Spoke network model. It also sets up the global DNS hub</td>
 </tr>
+<tr>
+<td><a href="../4-infra-pipeline">4-infra-pipeline</a></td>
+<td>Sets up a application infrastructure pipeline for applications.</td>
 </tr>
 <tr>
-<td><a href="../4-projects">4-projects</a></td>
-<td>Sets up a folder structure, projects, and application infrastructure pipeline for applications,
- which are connected as service projects to the shared VPC created in the previous stage.</td>
+<td><a href="../5-projects">5-projects</a></td>
+<td>Sets up a folder structure and projects which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
 <td><a href="../6-project-infra">6-project-infra</a></td>
-<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
+<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.</td>
 </tr>
 </tbody>
 </table>
@@ -272,7 +274,7 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
    unset GOOGLE_IMPERSONATE_SERVICE_ACCOUNT
    ```
 
-1. You can now move to the instructions in the [4-projects](../4-projects/README.md) step.
+1. You can now move to the instructions in the [4-infra-pipeline(../4-infra-pipeline/README.md) step.
 
 ### Deploying with Jenkins
 
@@ -422,6 +424,6 @@ unset GOOGLE_IMPERSONATE_SERVICE_ACCOUNT
 
 Because enabling VPC Service Controls can be a disruptive process, this repo configures VPC Service Controls perimeters in dry run mode by default. This configuration will service traffic that crosses the security perimeter (API requests that originate from inside your perimeter communicating with external resources, or API requests from external resources communicating with resources inside your perimeter) but still allow service traffic normally.
 
-When you are ready to enforce VPC Service Controls, we recommend that you review the guidance at [Best practices for enabling VPC Service Controls](https://cloud.google.com/vpc-service-controls/docs/enable). After you have added the necessary exceptions and are confident that VPC Service Controls will not disrupt your intended operations, set the variable `enforce_vpcsc` under the module `restricted_shared_vpc` to `true` and re-apply this stage. Then re-apply the 4-projects stage, which will inherit the new setting and include those projects inside the enforced perimeter.
+When you are ready to enforce VPC Service Controls, we recommend that you review the guidance at [Best practices for enabling VPC Service Controls](https://cloud.google.com/vpc-service-controls/docs/enable). After you have added the necessary exceptions and are confident that VPC Service Controls will not disrupt your intended operations, set the variable `enforce_vpcsc` under the module `restricted_shared_vpc` to `true` and re-apply this stage. Then re-apply the 5-projects stage, which will inherit the new setting and include those projects inside the enforced perimeter.
 
 When you need to make changes to an existing enforced perimeter, you can test safely by modifying the configuration of the dry run perimeter. This will log traffic denied by the dry run perimeter without impacting whether the enforced perimeter allows or denies traffic.

@@ -142,13 +142,13 @@ example-organization/
 
 1. Proceed with deployment.
 
-### Step 4-projects
+### Step 5-projects
 
 1. Change the base_env module to receive the new folder key (e.g. development/retail) in the hierarchy map from step 2-environments.
 1. This folder key should be used to get the folder where projects should be created.
     Example:
 
-    4-projects/modules/base_env/variables.tf
+    5-projects/modules/base_env/variables.tf
 
     ```text
     ...
@@ -161,7 +161,7 @@ example-organization/
     ...
     ```
 
-    4-projects/modules/base_env/main.tf
+    5-projects/modules/base_env/main.tf
 
     ```text
     locals {
@@ -202,7 +202,7 @@ example-organization/
 1. Change backend gcs prefix for each business unit shared resources.
     Example:
 
-    4-projects/finance/shared/backend.tf
+    5-projects/finance/shared/backend.tf
 
     ```text
     ...
@@ -216,11 +216,11 @@ example-organization/
     }
     ```
 
-1. Review local `repo_names` values in Cloud Build project pipelines. This name must match `sa_roles` key in base_shared_vpc_project module variable in `4-projects/modules/base_env/example_base_shared_vpc_project.tf`. The current pattern for this value is `"${var.business_code}-example-app"`.
+1. Review local `repo_names` values in Cloud Build project pipelines. This name must match `sa_roles` key in base_shared_vpc_project module variable in `5-projects/modules/base_env/example_base_shared_vpc_project.tf`. The current pattern for this value is `"${var.business_code}-example-app"`.
 1. Review business code in Cloud Build project pipelines.
     Example:
 
-    4-projects/finance/shared/example_infra_pipeline.tf
+    5-projects/finance/shared/example_infra_pipeline.tf
 
     ```text
     locals {
@@ -245,7 +245,7 @@ example-organization/
 1. Change backend gcs prefix for each business unit environment.
     Example:
 
-    4-projects/finance/development/backend.tf
+    5-projects/finance/development/backend.tf
 
     ```text
     ...
@@ -264,7 +264,7 @@ example-organization/
 
     Example:
 
-    4-projects/finance/development/main.tf
+    5-projects/finance/development/main.tf
 
     ```text
     module "env" {

@@ -1,7 +1,7 @@
 # Deploying a GitHub actions compatible environment
 
 The objective of the instructions below is to configure the infrastructure that allows you to run CI/CD deployments using
-GitHub Actions for the Terraform Example Foundation stages (`0-bootstrap`, `1-org`, `2-environments`, `3-networks`, `4-projects`).
+GitHub Actions for the Terraform Example Foundation stages (`0-bootstrap`, `1-org`, `2-environments`, `3-networks`, `4-infra-pipeline`, and `5-projects`).
 The infrastructure consists in two Google Cloud Platform projects (`prj-b-seed` and `prj-b-cicd-wif-gh`).
 
 It is a best practice to have two separate projects here (`prj-b-seed` and `prj-b-cicd-wif-gh`) for separation of concerns.
@@ -20,7 +20,7 @@ To run the instructions described in this document, install the following:
 For the manual steps described in this document, you need to use the same [Terraform](https://www.terraform.io/downloads.html) version used on the build pipeline.
 Otherwise, you might experience Terraform state snapshot lock errors.
 
-Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` and `4-projects` is the same version configured in the following code
+Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` is the same version configured in the following code
 
 - 0-bootstrap/modules/jenkins-agent/variables.tf
    ```
@@ -215,7 +215,7 @@ export the GitHub fine grained access token as an environment variable:
    terraform apply bootstrap.tfplan
    ```
 
-1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc`, `3-networks-hub-and-spoke`, and `4-projects`.
+1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc` or `3-networks-hub-and-spoke`.
 
    ```bash
    export network_step_sa=$(terraform output -raw networks_step_terraform_service_account_email)
@@ -684,7 +684,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    cd ..
    ```
 
-1. You can now move to the instructions in the [4-projects](#deploying-step-4-projects) stage.
+1. You can now move to the instructions in the [4-infra-pipeline](#deploying-step-4-infra-pipeline) stage.
 
 ## Deploying step 3-networks-hub-and-spoke
 
@@ -841,11 +841,18 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    cd ..
    ```
 
-1. You can now move to the instructions in the [4-projects](#deploying-step-4-projects) stage.
+1. You can now move to the instructions in the [4-infra-pipeline](#deploying-step-4-infra-pipeline) stage.
 
-## Deploying step 4-projects
+## Deploying step 4-infra-pipeline
 
-1. Clone the repository you created to host the `4-projects` terraform configuration at the same level of the `terraform-example-foundation` folder.
+TODO
+
+1. You can now move to the instructions in the [5-projects](#deploying-step-5-projects) stage.
+
+## Deploying step 5-projects
+TODO
+
+1. Clone the repository you created to host the `5-projects` terraform configuration at the same level of the `terraform-example-foundation` folder.
 
    ```bash
    git clone git@github.com:<GITHUB-OWNER>/<GITHUB-PROJECTS-REPO>.git gcp-projects
@@ -858,8 +865,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    cd gcp-projects
    ```
-
-
 
 1. Seed the repository if it has not been initialized yet.
 
@@ -886,7 +891,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
 1. Copy contents of foundation to new repo.
 
    ```bash
-   cp -RT ../terraform-example-foundation/4-projects/ .
+   cp -RT ../terraform-example-foundation/5-projects/ .
    cp -RT ../terraform-example-foundation/policy-library/ ./policy-library
    mkdir -p .github/workflows
    cp ../terraform-example-foundation/build/github-tf-* ./.github/workflows/
@@ -904,7 +909,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    mv production.auto.example.tfvars production.auto.tfvars
    ```
 
-1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md#inputs) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
+1. See any of the envs folder [README.md](../5-projects/business_unit_1/production/README.md#inputs) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
 1. See any of the shared folder [README.md](../4-infra-pipeline/business_unit_1/shared/README.md#inputs) files for additional information on the values in the `shared.auto.tfvars` file.
 
 1. Use `terraform output` to get the backend bucket value from bootstrap output.
@@ -937,7 +942,7 @@ For example, to create a new business unit similar to business_unit_1, run the f
    git commit -m 'Initialize projects repo'
    ```
 
-1. You need to manually plan and apply only once the `business_unit_1/shared` and `business_unit_2/shared` environments since `development`, `nonproduction`, and `production` depend on them.
+1. You need to manually plan and apply only once the `business_unit_1/shared` environment since `development`, `nonproduction`, and `production` depend on it.
 
 1. Use `terraform output` to get the CI/CD project ID and the projects step Terraform Service Account from gcp-bootstrap output.
 1. The CI/CD project ID will be used in the [validation](https://cloud.google.com/docs/terraform/policy-validation/quickstart) of the Terraform configuration

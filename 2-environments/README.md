@@ -37,15 +37,17 @@ up the global DNS hub.</td>
 found on step 3-networks-dual-svpc, but here the architecture will be based on the
 Hub and Spoke network model. It also sets up the global DNS hub</td>
 </tr>
+<tr>
+<td><a href="../4-infra-pipeline">4-infra-pipeline</a></td>
+<td>Sets up a application infrastructure pipeline for applications.</td>
 </tr>
 <tr>
-<td><a href="../4-projects">4-projects</a></td>
-<td>Sets up a folder structure, projects, and application infrastructure pipeline for applications,
- which are connected as service projects to the shared VPC created in the previous stage.</td>
+<td><a href="../5-projects">5-projects</a></td>
+<td>Sets up a folder structure and projects which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
 <td><a href="../6-project-infra">6-project-infra</a></td>
-<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
+<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.</td>
 </tr>
 </tbody>
 </table>

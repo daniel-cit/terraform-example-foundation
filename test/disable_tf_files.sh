@@ -64,14 +64,14 @@ function projectsshared(){
 
 function projects(){
     # disable ENVS.auto.tfvars in main module
-    mv 4-projects/business_unit_1/development/development.auto.tfvars 4-projects/business_unit_1/development/development.auto.tfvars.disabled
-    mv 4-projects/business_unit_1/nonproduction/nonproduction.auto.tfvars  4-projects/business_unit_1/nonproduction/nonproduction.auto.tfvars.disabled
-    mv 4-projects/business_unit_1/production/production.auto.tfvars 4-projects/business_unit_1/production/production.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/development/development.auto.tfvars 5-projects/business_unit_1/development/development.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/nonproduction/nonproduction.auto.tfvars  5-projects/business_unit_1/nonproduction/nonproduction.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/production/production.auto.tfvars 5-projects/business_unit_1/production/production.auto.tfvars.disabled
 
     # disable common.auto.tfvars in main module
-    mv 4-projects/business_unit_1/development/common.auto.tfvars 4-projects/business_unit_1/development/common.auto.tfvars.disabled
-    mv 4-projects/business_unit_1/nonproduction/common.auto.tfvars  4-projects/business_unit_1/nonproduction/common.auto.tfvars.disabled
-    mv 4-projects/business_unit_1/production/common.auto.tfvars 4-projects/business_unit_1/production/common.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/development/common.auto.tfvars 5-projects/business_unit_1/development/common.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/nonproduction/common.auto.tfvars  5-projects/business_unit_1/nonproduction/common.auto.tfvars.disabled
+    mv 5-projects/business_unit_1/production/common.auto.tfvars 5-projects/business_unit_1/production/common.auto.tfvars.disabled
 }
 
 function appinfra(){

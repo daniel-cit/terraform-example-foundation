@@ -162,12 +162,13 @@ variable "initial_group_config" {
 #   projects: The repository to host the code of the projects stage.
 #   EOT
 #   type = object({
-#     owner        = string,
-#     bootstrap    = string,
-#     organization = string,
-#     environments = string,
-#     networks     = string,
-#     projects     = string,
+#     owner          = string,
+#     bootstrap      = string,
+#     organization   = string,
+#     environments   = string,
+#     networks       = string,
+#     infra-pipeline = string,
+#     projects       = string,
 #   })
 # }
 
@@ -276,13 +277,14 @@ variable "initial_group_config" {
 #   cicd_runner: The repository to host the code of docker image used for CI/CD.
 #   EOT
 #   type = object({
-#     owner        = string,
-#     bootstrap    = string,
-#     organization = string,
-#     environments = string,
-#     networks     = string,
-#     projects     = string,
-#     cicd_runner  = string,
+#     owner          = string,
+#     bootstrap      = string,
+#     organization   = string,
+#     environments   = string,
+#     networks       = string,
+#     infra-pipeline = string,
+#     projects       = string,
+#     cicd_runner    = string,
 #   })
 # }
 
@@ -310,15 +312,17 @@ variable "initial_group_config" {
 #   organization: The repository to host the code of the organization stage.
 #   environments: The repository to host the code of the environments stage.
 #   networks: The repository to host the code of the networks stage.
+#   infra-pipeline: The repository to host the code of the infra pipeline stage.
 #   projects: The repository to host the code of the projects stage.
 #   EOT
 #   type = object({
-#     owner        = string,
-#     bootstrap    = string,
-#     organization = string,
-#     environments = string,
-#     networks     = string,
-#     projects     = string,
+#     owner          = string,
+#     bootstrap      = string,
+#     organization   = string,
+#     environments   = string,
+#     networks       = string,
+#     infra-pipeline = string,
+#     projects       = string,
 #   })
 # }
 

@@ -1,7 +1,7 @@
 # Deploying a Terraform Cloud (TFC) compatible environment
 
 The objective of the instructions below is to configure the infrastructure that allows you to run CI/CD deployments using
-Terraform Cloud for the Terraform Example Foundation stages (`0-bootstrap`, `1-org`, `2-environments`, `3-networks`, `4-projects`).
+Terraform Cloud for the Terraform Example Foundation stages (`0-bootstrap`, `1-org`, `2-environments`, `3-networks`, `4-infra-pipeline`, and `5-projects`).
 The infrastructure consists in two Google Cloud Platform projects (`prj-b-seed` and `prj-b-cicd-wif-tfc`).
 
 It is a best practice to have two separate projects here (`prj-b-seed` and `prj-b-cicd-wif-tfc`) for separation of concerns.
@@ -213,7 +213,7 @@ export the OAuth Token ID as an environment variable:
     1. Run `terraform plan -input=false -out bootstrap_2.tfplan`
     1. Run `terraform apply bootstrap_2.tfplan`
 
-1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc`, `3-networks-hub-and-spoke`, and `4-projects`.
+1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc` or `3-networks-hub-and-spoke`.
 
    ```bash
    export network_step_sa=$(terraform output -raw networks_step_terraform_service_account_email)
@@ -230,7 +230,7 @@ export the OAuth Token ID as an environment variable:
    echo "CI/CD Project ID = ${cicd_project_id}"
    ```
 
-1. Run `terraform output` to get the name of the TFC organization and export it as environment variables. `TF_CLOUD_ORGANIZATION` variable will be used by the `cloud` block in order to move the local Terraform's state to TFC and `TF_VAR_tfc_org_name` will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc`, `3-networks-hub-and-spoke`, and `4-projects`
+1. Run `terraform output` to get the name of the TFC organization and export it as environment variables. `TF_CLOUD_ORGANIZATION` variable will be used by the `cloud` block in order to move the local Terraform's state to TFC and `TF_VAR_tfc_org_name` will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc` and `3-networks-hub-and-spoke`
 
    ```bash
    export TF_CLOUD_ORGANIZATION=$(terraform output -raw tfc_org_name)
@@ -610,7 +610,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    cd ..
    ```
 
-1. You can now move to the instructions in the [4-projects](#deploying-step-4-projects) stage.
+1. You can now move to the instructions in the [4-infra-pipeline](#deploying-step-4-infra-pipeline) stage.
 
 ## Deploying step 3-networks-hub-and-spoke
 
@@ -760,9 +760,16 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    cd ..
    ```
 
-1. You can now move to the instructions in the [4-projects](#deploying-step-4-projects) stage.
+1. You can now move to the instructions in the [4-infra-pipeline](#deploying-step-4-infra-pipeline) stage.
 
-## Deploying step 4-projects
+## Deploying step 4-infra-pipeline
+
+TODO
+
+1. You can now move to the instructions in the [5-projects](#deploying-step-5-projects) stage.
+
+## Deploying step 5-projects
+TODO
 
 **Note:** For all purposes we treat `shared` environment as `production` environment due to the possible impacts into `production`. So `4-<business_unit>-production` TFC workspace have a [Run Trigger](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers) sourcing `4-<business_unit>-shared` TFC workspace, which means that every time you successfully run an apply job in `4-<business_unit>-shared` TFC workspace, a `Plan and apply` job will be triggered automatically for `4-<business_unit>-production` TFC workspace. (All the applies will continue requiring manual approvals in TFC console).
 
@@ -783,7 +790,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
 1. Copy contents of foundation to new repo.
 
    ```bash
-   cp -RT ../terraform-example-foundation/4-projects/ .
+   cp -RT ../terraform-example-foundation/5-projects/ .
    cp -RT ../terraform-example-foundation/policy-library/ ./policy-library
    cp ../terraform-example-foundation/build/tf-wrapper.sh .
    chmod 755 ./tf-wrapper.sh
@@ -799,16 +806,15 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    mv production.auto.example.tfvars production.auto.tfvars
    ```
 
-1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md#inputs) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
+1. See any of the envs folder [README.md](../5-projects/business_unit_1/production/README.md#inputs) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
 1. See any of the shared folder [README.md](../4-infra-pipeline/business_unit_1/shared/README.md#inputs) files for additional information on the values in the `shared.auto.tfvars` file.
 
-1. You need to manually plan and apply only once the `business_unit_1/shared` and `business_unit_2/shared` environments since `development`, `nonproduction`, and `production` depend on them.
+1. You need to manually plan and apply only once the `business_unit_1/shared` environment since `development`, `nonproduction`, and `production` depend on it.
 
 1. In order to manually run the apply for shared workspace from your local we need to temporary unset the TFC backend by renaming `envs/shared/backend.tf` to `envs/shared/backend.tf.temporary_disabled`.
 
    ```bash
    mv business_unit_1/shared/backend.tf business_unit_1/shared/backend.tf.temporary_disabled
-   mv business_unit_2/shared/backend.tf business_unit_2/shared/backend.tf.temporary_disabled
    ```
 
 1. Use `terraform output` to get the CI/CD project ID and the projects step Terraform Service Account from gcp-bootstrap output.
@@ -860,9 +866,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
 
    ```bash
    mv business_unit_1/shared/backend.tf.temporary_disabled business_unit_1/shared/backend.tf
-   mv business_unit_2/shared/backend.tf.temporary_disabled business_unit_2/shared/backend.tf
    terraform -chdir="business_unit_1/shared/" init
-   terraform -chdir="business_unit_2/shared/" init
    ```
 
 1. (Optional) If you want additional subfolders for separate business units or entities, make additional copies of the folder `business_unit_1` and modify any values that vary across business unit like `business_code`, `business_unit`, or `subnet_ip_range`.

@@ -21,8 +21,8 @@ It is located under folder `bootstrap`.
 
 ## App Infra Pipeline
 
-A project created in step 4-projects to host a Cloud Build pipeline configured to manage application infrastructure **within projects**.
-A separate pipeline exists for each of the business units and it can be configured to use a service account that has limited permissions to deploy into certain projects created in 4-projects.
+A project created in step 4-infra-pipeline to host a Cloud Build pipeline configured to manage application infrastructure **within projects**.
+A separate pipeline exists for each of the business units and it can be configured to use a service account that has limited permissions to deploy into certain projects created in 5-projects.
 They are located under folder `common`.
 
 ## Terraform Remote State Data Source

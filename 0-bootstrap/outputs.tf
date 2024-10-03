@@ -102,7 +102,7 @@ output "gcs_bucket_cloudbuild_logs" {
 }
 
 output "projects_gcs_bucket_tfstate" {
-  description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+  description = "Bucket used for storing terraform state for stages 4-infra-pipeline and 5-projects foundations pipelines in seed project."
   value       = module.gcp_projects_state_bucket.bucket.name
 }
 
@@ -152,7 +152,7 @@ output "cloud_build_peered_network_id" {
 # }
 
 # output "projects_gcs_bucket_tfstate" {
-#   description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+#   description = "Bucket used for storing terraform state for stages 4-infra-pipeline and 5-projects foundations pipelines in seed project."
 #   value       = module.seed_bootstrap.gcs_bucket_tfstate
 # }
 
@@ -176,7 +176,7 @@ output "cloud_build_peered_network_id" {
 # }
 
 # output "projects_gcs_bucket_tfstate" {
-#   description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+#   description = "Bucket used for storing terraform state for stages 4-infra-pipeline and 5-projects foundations pipelines in seed project."
 #   value       = module.seed_bootstrap.gcs_bucket_tfstate
 # }
 
@@ -205,7 +205,7 @@ output "cloud_build_peered_network_id" {
 # }
 
 # output "projects_gcs_bucket_tfstate" {
-#   description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+#   description = "Bucket used for storing terraform state for stages 4-infra-pipeline and 5-projects foundations pipelines in seed project."
 #   value       = module.seed_bootstrap.gcs_bucket_tfstate
 # }
 

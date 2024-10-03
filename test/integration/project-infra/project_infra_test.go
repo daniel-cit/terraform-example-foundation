@@ -57,7 +57,7 @@ func TestProjectInfra(t *testing.T) {
 			t.Parallel()
 
 			projects := tft.NewTFBlueprintTest(t,
-				tft.WithTFDir(fmt.Sprintf("../../../4-projects/business_unit_1/%s", envName)),
+				tft.WithTFDir(fmt.Sprintf("../../../5-projects/business_unit_1/%s", envName)),
 			)
 
 			appInfra := tft.NewTFBlueprintTest(t,

@@ -1,4 +1,4 @@
-# 4-projects
+# 5-projects
 
 This repo is part of a multi-part guide that shows how to configure and deploy
 the example.com reference architecture described in
@@ -37,15 +37,17 @@ up the global DNS hub.</td>
 found on step 3-networks-dual-svpc, but here the architecture will be based on the
 Hub and Spoke network model. It also sets up the global DNS hub</td>
 </tr>
+<tr>
+<td><a href="../4-infra-pipeline">4-infra-pipeline</a></td>
+<td>Sets up a application infrastructure pipeline for applications.</td>
 </tr>
 <tr>
-<td>4-projects (this file)</td>
-<td>Sets up a folder structure, projects, and application infrastructure pipeline for applications,
- which are connected as service projects to the shared VPC created in the previous stage.</td>
+<td>5-projects (this file)</td>
+<td>Sets up a folder structure and projects which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
 <td><a href="../6-project-infra">6-project-infra</a></td>
-<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
+<td>Deploy a simple <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.</td>
 </tr>
 </tbody>
 </table>
@@ -60,7 +62,7 @@ The purpose of this step is to set up the folder structure, projects, and infras
 For each business unit, a shared `infra-pipeline` project is created along with Cloud Build triggers, CSRs for application infrastructure code and Google Cloud Storage buckets for state storage.
 
 This step follows the same [conventions](https://github.com/terraform-google-modules/terraform-example-foundation#branching-strategy) as the Foundation pipeline deployed in [0-bootstrap](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md).
-A custom [workspace](https://github.com/terraform-google-modules/terraform-google-bootstrap/blob/master/modules/tf_cloudbuild_workspace/README.md) (`bu1-example-app`) is created by this pipeline and necessary roles are granted to the Terraform Service Account of this workspace by enabling variable `sa_roles` as shown in this [example](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects/modules/base_env/example_base_shared_vpc_project.tf).
+A custom [workspace](https://github.com/terraform-google-modules/terraform-google-bootstrap/blob/master/modules/tf_cloudbuild_workspace/README.md) (`bu1-example-app`) is created by this pipeline and necessary roles are granted to the Terraform Service Account of this workspace by enabling variable `sa_roles` as shown in this [example](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-projects/modules/base_env/example_base_shared_vpc_project.tf).
 
 This pipeline is utilized to deploy resources in projects across development/nonproduction/production in step [6-project-infra](../6-project-infra/README.md).
 Other Workspaces can also be created to isolate deployments if needed.
@@ -75,7 +77,7 @@ Other Workspaces can also be created to isolate deployments if needed.
 1. For the manual step described in this document, you need to use the same [Terraform](https://www.terraform.io/downloads.html) version used on the build pipeline.
 Otherwise, you might experience Terraform state snapshot lock errors.
 
-   **Note:** As mentioned in 0-bootstrap [README note 2](../0-bootstrap/README.md#deploying-with-cloud-build) at the end of Cloud Build deploy section, make sure that you have requested at least 50 additional projects for the **projects step service account**, otherwise you may face a project quota exceeded error message during the following steps and you will need to apply the fix from [this entry](../docs/TROUBLESHOOTING.md#attempt-to-run-4-projects-step-without-enough-project-quota) of the Troubleshooting guide in order to continue.
+   **Note:** As mentioned in 0-bootstrap [README note 2](../0-bootstrap/README.md#deploying-with-cloud-build) at the end of Cloud Build deploy section, make sure that you have requested at least 50 additional projects for the **projects step service account**, otherwise you may face a project quota exceeded error message during the following steps and you will need to apply the fix from [this entry](../docs/TROUBLESHOOTING.md#error-unknown-project-id-on-5-project-step-context) of the Troubleshooting guide in order to continue.
 
 ### Troubleshooting
 
@@ -105,7 +107,7 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
    cd gcp-projects
    git checkout -b plan
 
-   cp -RT ../terraform-example-foundation/4-projects/ .
+   cp -RT ../terraform-example-foundation/5-projects/ .
    cp ../terraform-example-foundation/build/cloudbuild-tf-* .
    cp ../terraform-example-foundation/build/tf-wrapper.sh .
    chmod 755 ./tf-wrapper.sh
@@ -154,7 +156,7 @@ For example, to create a new business unit similar to business_unit_1, run the f
    git commit -m 'Initialize projects repo'
    ```
 
-1. You need to manually plan and apply only once the `business_unit_1/shared` and `business_unit_2/shared` environments since `development`, `nonproduction`, and `production` depend on them.
+1. You need to manually plan and apply only once the `business_unit_1/shared` environment since `development`, `nonproduction`, and `production` depend on it.
 1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
 1. Use `terraform output` to get the Cloud Build project ID and the projects step Terraform Service Account from 0-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
 
@@ -229,18 +231,18 @@ For example, to create a new business unit similar to business_unit_1, run the f
 
 ### Deploying with Jenkins
 
-See `0-bootstrap` [README-Jenkins.md](../0-bootstrap/README-Jenkins.md#deploying-step-4-projects).
+See `0-bootstrap` [README-Jenkins.md](../0-bootstrap/README-Jenkins.md#deploying-step-5-projects).
 
 ### Deploying with GitHub Actions
 
-See `0-bootstrap` [README-GitHub.md](../0-bootstrap/README-GitHub.md#deploying-step-4-projects).
+See `0-bootstrap` [README-GitHub.md](../0-bootstrap/README-GitHub.md#deploying-step-5-projects).
 
 ### Run Terraform locally
 
-1. The next instructions assume that you are at the same level of the `terraform-example-foundation` folder. Change into `4-projects` folder, copy the Terraform wrapper script and ensure it can be executed.
+1. The next instructions assume that you are at the same level of the `terraform-example-foundation` folder. Change into `5-projects` folder, copy the Terraform wrapper script and ensure it can be executed.
 
    ```bash
-   cd terraform-example-foundation/4-projects
+   cd terraform-example-foundation/5-projects
    cp ../build/tf-wrapper.sh .
    chmod 755 ./tf-wrapper.sh
    ```
@@ -267,7 +269,7 @@ See `0-bootstrap` [README-GitHub.md](../0-bootstrap/README-GitHub.md#deploying-s
    ```
 
 We will now deploy each of our environments(development/production/nonproduction) using the `tf-wrapper.sh` script.
-When using Cloud Build or Jenkins as your CI/CD tool each environment corresponds to a branch is the repository for 4-projects step and only the corresponding environment is applied. Environment shared must be applied first because development, nonproduction, and production depend on it.
+When using Cloud Build or Jenkins as your CI/CD tool each environment corresponds to a branch is the repository for 5-projects step and only the corresponding environment is applied. Environment shared must be applied first because development, nonproduction, and production depend on it.
 
 To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
 

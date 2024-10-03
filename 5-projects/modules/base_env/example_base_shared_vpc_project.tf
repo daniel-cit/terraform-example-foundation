@@ -34,7 +34,7 @@ module "base_shared_vpc_project" {
   // in 6-project-infra step (6-project-infra/modules/env_base/main.tf).
   // The roles are grouped by the repository name ("${var.business_code}-example-app") used to create the Cloud Build workspace
   // (https://github.com/terraform-google-modules/terraform-google-bootstrap/tree/master/modules/tf_cloudbuild_workspace)
-  // in the 4-projects shared environment of each business unit.
+  // in the 4-infra-pipeline shared environment of each business unit.
   // the repository name is the same key used for the project_infra_pipeline_service_accounts map and the
   // roles will be granted to the service account with the same key.
   sa_roles = {

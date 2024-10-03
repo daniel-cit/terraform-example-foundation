@@ -265,7 +265,7 @@ tf_validate() {
           cd "${policy_file_path}"
           # Commented command below works only on Git 2.22.0+
           # current_branch=$(git branch --show-current)
-          # As Cloud Build is based on step 4-projects docker image having
+          # As Cloud Build is based on step 5-projects docker image having
           # git version 2.20.1 installed the command below keeps compatibility
           current_branch=$(git symbolic-ref --short HEAD)
           echo "current gcp-policies branch $current_branch"

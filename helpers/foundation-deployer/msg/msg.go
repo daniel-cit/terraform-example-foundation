@@ -81,7 +81,7 @@ func PrintBuildMsg(project, region string, disablePrompt bool) {
 
 func PrintQuotaMsg(sa string, disablePrompt bool) {
 	fmt.Println("")
-	fmt.Println("# Request a billing quota increase for the service account of stage 4-projects")
+	fmt.Println("# Request a billing quota increase for the service account of stage 5-projects")
 	fmt.Printf("# %s \n", sa)
 	fmt.Printf("# Link: %s\n", quotaURL)
 	fmt.Println("")
@@ -111,7 +111,7 @@ func PrintAdminGroupPermissionMsg(sa string, disablePrompt bool) {
 
 func ConfirmQuota(sa string, disablePrompt bool) {
 	fmt.Println("")
-	fmt.Println("# Proceed if you received confirmation of billing quota increase for the service account of stage 4-projects")
+	fmt.Println("# Proceed if you received confirmation of billing quota increase for the service account of stage 5-projects")
 	fmt.Printf("# %s \n", sa)
 	fmt.Printf("# Quota increase link is: %s\n", quotaURL)
 	fmt.Println("")

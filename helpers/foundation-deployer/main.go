@@ -172,8 +172,8 @@ func main() {
 			os.Exit(3)
 		}
 
-		// 4-projects
-		msg.PrintStageMsg("Destroying 4-projects stage")
+		// 5-projects
+		msg.PrintStageMsg("Destroying 5-projects stage")
 		err = s.RunDestroyStep("gcp-projects", func() error {
 			bo := stages.GetBootstrapStepOutputs(t, conf.FoundationPath)
 			return stages.DestroyProjectsStage(t, s, bo, conf)
@@ -309,8 +309,8 @@ func main() {
 		os.Exit(3)
 	}
 
-	// 4-projects
-	msg.PrintStageMsg("Deploying 4-projects stage")
+	// 5-projects
+	msg.PrintStageMsg("Deploying 5-projects stage")
 	msg.ConfirmQuota(bo.ProjectsSA, conf.DisablePrompt)
 
 	err = s.RunStep("gcp-projects", func() error {

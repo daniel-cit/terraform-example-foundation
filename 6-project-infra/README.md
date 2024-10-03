@@ -38,13 +38,16 @@ found on step 3-networks-dual-svpc, but here the architecture will be based on t
 Hub and Spoke network model. It also sets up the global DNS hub</td>
 </tr>
 <tr>
-<td><a href="../4-projects">4-projects</a></td>
-<td>Sets up a folder structure, projects, and an application infrastructure pipeline for applications,
- which are connected as service projects to the shared VPC created in the previous stage.</td>
+<td><a href="../4-infra-pipeline">4-infra-pipeline</a></td>
+<td>Sets up a application infrastructure pipeline for applications.</td>
+</tr>
+<tr>
+<td><a href="../5-projects">5-projects</a></td>
+<td>Sets up a folder structure and projects which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
 <td>6-project-infra (this file)</td>
-<td>Deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-projects.</td>
+<td>Deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.</td>
 </tr>
 </tbody>
 </table>
@@ -55,8 +58,8 @@ file.
 
 ## Purpose
 
-The purpose of this step is to deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-projects.
-The infra pipeline is created in step `4-projects` within the shared env and has a [Cloud Build](https://cloud.google.com/build/docs) pipeline configured to manage infrastructure within projects.
+The purpose of this step is to deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.
+The infra pipeline is created in step `4-infra-pipeline` within the shared env and has a [Cloud Build](https://cloud.google.com/build/docs) pipeline configured to manage infrastructure within projects.
 
 There is also a [Source Repository](https://cloud.google.com/source-repositories) configured with build triggers similar to the [CI/CD Pipeline](https://github.com/terraform-google-modules/terraform-example-foundation#0-bootstrap) setup in `0-bootstrap`.
 This Compute Engine instance is created using the base network from step `3-networks` and is used to access private services.
@@ -67,7 +70,8 @@ This Compute Engine instance is created using the base network from step `3-netw
 1. 1-org executed successfully.
 1. 2-environments executed successfully.
 1. 3-networks executed successfully.
-1. 4-projects executed successfully.
+1. 4-infra-pipeline executed successfully.
+1. 5-projects executed successfully.
 
 ### Troubleshooting
 
@@ -80,12 +84,12 @@ commands. The `-T` flag is needed for Linux, but causes problems for MacOS.
 
 ### Deploying with Cloud Build
 
-1. Clone the `gcp-policies` repo based on the Terraform output from the `0-bootstrap` step.
+1. Clone the `gcp-policies` repo based on the Terraform output from the `4-infra-pipeline` step.
 Clone the repo at the same level of the `terraform-example-foundation` folder, the following instructions assume this layout.
-Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get the Cloud Build Project ID.
+Run `terraform output cloudbuild_project_id` in the `gcp-infra-pipeline` folder to get the Cloud Build Project ID.
 
    ```bash
-   export INFRA_PIPELINE_PROJECT_ID=$(terraform -chdir="gcp-projects/business_unit_1/shared/" output -raw cloudbuild_project_id)
+   export INFRA_PIPELINE_PROJECT_ID=$(terraform -chdir="gcp-infra-pipeline/business_unit_1/shared/" output -raw cloudbuild_project_id)
    echo ${INFRA_PIPELINE_PROJECT_ID}
 
    gcloud source repos clone gcp-policies gcp-policies-project-infra --project=${INFRA_PIPELINE_PROJECT_ID}
@@ -247,7 +251,7 @@ When using Cloud Build or Jenkins as your CI/CD tool, each environment correspon
 
 To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
 
-1. Use `terraform output` to get the Infra Pipeline Project ID from 4-projects output.
+1. Use `terraform output` to get the Infra Pipeline Project ID from 4-infra-pipeline output.
 
    ```bash
    export INFRA_PIPELINE_PROJECT_ID=$(terraform -chdir="../4-infra-pipeline/business_unit_1/shared/" output -raw cloudbuild_project_id)

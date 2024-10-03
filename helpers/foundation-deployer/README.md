@@ -15,7 +15,7 @@ Helper tool to deploy the Terraform example foundation using Cloud Build and Clo
 Your environment need to use the same [Terraform](https://www.terraform.io/downloads.html) version used on the build pipeline.
 Otherwise, you might experience Terraform state snapshot lock errors.
 
-Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` and `4-projects` is the same version configured in the following code
+Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` is the same version configured in the following code
 
 - 0-bootstrap/modules/jenkins-agent/variables.tf
    ```
@@ -98,7 +98,8 @@ Version 1.5.7 is the last version before the license model change. To use a late
   - [2-environments](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/2-environments/README.md)
   - [3-networks-dual-svpc](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-dual-svpc)
   - [3-networks-hub-and-spoke](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/3-networks-hub-and-spoke)
-  - [4-projects](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-projects)
+  - [4-infra-pipeline](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/4-infra-pipeline)
+  - [5-projects](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-projects)
   - [6-project-infra](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/6-project-infra)
 
 ### Location

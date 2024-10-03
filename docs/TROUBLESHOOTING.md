@@ -26,7 +26,7 @@ See [GLOSSARY.md](./GLOSSARY.md).
 - [Error: Error adding network peering](#error-error-adding-network-peering)
 - [Error: Terraform deploy fails due to GitLab repositories not found](#terraform-deploy-fails-due-to-gitlab-repositories-not-found)
 - [Error: Gitlab pipelines access denied](#gitlab-pipelines-access-denied)
-- [Error: Unknown project id on 4-project step context](#error-unknown-project-id-on-4-project-step-context)
+- [Error: Unknown project id on 5-project step context](#error-unknown-project-id-on-5-project-step-context)
 - [Error: Error getting operation for committing purpose for TagValue](#error-error-getting-operation-for-committing-purpose-for-tagvalue)
 - - -
 
@@ -252,7 +252,7 @@ In a deploy using the [Hub and Spoke](https://cloud.google.com/architecture/secu
 This is a transient error and the deploy can be retried. Wait for at least a minute and retry the deploy.
 
 
-### Error: Unknown project id on 4-project step context
+### Error: Unknown project id on 5-project step context
 
 **Error message:**
 
@@ -262,7 +262,7 @@ Error 400: Unknown project id: 'prj-<business-unity>-<environment>-sample-base-<
 
 **Cause:**
 
-When you try to run 4-projects step without requesting additional project quota for **project service account created in 0-bootstrap step** you may face the error above, even after the project quota issue is resolved, due to an inconsistency in terraform state.
+When you try to run 5-projects step without requesting additional project quota for **project service account created in 0-bootstrap step** you may face the error above, even after the project quota issue is resolved, due to an inconsistency in terraform state.
 
 **Solution:**
 

@@ -193,7 +193,7 @@ This step configures the same network resources that the step 3-networks-dual-sv
 
 Usage instructions are available for the networks step in the [README](./3-networks-hub-and-spoke/README.md).
 
-### [4. projects](./4-projects/)
+### [5. projects](./5-projects/)
 
 This step is focused on creating service projects with a standard configuration that are attached to the Shared VPC created in the previous step and application infrastructure pipelines.
 Running this code as-is should generate a structure as shown below:
@@ -242,11 +242,11 @@ The code in this step includes two options for creating projects.
 The first is the standard projects module which creates a project per environment, and the second creates a standalone project for one environment.
 If relevant for your use case, there are also two optional submodules which can be used to create a subnet per project, and a dedicated private DNS zone per project.
 
-Usage instructions are available for the projects step in the [README](./4-projects/README.md).
+Usage instructions are available for the projects step in the [README](./5-projects/README.md).
 
 ### [6. project-infra](./6-project-infra/)
 
-The purpose of this step is to deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-projects.
+The purpose of this step is to deploy a simple [Compute Engine](https://cloud.google.com/compute/) instance in one of the business unit projects using the infra pipeline set up in 4-infra-pipeline.
 
 Usage instructions are available for the project-infra step in the [README](./6-project-infra/README.md).
 
@@ -352,7 +352,8 @@ Some variables used to deploy the steps have default values, check those **befor
 - Step 2-environments: The READMEs of the environments [development](./2-environments/envs/development/README.md#Inputs), [nonproduction](./2-environments/envs/nonproduction/README.md#Inputs), and [production](./2-environments/envs/production/README.md#Inputs)
 - Step 3-networks-dual-svpc: The READMEs of the environments [shared](./3-networks-dual-svpc/envs/shared/README.md#inputs), [development](./3-networks-dual-svpc/envs/development/README.md#Inputs), [nonproduction](./3-networks/envs/nonproduction/README.md#Inputs), and [production](./3-networks/envs/production/README.md#Inputs)
 - Step 3-networks-hub-and-spoke: The READMEs of the environments [shared](./3-networks-hub-and-spoke/envs/shared/README.md#inputs), [development](./3-networks-hub-and-spoke/envs/development/README.md#Inputs), [nonproduction](./3-networks/envs/nonproduction/README.md#Inputs), and [production](./3-networks/envs/production/README.md#Inputs)
-- Step 4-projects: The READMEs of the environments [shared](./4-infra-pipeline/business_unit_1/shared/README.md#inputs), [development](./4-projects/business_unit_1/development/README.md#Inputs), [nonproduction](./4-projects/business_unit_1/nonproduction/README.md#Inputs), and [production](./4-projects/business_unit_1/production/README.md#Inputs)
+- Step 4-infra-pipeline: The [README](./4-infra-pipeline/business_unit_1/shared/README.md#inputs) of the environment `shared`.
+- Step 5-projects: The READMEs of the environments  [development](./5-projects/business_unit_1/development/README.md#Inputs), [nonproduction](./5-projects/business_unit_1/nonproduction/README.md#Inputs), and [production](./5-projects/business_unit_1/production/README.md#Inputs)
 
 ## Errata summary
 

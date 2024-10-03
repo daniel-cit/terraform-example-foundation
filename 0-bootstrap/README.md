@@ -37,15 +37,17 @@ up the global DNS hub.</td>
 found on step 3-networks-dual-svpc, but here the architecture will be based on the
 Hub and Spoke network model. It also sets up the global DNS hub.</td>
 </tr>
+<tr>
+<td><a href="../4-infra-pipeline">4-infra-pipeline</a></td>
+<td>Sets up a application infrastructure pipeline for applications.</td>
 </tr>
 <tr>
-<td><a href="../4-projects">4-projects</a></td>
-<td>Set up a folder structure, projects, and application infrastructure pipeline for applications,
- which are connected as service projects to the shared VPC created in the previous stage.</td>
+<td><a href="../5-projects">5-projects</a></td>
+<td>Sets up a folder structure and projects which are connected as service projects to the shared VPC created in the previous stage.</td>
 </tr>
 <tr>
 <td><a href="../6-project-infra">6-project-infra</a></td>
-<td>Deploy a <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline setup in 4-projects.</td>
+<td>Deploy a <a href="https://cloud.google.com/compute/">Compute Engine</a> instance in one of the business unit projects using the infra pipeline setup in 4-infra-pipeline.</td>
 </tr>
 </tbody>
 </table>
@@ -83,7 +85,7 @@ To run the commands described in this document, install the following:
 
 **Note:** Make sure that you use the same version of [Terraform](https://www.terraform.io/downloads.html) throughout this series. Otherwise, you might experience Terraform state snapshot lock errors.
 
-Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` and `4-projects` is the same version configured in the following code
+Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` is the same version configured in the following code
 
 - 0-bootstrap/modules/jenkins-agent/variables.tf
    ```
@@ -245,7 +247,7 @@ The following steps introduce the steps to deploy with Cloud Build Alternatively
    terraform apply bootstrap.tfplan
    ```
 
-1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc`, `3-networks-hub-and-spoke`, and `4-projects` and the state bucket that will be used by step 4-projects.
+1. Run `terraform output` to get the email address of the terraform service accounts that will be used to run manual steps for `shared` environments in steps `3-networks-dual-svpc` and `3-networks-hub-and-spoke`, and the state bucket that will be used by step 5-projects.
 
    ```bash
    export network_step_sa=$(terraform output -raw networks_step_terraform_service_account_email)
@@ -390,7 +392,7 @@ Each step has instructions for this change.
 | networks\_step\_terraform\_service\_account\_email | Networks Step Terraform Account |
 | optional\_groups | List of Google Groups created that are optional to the Example Foundation steps. |
 | organization\_step\_terraform\_service\_account\_email | Organization Step Terraform Account |
-| projects\_gcs\_bucket\_tfstate | Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project. |
+| projects\_gcs\_bucket\_tfstate | Bucket used for storing terraform state for stages 4-infra-pipeline and 5-projects foundations pipelines in seed project. |
 | projects\_step\_terraform\_service\_account\_email | Projects Step Terraform Account |
 | required\_groups | List of Google Groups created that are required by the Example Foundation steps. |
 | seed\_project\_id | Project where service accounts and core APIs will be enabled. |

@@ -20,5 +20,5 @@ locals {
 
 data "tfe_outputs" "projects" {
   organization = var.tfc_org_name
-  workspace    = "4-projects"
+  workspace    = "5-projects"
 }

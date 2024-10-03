@@ -10,7 +10,7 @@ Another CI/CD option is to use Cloud Build & Cloud Source Repos. If you don't ha
 
 ## Overview
 
-The objective of the instructions below is to configure the infrastructure that allows you to run CI/CD deployments for the next stages (`1-org, 2-environments, 3-networks, 4-projects`) using Jenkins. The infrastructure consists in two Google Cloud Platform projects (`prj-b-seed` and `prj-b-cicd`) and VPN configuration to connect to your on-prem environment.
+The objective of the instructions below is to configure the infrastructure that allows you to run CI/CD deployments for the next stages (`1-org, 2-environments, 3-networks, 5-projects`) using Jenkins. The infrastructure consists in two Google Cloud Platform projects (`prj-b-seed` and `prj-b-cicd`) and VPN configuration to connect to your on-prem environment.
 
 It is a best practice to have two separate projects here (`prj-b-seed` and `prj-b-cicd`) for separation of concerns. On one hand, `prj-b-seed` stores terraform state and has the Service Account able to create / modify infrastructure. On the other hand, the deployment of that infrastructure is coordinated by Jenkins, which is implemented in `prj-b-cicd` and connected to your Controller on-prem.
 
@@ -204,7 +204,7 @@ You arrived to these instructions because you are using the `jenkins_bootstrap` 
 For the manual steps described in this document, you need to use the same [Terraform](https://www.terraform.io/downloads.html) version used on the build pipeline.
 Otherwise, you might experience Terraform state snapshot lock errors.
 
-Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` and `4-projects` is the same version configured in the following code
+Version 1.5.7 is the last version before the license model change. To use a later version of Terraform, ensure that the Terraform version used in the Operational System to manually execute part of the steps in `3-networks` is the same version configured in the following code
 
 - 0-bootstrap/modules/jenkins-agent/variables.tf
    ```
@@ -854,7 +854,14 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 
 1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
 
-## Deploying step 4-projects
+## Deploying step 4-infra-pipeline
+
+TODO
+
+1. Review the apply output in your Controller's web UI (you might want to use the option to "Scan Multibranch Pipeline Now" in your Jenkins Controller UI).
+
+## Deploying step 5-projects
+TODO
 
 1. Clone the repo you created manually in 0-bootstrap.
 
@@ -874,7 +881,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
 1. Copy contents of foundation to new repo.
 
    ```bash
-   cp -RT ../terraform-example-foundation/4-projects/ .
+   cp -RT ../terraform-example-foundation/5-projects/ .
    cp -RT ../terraform-example-foundation/policy-library/ ./policy-library
    cp ../terraform-example-foundation/build/Jenkinsfile .
    cp ../terraform-example-foundation/build/tf-wrapper.sh .
@@ -915,7 +922,7 @@ Here you will configure a VPN Network tunnel to enable connectivity between the 
    mv production.auto.example.tfvars production.auto.tfvars
    ```
 
-1. See any of the envs folder [README.md](../4-projects/business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
+1. See any of the envs folder [README.md](../5-projects/business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
 1. See any of the shared folder [README.md](../4-infra-pipeline/business_unit_1/shared/README.md) files for additional information on the values in the `shared.auto.tfvars` file.
 1. Use `terraform output` to get the backend bucket value from gcp-bootstrap output.
 

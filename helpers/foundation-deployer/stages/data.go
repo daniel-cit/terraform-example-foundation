@@ -42,7 +42,7 @@ const (
 	HubAndSpokeStep   = "3-networks-hub-and-spoke"
 	DualSvpcStep      = "3-networks-dual-svpc"
 	InfraPipelineStep = "4-infra-pipeline"
-	ProjectsStep      = "4-projects"
+	ProjectsStep      = "5-projects"
 	AppInfraStep      = "6-project-infra"
 )
 
