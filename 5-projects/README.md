@@ -57,14 +57,14 @@ For an overview of the architecture and the parts, see the
 
 ## Purpose
 
-The purpose of this step is to set up the folder structure, projects, and infrastructure pipelines for applications that are connected as service projects to the shared VPC created in the previous stage.
+The purpose of this step is to set up the folder structure and projects that are connected as service projects to the shared VPC created in the previous stage.
 
-For each business unit, a shared `infra-pipeline` project is created along with Cloud Build triggers, CSRs for application infrastructure code and Google Cloud Storage buckets for state storage.
+For each business unit, a shared `infra-pipeline` project was created in step `4-infra-pipeline` along with Cloud Build triggers, CSRs for application infrastructure code and Google Cloud Storage buckets for state storage.
 
 This step follows the same [conventions](https://github.com/terraform-google-modules/terraform-example-foundation#branching-strategy) as the Foundation pipeline deployed in [0-bootstrap](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md).
-A custom [workspace](https://github.com/terraform-google-modules/terraform-google-bootstrap/blob/master/modules/tf_cloudbuild_workspace/README.md) (`bu1-example-app`) is created by this pipeline and necessary roles are granted to the Terraform Service Account of this workspace by enabling variable `sa_roles` as shown in this [example](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-projects/modules/base_env/example_base_shared_vpc_project.tf).
+A custom [workspace](https://github.com/terraform-google-modules/terraform-google-bootstrap/blob/master/modules/tf_cloudbuild_workspace/README.md) (`bu1-example-app`) was created by the pipeline in `4-infra-pipeline` and necessary roles are granted to the Terraform Service Account of this workspace by enabling variable `sa_roles` as shown in this [example](https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/5-projects/modules/base_env/example_base_shared_vpc_project.tf).
 
-This pipeline is utilized to deploy resources in projects across development/nonproduction/production in step [6-project-infra](../6-project-infra/README.md).
+The pipeline is utilized to deploy resources in projects across development/nonproduction/production in step [6-project-infra](../6-project-infra/README.md).
 Other Workspaces can also be created to isolate deployments if needed.
 
 ## Prerequisites
@@ -73,11 +73,9 @@ Other Workspaces can also be created to isolate deployments if needed.
 1. 1-org executed successfully.
 1. 2-environments executed successfully.
 1. 3-networks executed successfully.
+1. 4-infra-pipeline executed successfully.
 
-1. For the manual step described in this document, you need to use the same [Terraform](https://www.terraform.io/downloads.html) version used on the build pipeline.
-Otherwise, you might experience Terraform state snapshot lock errors.
-
-   **Note:** As mentioned in 0-bootstrap [README note 2](../0-bootstrap/README.md#deploying-with-cloud-build) at the end of Cloud Build deploy section, make sure that you have requested at least 50 additional projects for the **projects step service account**, otherwise you may face a project quota exceeded error message during the following steps and you will need to apply the fix from [this entry](../docs/TROUBLESHOOTING.md#error-unknown-project-id-on-5-project-step-context) of the Troubleshooting guide in order to continue.
+**Note:** As mentioned in 0-bootstrap [README note 2](../0-bootstrap/README.md#deploying-with-cloud-build) at the end of Cloud Build deploy section, make sure that you have requested at least 50 additional projects for the **projects step service account**, otherwise you may face a project quota exceeded error message during the following steps and you will need to apply the fix from [this entry](../docs/TROUBLESHOOTING.md#error-unknown-project-id-on-5-project-step-context) of the Troubleshooting guide in order to continue.
 
 ### Troubleshooting
 
@@ -117,14 +115,12 @@ Run `terraform output cloudbuild_project_id` in the `0-bootstrap` folder to get 
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
-   mv shared.auto.example.tfvars shared.auto.tfvars
    mv development.auto.example.tfvars development.auto.tfvars
    mv nonproduction.auto.example.tfvars nonproduction.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
    ```
 
 1. See any of the envs folder [README.md](./business_unit_1/production/README.md) files for additional information on the values in the `common.auto.tfvars`, `development.auto.tfvars`, `nonproduction.auto.tfvars`, and `production.auto.tfvars` files.
-1. See any of the shared folder [README.md](./business_unit_1/shared/README.md) files for additional information on the values in the `shared.auto.tfvars` file.
 
 1. Use `terraform output` to get the backend bucket value from 0-bootstrap output.
 
@@ -148,7 +144,6 @@ For example, to create a new business unit similar to business_unit_1, run the f
    grep -rl business_unit_1 business_unit_2/ | xargs sed -i 's/business_unit_1/business_unit_2/g'
    ```
 
-
 1. Commit changes.
 
    ```bash
@@ -156,39 +151,8 @@ For example, to create a new business unit similar to business_unit_1, run the f
    git commit -m 'Initialize projects repo'
    ```
 
-1. You need to manually plan and apply only once the `business_unit_1/shared` environment since `development`, `nonproduction`, and `production` depend on it.
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Use `terraform output` to get the Cloud Build project ID and the projects step Terraform Service Account from 0-bootstrap output. An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set using the Terraform Service Account to enable impersonation.
-
-   ```bash
-   export CLOUD_BUILD_PROJECT_ID=$(terraform -chdir="../terraform-example-foundation/0-bootstrap/" output -raw cloudbuild_project_id)
-   echo ${CLOUD_BUILD_PROJECT_ID}
-
-   export GOOGLE_IMPERSONATE_SERVICE_ACCOUNT=$(terraform -chdir="../terraform-example-foundation/0-bootstrap/" output -raw projects_step_terraform_service_account_email)
-   echo ${GOOGLE_IMPERSONATE_SERVICE_ACCOUNT}
-   ```
-
-1. Run `init` and `plan` and review output for environment shared.
-
-   ```bash
-   ./tf-wrapper.sh init shared
-   ./tf-wrapper.sh plan shared
-   ```
-
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/../gcp-policies ${CLOUD_BUILD_PROJECT_ID}
-   ```
-
-1. Run `apply` shared.
-
-   ```bash
-   ./tf-wrapper.sh apply shared
-   ```
-
 1. Push your plan branch to trigger a plan for all environments. Because the
-   _plan_ branch is not a [named environment branch](../docs/FAQ.md#what-is-a-named-branch)), pushing your _plan_
+   _plan_ branch is not a [named environment branch](../docs/FAQ.md#what-is-a-named-branch), pushing your _plan_
    branch triggers _terraform plan_ but not _terraform apply_. Review the plan output in your Cloud Build project https://console.cloud.google.com/cloud-build/builds;region=DEFAULT_REGION?project=YOUR_CLOUD_BUILD_PROJECT_ID
 
    ```bash
@@ -221,12 +185,6 @@ For example, to create a new business unit similar to business_unit_1, run the f
    git push origin nonproduction
    ```
 
-1. Before executing the next step, unset the `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` environment variable.
-
-   ```bash
-   unset GOOGLE_IMPERSONATE_SERVICE_ACCOUNT
-   ```
-
 1. You can now move to the instructions in the [6-project-infra](../6-project-infra/README.md) step.
 
 ### Deploying with Jenkins
@@ -238,6 +196,7 @@ See `0-bootstrap` [README-Jenkins.md](../0-bootstrap/README-Jenkins.md#deploying
 See `0-bootstrap` [README-GitHub.md](../0-bootstrap/README-GitHub.md#deploying-step-5-projects).
 
 ### Run Terraform locally
+TODO
 
 1. The next instructions assume that you are at the same level of the `terraform-example-foundation` folder. Change into `5-projects` folder, copy the Terraform wrapper script and ensure it can be executed.
 
@@ -251,7 +210,6 @@ See `0-bootstrap` [README-GitHub.md](../0-bootstrap/README-GitHub.md#deploying-s
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
-   mv shared.auto.example.tfvars shared.auto.tfvars
    mv development.auto.example.tfvars development.auto.tfvars
    mv nonproduction.auto.example.tfvars nonproduction.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
