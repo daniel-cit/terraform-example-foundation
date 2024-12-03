@@ -22,11 +22,13 @@ locals {
 
   cicd_project_id = module.tf_source.cloudbuild_project_id
 
-  state_bucket_kms_key = "projects/${module.seed_bootstrap.seed_project_id}/locations/${var.default_region}/keyRings/${var.project_prefix}-keyring/cryptoKeys/${var.project_prefix}-key"
+  state_bucket_kms_key = "projects/${local.seed_project_id}/locations/${local.default_region}/keyRings/${local.project_prefix}-keyring/cryptoKeys/${local.project_prefix}-key"
 
   bucket_self_link_prefix             = "https://www.googleapis.com/storage/v1/b/"
-  default_state_bucket_self_link      = "${local.bucket_self_link_prefix}${module.seed_bootstrap.gcs_bucket_tfstate}"
+  default_state_bucket_self_link      = "${local.bucket_self_link_prefix}${var.remote_state_bucket}"
   gcp_projects_state_bucket_self_link = module.gcp_projects_state_bucket.bucket.self_link
+
+  granular_sa = {}// TODO
 
   cb_config = {
     "bootstrap" = {
@@ -68,32 +70,47 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
+// When the bootstrap projects are created, the Compute Engine
+// default service account is disabled but it still has the Editor
+// role associated with the service account. This default SA is the
+// only member with the editor role.
+// This module will remove all editors from both projects.
+module "bootstrap_projects_remove_editor" {
+  source   = "./modules/parent-iam-remove-role"
+
+  parent_type = "project"
+  parent_id   = local.cicd_project_id
+  roles       = ["roles/editor"]
+
+  depends_on = [
+    module.cicd_project_iam_member
+  ]
+}
+
 module "gcp_projects_state_bucket" {
   source  = "terraform-google-modules/cloud-storage/google//modules/simple_bucket"
   version = "~> 8.0"
 
-  name          = "${var.bucket_prefix}-${module.seed_bootstrap.seed_project_id}-gcp-projects-tfstate"
-  project_id    = module.seed_bootstrap.seed_project_id
-  location      = var.default_region
+  name          = "${local.bucket_prefix}-${local.seed_project_id}-gcp-projects-tfstate"
+  project_id    = local.seed_project_id
+  location      = local.default_region
   force_destroy = var.bucket_force_destroy
 
   encryption = {
     default_kms_key_name = local.state_bucket_kms_key
   }
-
-  depends_on = [module.seed_bootstrap.gcs_bucket_tfstate]
 }
 
 module "tf_source" {
   source  = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_source"
   version = "~> 9.0"
 
-  org_id                = var.org_id
-  folder_id             = google_folder.bootstrap.id
-  project_id            = "${var.project_prefix}-b-cicd-${random_string.suffix.result}"
-  location              = var.default_region
-  billing_account       = var.billing_account
-  group_org_admins      = var.groups.required_groups.group_org_admins
+  org_id                = local.org_id
+  folder_id             = local.bootstrap_folder
+  project_id            = "${local.project_prefix}-b-cicd-${random_string.suffix.result}"
+  location              = local.default_region
+  billing_account       = local.billing_account
+  group_org_admins      = local.required_groups.group_org_admins
   buckets_force_destroy = var.bucket_force_destroy
 
   project_deletion_policy = var.project_deletion_policy
@@ -131,9 +148,6 @@ module "tf_source" {
     env_code          = "b"
     vpc               = "none"
   }
-
-  # Remove after github.com/terraform-google-modules/terraform-google-bootstrap/issues/160
-  depends_on = [module.seed_bootstrap]
 }
 
 resource "google_project_service_identity" "workflows_identity" {
@@ -151,7 +165,7 @@ module "tf_private_pool" {
   project_id = module.tf_source.cloudbuild_project_id
 
   private_worker_pool = {
-    region                   = var.default_region,
+    region                   = local.default_region,
     enable_network_peering   = true,
     create_peered_network    = true,
     peered_network_subnet_ip = "10.3.0.0/24"
@@ -170,15 +184,15 @@ module "tf_cloud_builder" {
 
   project_id                   = module.tf_source.cloudbuild_project_id
   dockerfile_repo_uri          = module.tf_source.csr_repos[local.cloudbuilder_repo].url
-  gar_repo_location            = var.default_region
-  workflow_region              = var.default_region
+  gar_repo_location            = local.default_region
+  workflow_region              = local.default_region
   terraform_version            = local.terraform_version
   build_timeout                = "1200s"
   cb_logs_bucket_force_destroy = var.bucket_force_destroy
-  trigger_location             = var.default_region
+  trigger_location             = local.default_region
   enable_worker_pool           = true
   worker_pool_id               = module.tf_private_pool.private_worker_pool_id
-  bucket_name                  = "${var.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-tf-cloudbuilder-build-logs"
+  bucket_name                  = "${local.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-tf-cloudbuilder-build-logs"
 }
 
 module "bootstrap_csr_repo" {
@@ -208,7 +222,7 @@ module "build_terraform_image" {
     "terraform_version" = local.terraform_version
   }
 
-  create_cmd_body = "beta builds triggers run  ${local.cloud_builder_trigger_id} --branch main --region ${var.default_region} --project ${module.tf_source.cloudbuild_project_id}"
+  create_cmd_body = "beta builds triggers run  ${local.cloud_builder_trigger_id} --branch main --region ${local.default_region} --project ${module.tf_source.cloudbuild_project_id}"
 
   module_depends_on = [
     time_sleep.cloud_builder,
@@ -221,26 +235,26 @@ module "tf_workspace" {
   for_each = local.granular_sa
 
   project_id                = module.tf_source.cloudbuild_project_id
-  location                  = var.default_region
-  trigger_location          = var.default_region
+  location                  = local.default_region
+  trigger_location          = local.default_region
   enable_worker_pool        = true
   worker_pool_id            = module.tf_private_pool.private_worker_pool_id
   state_bucket_self_link    = local.cb_config[each.key].state_bucket
-  log_bucket_name           = "${var.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-${local.cb_config[each.key].source}-build-logs"
-  artifacts_bucket_name     = "${var.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-${local.cb_config[each.key].source}-build-artifacts"
+  log_bucket_name           = "${local.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-${local.cb_config[each.key].source}-build-logs"
+  artifacts_bucket_name     = "${local.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-${local.cb_config[each.key].source}-build-artifacts"
   cloudbuild_plan_filename  = "cloudbuild-tf-plan.yaml"
   cloudbuild_apply_filename = "cloudbuild-tf-apply.yaml"
   tf_repo_uri               = module.tf_source.csr_repos[local.cb_config[each.key].source].url
-  cloudbuild_sa             = google_service_account.terraform-env-sa[each.key].id
+  cloudbuild_sa             = local.terraform_env_sa[each.key].id
   create_cloudbuild_sa      = false
   diff_sa_project           = true
   create_state_bucket       = false
   buckets_force_destroy     = var.bucket_force_destroy
 
   substitutions = {
-    "_ORG_ID"                       = var.org_id
-    "_BILLING_ID"                   = var.billing_account
-    "_GAR_REGION"                   = var.default_region
+    "_ORG_ID"                       = local.org_id
+    "_BILLING_ID"                   = local.billing_account
+    "_GAR_REGION"                   = local.default_region
     "_GAR_PROJECT_ID"               = module.tf_source.cloudbuild_project_id
     "_GAR_REPOSITORY"               = local.gar_repository
     "_DOCKER_TAG_VERSION_TERRAFORM" = local.docker_tag_version_terraform
@@ -259,10 +273,10 @@ resource "google_artifact_registry_repository_iam_member" "terraform_sa_artifact
   for_each = local.granular_sa
 
   project    = module.tf_source.cloudbuild_project_id
-  location   = var.default_region
+  location   = local.default_region
   repository = local.gar_repository
   role       = "roles/artifactregistry.reader"
-  member     = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member     = "serviceAccount:${local.terraform_env_sa[each.key].email}"
 }
 
 resource "google_sourcerepo_repository_iam_member" "member" {
@@ -271,5 +285,5 @@ resource "google_sourcerepo_repository_iam_member" "member" {
   project    = module.tf_source.cloudbuild_project_id
   repository = module.tf_source.csr_repos["gcp-policies"].name
   role       = "roles/viewer"
-  member     = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member     = "serviceAccount:${local.terraform_env_sa[each.key].email}"
 }

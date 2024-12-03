@@ -113,29 +113,6 @@ locals {
       "roles/storage.objectAdmin",
     ],
   }
-
-  // Roles required to manage resources in the CI/CD project
-  granular_sa_cicd_project = {
-    "bootstrap" = [
-      "roles/storage.admin",
-      "roles/compute.networkAdmin",
-      "roles/cloudbuild.builds.editor",
-      "roles/cloudbuild.workerPoolOwner",
-      "roles/artifactregistry.admin",
-      "roles/source.admin",
-      "roles/iam.serviceAccountAdmin",
-      "roles/workflows.admin",
-      "roles/cloudscheduler.admin",
-      "roles/resourcemanager.projectDeleter",
-      "roles/dns.admin",
-      "roles/iam.workloadIdentityPoolAdmin",
-    ],
-  }
-
-  bootstrap_projects = {
-    "seed" = module.seed_bootstrap.seed_project_id,
-    "cicd" = local.cicd_project_id,
-  }
 }
 
 resource "google_service_account" "terraform-env-sa" {
@@ -177,15 +154,7 @@ module "seed_project_iam_member" {
   roles       = each.value
 }
 
-module "cicd_project_iam_member" {
-  source   = "./modules/parent-iam-member"
-  for_each = local.granular_sa_cicd_project
 
-  member      = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
-  parent_type = "project"
-  parent_id   = local.cicd_project_id
-  roles       = each.value
-}
 
 // When the bootstrap projects are created, the Compute Engine
 // default service account is disabled but it still has the Editor
@@ -194,15 +163,13 @@ module "cicd_project_iam_member" {
 // This module will remove all editors from both projects.
 module "bootstrap_projects_remove_editor" {
   source   = "./modules/parent-iam-remove-role"
-  for_each = local.bootstrap_projects
 
   parent_type = "project"
-  parent_id   = each.value
+  parent_id   = module.seed_bootstrap.seed_project_id
   roles       = ["roles/editor"]
 
   depends_on = [
     module.seed_project_iam_member,
-    module.cicd_project_iam_member
   ]
 }
 

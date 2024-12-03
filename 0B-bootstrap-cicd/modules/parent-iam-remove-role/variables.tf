@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = ">= 1.3"
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 3.77"
-    }
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = ">= 3.77"
-    }
-    random = {
-      source = "hashicorp/random"
-    }
+variable "parent_type" {
+  description = "Type of the parent resource. valid values are `organization`, `folder`, and `project`."
+  type        = string
+
+  validation {
+    condition     = contains(["organization", "folder", "project"], var.parent_type)
+    error_message = "For parent_type only `organization`, `folder`, and `project` are valid."
   }
+}
+
+variable "parent_id" {
+  description = "ID of the parent resource."
+  type        = string
+}
+
+variable "roles" {
+  description = "Roles to remove all members in the parent resource."
+  type        = list(string)
 }
