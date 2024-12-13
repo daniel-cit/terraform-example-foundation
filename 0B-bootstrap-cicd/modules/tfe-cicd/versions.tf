@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,26 @@
  */
 
 terraform {
-  cloud {
-    workspaces {
-      name = "0-shared"
+  required_version = ">= 1.3"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 3.77"
+    }
+
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = ">= 3.77"
+    }
+
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = ">= 0.60.1"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.4.3"
     }
   }
 }

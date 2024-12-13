@@ -24,9 +24,16 @@ output "bootstrap_folder" {
   value       = google_folder.bootstrap.id
 }
 
-output "terraform_env_sa" {
+output "terraform_env_sa" { // TODO output used here should only have email and id and key
   description = "Map of Terraform Accounts"
-  value       = google_service_account.terraform-env-sa
+  # value       = google_service_account.terraform-env-sa
+  value = tomap({
+    for key, value in google_service_account.terraform-env-sa : key => {
+      id    = value.id,
+      email = value.email,
+      name  = value.name
+    }
+  })
 }
 
 output "bootstrap_step_terraform_service_account_email" {
@@ -57,6 +64,12 @@ output "organization_step_terraform_service_account_email" {
 output "gcs_bucket_tfstate" {
   description = "Bucket used for storing terraform state for Foundations Pipelines in Seed Project."
   value       = module.seed_bootstrap.gcs_bucket_tfstate
+}
+
+
+output "projects_gcs_bucket_tfstate" {
+  description = "Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project."
+  value       = module.gcp_projects_state_bucket.bucket.name
 }
 
 output "common_config" {

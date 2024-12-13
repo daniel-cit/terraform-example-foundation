@@ -14,35 +14,27 @@
  * limitations under the License.
  */
 
-
-provider "github" {
-  owner = var.gh_repos.owner
-  token = var.gh_token
-}
-
 locals {
-  cicd_project_id = module.gh_cicd.project_id
-
   gh_config = {
-    "bootstrap" = var.gh_repos.bootstrap,
-    "org"       = var.gh_repos.organization,
-    "env"       = var.gh_repos.environments,
-    "net"       = var.gh_repos.networks,
-    "proj"      = var.gh_repos.projects,
+    "bootstrap" = var.repos.bootstrap,
+    "org"       = var.repos.organization,
+    "env"       = var.repos.environments,
+    "net"       = var.repos.networks,
+    "proj"      = var.repos.projects,
   }
 
   sa_mapping = {
     for k, v in local.gh_config : k => {
-      sa_name   = google_service_account.terraform-env-sa[k].name
-      attribute = "attribute.repository/${var.gh_repos.owner}/${v}"
+      sa_name   = var.terraform_env_sa[k].name
+      attribute = "attribute.repository/${var.repos_owner}/${v}"
     }
   }
 
   common_secrets = {
-    "PROJECT_ID" : module.gh_cicd.project_id,
+    "PROJECT_ID" : var.project_id,
     "WIF_PROVIDER_NAME" : module.gh_oidc.provider_name,
-    "TF_BACKEND" : module.seed_bootstrap.gcs_bucket_tfstate,
-    "TF_VAR_gh_token" : var.gh_token,
+    "TF_BACKEND" : var.gcs_bucket_tfstate,
+    "TF_VAR_token" : var.token,
   }
 
   secrets_list = flatten([
@@ -59,7 +51,7 @@ locals {
   sa_secrets = [for k, v in local.gh_config : {
     config          = k
     secret_name     = "SERVICE_ACCOUNT_EMAIL"
-    plaintext_value = google_service_account.terraform-env-sa[k].email
+    plaintext_value = var.terraform_env_sa[k]["mail"]
     repository      = v
     }
   ]
@@ -68,34 +60,11 @@ locals {
 
 }
 
-module "gh_cicd" {
-  source  = "terraform-google-modules/project-factory/google"
-  version = "~> 17.0"
-
-  name              = "${var.project_prefix}-b-cicd-wif-gh"
-  random_project_id = true
-  org_id            = var.org_id
-  folder_id         = google_folder.bootstrap.id
-  billing_account   = var.billing_account
-  activate_apis = [
-    "compute.googleapis.com",
-    "admin.googleapis.com",
-    "iam.googleapis.com",
-    "billingbudgets.googleapis.com",
-    "cloudbilling.googleapis.com",
-    "serviceusage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "iamcredentials.googleapis.com",
-  ]
-
-  deletion_policy = var.project_deletion_policy
-}
-
 module "gh_oidc" {
   source  = "terraform-google-modules/github-actions-runners/google//modules/gh-oidc"
-  version = "~> 3.1"
+  version = "~> 4.0"
 
-  project_id  = module.gh_cicd.project_id
+  project_id  = var.project_id
   pool_id     = "foundation-pool"
   provider_id = "foundation-gh-provider"
   sa_mapping  = local.sa_mapping
@@ -110,9 +79,9 @@ resource "github_actions_secret" "secrets" {
 }
 
 resource "google_service_account_iam_member" "self_impersonate" {
-  for_each = local.granular_sa
+  for_each = var.terraform_env_sa
 
-  service_account_id = google_service_account.terraform-env-sa[each.key].id
+  service_account_id = each.value["id"]
   role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member             = "serviceAccount:${each.value["email"]}"
 }

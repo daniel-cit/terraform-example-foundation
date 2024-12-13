@@ -16,16 +16,12 @@ This includes:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| autopilot\_gke\_io\_warden\_version | Autopilot GKE IO Warden Version | `string` | `"2.7.41"` | no |
 | create\_service\_account | Set to true to create a new service account, false to use an existing one | `bool` | `true` | no |
-| firewall\_enable\_logging | n/a | `bool` | `true` | no |
+| firewall\_enable\_logging | Enable firewall logging | `bool` | `true` | no |
 | ip\_range\_pods\_cidr | The secondary IP range CIDR to use for pods | `string` | `"192.168.0.0/18"` | no |
 | ip\_range\_pods\_name | The secondary IP range to use for pods | `string` | `"ip-range-pods"` | no |
 | ip\_range\_services\_cider | The secondary IP range CIDR to use for services | `string` | `"192.168.64.0/18"` | no |
 | ip\_range\_services\_name | The secondary IP range to use for services | `string` | `"ip-range-scv"` | no |
-| machine\_type | Machine type for TFC agent node pool | `string` | `"n1-standard-4"` | no |
-| max\_node\_count | Maximum number of nodes in the TFC agent node pool | `number` | `4` | no |
-| min\_node\_count | Minimum number of nodes in the TFC agent node pool | `number` | `2` | no |
 | nat\_bgp\_asn | BGP ASN for NAT cloud routes. | `number` | `64514` | no |
 | nat\_enabled | n/a | `bool` | `true` | no |
 | nat\_num\_addresses | n/a | `number` | `2` | no |
@@ -33,7 +29,6 @@ This includes:
 | network\_project\_id | The project ID of the shared VPCs host (for shared vpc support).<br>If not provided, the project\_id is used | `string` | `""` | no |
 | private\_service\_connect\_ip | n/a | `string` | `"10.10.64.5"` | no |
 | project\_id | The Google Cloud Platform project ID to deploy Terraform Cloud agent cluster | `string` | n/a | yes |
-| project\_number | The project number to host the cluster in | `any` | n/a | yes |
 | region | The GCP region to use when deploying resources | `string` | `"us-central1"` | no |
 | service\_account\_email | Optional Service Account for the GKE nodes, required if create\_service\_account is set to false | `string` | `""` | no |
 | service\_account\_id | Optional Service Account for the GKE nodes, required if create\_service\_account is set to false | `string` | `""` | no |
@@ -45,7 +40,6 @@ This includes:
 | tfc\_agent\_ephemeral\_storage | A temporary storage for a container that gets wiped out and lost when the container is stopped or restarted | `string` | `"1Gi"` | no |
 | tfc\_agent\_image | The Terraform Cloud agent image to use | `string` | `"hashicorp/tfc-agent:latest"` | no |
 | tfc\_agent\_k8s\_secrets | Name for the k8s secret required to configure TFC agent on GKE | `string` | `"tfc-agent-k8s-secrets"` | no |
-| tfc\_agent\_max\_replicas | Maximum replicas for the Terraform Cloud agent pod autoscaler | `string` | `"10"` | no |
 | tfc\_agent\_memory\_request | Memory request for the Terraform Cloud agent container | `string` | `"2Gi"` | no |
 | tfc\_agent\_min\_replicas | Minimum replicas for the Terraform Cloud agent pod autoscaler | `string` | `"1"` | no |
 | tfc\_agent\_name\_prefix | This name may be used in the Terraform Cloud user interface to help easily identify the agent | `string` | `"tfc-agent-k8s"` | no |

@@ -132,9 +132,6 @@ module "tfc_agent_cluster" {
   K8S resources for configuring TFC agent
  *****************************************/
 
-data "google_client_config" "default" {
-}
-
 resource "kubernetes_secret" "tfc_agent_secrets" {
   metadata {
     name = var.tfc_agent_k8s_secrets
@@ -334,7 +331,7 @@ resource "google_compute_router_nat" "egress" {
   router                             = google_compute_router.nat[0].name
   region                             = var.region
   nat_ip_allocate_option             = "MANUAL_ONLY"
-  nat_ips                            = google_compute_address.nat_external_addresses.*.self_link
+  nat_ips                            = google_compute_address.nat_external_addresses[*].self_link
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 
   log_config {

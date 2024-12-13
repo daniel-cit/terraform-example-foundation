@@ -15,21 +15,19 @@
  */
 
 locals {
-  sa_names = { for k, v in google_service_account.terraform-env-sa : k => v.id }
-
-  cicd_project_id = module.jenkins_bootstrap.cicd_project_id
+  sa_names = { for k, v in var.terraform_env_sa : k => v["id"] }
 }
 
 module "jenkins_bootstrap" {
-  source = "./modules/jenkins-agent"
+  source = "../jenkins-agent"
 
   org_id                                   = var.org_id
-  folder_id                                = google_folder.bootstrap.id
+  folder_id                                = var.bootstrap_folder
   billing_account                          = var.billing_account
-  group_org_admins                         = local.group_org_admins
+  group_org_admins                         = var.group_org_admins
   default_region                           = var.default_region
   terraform_sa_names                       = local.sa_names
-  terraform_state_bucket                   = module.seed_bootstrap.gcs_bucket_tfstate
+  terraform_state_bucket                   = var.gcs_bucket_tfstate
   sa_enable_impersonation                  = true
   jenkins_controller_subnetwork_cidr_range = var.jenkins_controller_subnetwork_cidr_range
   jenkins_agent_gce_subnetwork_cidr_range  = var.jenkins_agent_gce_subnetwork_cidr_range
@@ -50,14 +48,16 @@ module "jenkins_bootstrap" {
 }
 
 resource "google_organization_iam_member" "org_jenkins_sa_browser" {
-  count  = var.parent_folder == "" ? 1 : 0
+  count = var.parent_folder == "" ? 1 : 0
+
   org_id = var.org_id
   role   = "roles/browser"
   member = "serviceAccount:${module.jenkins_bootstrap.jenkins_agent_sa_email}"
 }
 
 resource "google_folder_iam_member" "folder_jenkins_sa_browser" {
-  count  = var.parent_folder != "" ? 1 : 0
+  count = var.parent_folder != "" ? 1 : 0
+
   folder = var.parent_folder
   role   = "roles/browser"
   member = "serviceAccount:${module.jenkins_bootstrap.jenkins_agent_sa_email}"

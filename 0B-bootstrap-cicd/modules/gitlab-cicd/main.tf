@@ -15,8 +15,6 @@
  */
 
 locals {
-  cicd_project_id = module.gitlab_cicd.project_id
-
   wif_sa_cicd_project = {
     "bootstrap" = [
       "roles/iam.workloadIdentityPoolAdmin",
@@ -24,32 +22,32 @@ locals {
   }
 
   gl_config = {
-    "bootstrap" = var.gl_repos.bootstrap,
-    "org"       = var.gl_repos.organization,
-    "env"       = var.gl_repos.environments,
-    "net"       = var.gl_repos.networks,
-    "proj"      = var.gl_repos.projects,
+    "bootstrap" = var.repos.bootstrap,
+    "org"       = var.repos.organization,
+    "env"       = var.repos.environments,
+    "net"       = var.repos.networks,
+    "proj"      = var.repos.projects,
   }
 
   gl_branch_protection_envs = {
-    "env"  = var.gl_repos.environments,
-    "net"  = var.gl_repos.networks,
-    "proj" = var.gl_repos.projects,
+    "env"  = var.repos.environments,
+    "net"  = var.repos.networks,
+    "proj" = var.repos.projects,
   }
 
   sa_mapping = {
     for k, v in local.gl_config : k => {
-      sa_name   = google_service_account.terraform-env-sa[k].name
-      attribute = "attribute.project_path/${var.gl_repos.owner}/${v}"
+      sa_name   = var.terraform_env_sa[k]["name"]
+      attribute = "attribute.project_path/${var.repos_owner}/${v}"
     }
   }
 
   common_vars = {
-    "PROJECT_ID" : module.gitlab_cicd.project_id,
-    "CICD_RUNNER_REPO" : var.gl_repos.cicd_runner,
+    "PROJECT_ID" : var.project_id,
+    "CICD_RUNNER_REPO" : var.cicd_runner_repo,
     "WIF_PROVIDER_NAME" : module.gitlab_oidc.provider_name,
-    "TF_BACKEND" : module.seed_bootstrap.gcs_bucket_tfstate,
-    "TF_VAR_gitlab_token" : var.gitlab_token,
+    "TF_BACKEND" : var.gcs_bucket_tfstate,
+    "TF_VAR_token" : var.token,
   }
 
   vars_list = flatten([
@@ -66,7 +64,7 @@ locals {
   sa_vars = [for k, v in local.gl_config : {
     config     = k
     name       = "SERVICE_ACCOUNT_EMAIL"
-    value      = google_service_account.terraform-env-sa[k].email
+    value      = var.terraform_env_sa[k]["email"]
     repository = v
     }
   ]
@@ -75,40 +73,10 @@ locals {
 
 }
 
-provider "gitlab" {
-  token = var.gitlab_token
-}
-
-module "gitlab_cicd" {
-  source  = "terraform-google-modules/project-factory/google"
-  version = "~> 17.0"
-
-  name              = "${var.project_prefix}-b-cicd-wif-gl"
-  random_project_id = true
-  org_id            = var.org_id
-  folder_id         = google_folder.bootstrap.id
-  billing_account   = var.billing_account
-  activate_apis = [
-    "compute.googleapis.com",
-    "admin.googleapis.com",
-    "iam.googleapis.com",
-    "billingbudgets.googleapis.com",
-    "cloudbilling.googleapis.com",
-    "serviceusage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "sts.googleapis.com",
-    "dns.googleapis.com",
-    "secretmanager.googleapis.com",
-  ]
-
-  deletion_policy = var.project_deletion_policy
-}
-
 module "gitlab_oidc" {
-  source = "./modules/gitlab-oidc"
+  source = "../gitlab-oidc"
 
-  project_id  = module.gitlab_cicd.project_id
+  project_id  = var.project_id
   pool_id     = "foundation-pool"
   provider_id = "foundation-gl-provider"
   sa_mapping  = local.sa_mapping
@@ -117,7 +85,7 @@ module "gitlab_oidc" {
 resource "gitlab_project_variable" "variables" {
   for_each = local.gl_vars
 
-  project   = "${var.gl_repos.owner}/${each.value.repository}"
+  project   = "${var.repos_owner}/${each.value.repository}"
   key       = each.value.name
   value     = each.value.value
   protected = false
@@ -125,52 +93,52 @@ resource "gitlab_project_variable" "variables" {
 }
 
 resource "gitlab_branch_protection" "image" {
-  project = "${var.gl_repos.owner}/${var.gl_repos.cicd_runner}"
+  project = "${var.repos_owner}/${var.cicd_runner_repo}"
   branch  = "image"
 }
 
 resource "gitlab_branch_protection" "plan" {
   for_each = local.gl_config
 
-  project = "${var.gl_repos.owner}/${each.value}"
+  project = "${var.repos_owner}/${each.value}"
   branch  = "plan"
 }
 
 resource "gitlab_branch_protection" "production" {
   for_each = local.gl_config
 
-  project = "${var.gl_repos.owner}/${each.value}"
+  project = "${var.repos_owner}/${each.value}"
   branch  = "production"
 }
 
 resource "gitlab_branch_protection" "nonproduction" {
   for_each = local.gl_branch_protection_envs
 
-  project = "${var.gl_repos.owner}/${each.value}"
+  project = "${var.repos_owner}/${each.value}"
   branch  = "nonproduction"
 }
 
 resource "gitlab_branch_protection" "development" {
   for_each = local.gl_branch_protection_envs
 
-  project = "${var.gl_repos.owner}/${each.value}"
+  project = "${var.repos_owner}/${each.value}"
   branch  = "development"
 }
 
 module "cicd_project_wif_iam_member" {
-  source   = "./modules/parent-iam-member"
+  source   = "../parent-iam-member"
   for_each = local.wif_sa_cicd_project
 
-  member      = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member      = "serviceAccount:${var.terraform_env_sa[each.key]["email"]}"
   parent_type = "project"
-  parent_id   = local.cicd_project_id
+  parent_id   = var.project_id
   roles       = each.value
 }
 
 resource "google_service_account_iam_member" "self_impersonate" {
-  for_each = local.granular_sa
+  for_each = var.terraform_env_sa
 
-  service_account_id = google_service_account.terraform-env-sa[each.key].id
+  service_account_id = var.terraform_env_sa[each.key]["id"]
   role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member             = "serviceAccount:${var.terraform_env_sa[each.key]["email"]}"
 }

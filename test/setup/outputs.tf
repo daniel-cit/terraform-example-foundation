@@ -120,3 +120,8 @@ variable "folder_deletion_protection" {
   type        = bool
   default     = false
 }
+
+output "repository_type" {
+  description = "Type o Git repository to use in tests"
+  value       = "CLOUD_SOURCE_REPOSITORY"
+}

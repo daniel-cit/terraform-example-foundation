@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Google LLC
+ * Copyright 2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,33 @@
 terraform {
   required_version = ">= 0.13"
   required_providers {
-
     google = {
+      // version 4.31.0 removed because of issue https://github.com/hashicorp/terraform-provider-google/issues/12226
       source  = "hashicorp/google"
-      version = ">= 4.3.0, < 7"
+      version = ">= 3.50, != 4.31.0, <= 6.10"
     }
 
     google-beta = {
+      // version 4.31.0 removed because of issue https://github.com/hashicorp/terraform-provider-google/issues/12226
       source  = "hashicorp/google-beta"
-      version = ">= 4.3.0, < 7"
-    }
-
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = ">= 2.0, < 3"
+      version = ">= 3.50, != 4.31.0, <= 6.10"
     }
 
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.4.3, < 4"
+      version = ">= 3.4.3"
     }
+
+    time = {
+      source  = "hashicorp/time"
+      version = ">= 0.12.1"
+    }
+
+    gitlab = {
+      source  = "gitlabhq/gitlab"
+      version = "16.6.0"
+    }
+
   }
 
-  provider_meta "google" {
-    module_name = "blueprints/terraform/terraform-google-tf-cloud-agents:tfc-agent-gke/v4.1.0"
-  }
 }
-

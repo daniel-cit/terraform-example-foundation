@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 
-
-provider "tfe" {
-  token = var.tfc_token
-}
-
-
 locals {
-
-  cicd_project_id = module.tfc_cicd.project_id
-
   tfc_org_name = var.tfc_org_name
 
   tfc_projects = {
@@ -91,8 +82,8 @@ locals {
 
   sa_mapping = {
     for k, v in local.tfc_projects : k => {
-      sa_name   = google_service_account.terraform-env-sa[k].name
-      sa_email  = google_service_account.terraform-env-sa[k].email
+      sa_name   = var.terraform_env_sa[k]["name"]
+      sa_email  = var.terraform_env_sa[k]["email"]
       attribute = "*"
     }
   }
@@ -128,15 +119,6 @@ resource "tfe_workspace" "main" {
     branch         = each.value.branch
     oauth_token_id = var.vcs_oauth_token_id
   }
-}
-
-data "tfe_workspace" "main" {
-  for_each = local.tfc_workspace_map
-
-  name         = each.value.name
-  organization = local.tfc_org_name
-
-  depends_on = [tfe_workspace.main]
 }
 
 resource "tfe_variable_set" "main" {
@@ -200,7 +182,7 @@ resource "tfe_variable" "service_account_email" {
   for_each = local.tfc_workspace_map
 
   key          = "TFC_GCP_RUN_SERVICE_ACCOUNT_EMAIL"
-  value        = google_service_account.terraform-env-sa[each.value.project].email
+  value        = var.terraform_env_sa[each.value.project]["email"]
   category     = "env"
   description  = "The service account email to use for the plan phase of a run."
   workspace_id = tfe_workspace.main[each.key].id
@@ -228,46 +210,16 @@ resource "tfe_run_trigger" "projects_bu2_shared_production" {
   sourceable_id = tfe_workspace.main["4-bu2-shared"].id
 }
 
-module "tfc_cicd" {
-  source  = "terraform-google-modules/project-factory/google"
-  version = "~> 17.0"
-
-  name              = "${var.project_prefix}-b-cicd-wif-tfc"
-  random_project_id = true
-  org_id            = var.org_id
-  folder_id         = google_folder.bootstrap.id
-  billing_account   = var.billing_account
-  activate_apis = [
-    "compute.googleapis.com",
-    "admin.googleapis.com",
-    "iam.googleapis.com",
-    "billingbudgets.googleapis.com",
-    "cloudbilling.googleapis.com",
-    "serviceusage.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "container.googleapis.com",
-    "gkeconnect.googleapis.com",
-    "gkehub.googleapis.com",
-    "connectgateway.googleapis.com"
-  ]
-
-  deletion_policy = var.project_deletion_policy
-}
-
 module "tfc-oidc" {
   source  = "GoogleCloudPlatform/tf-cloud-agents/google//modules/tfc-oidc"
-  version = "0.1.0"
+  version = "0.2.0"
 
-  project_id            = module.tfc_cicd.project_id
+  project_id            = var.project_id
   pool_id               = "foundation-pool"
   provider_id           = "foundation-tfc-provider"
   sa_mapping            = local.sa_mapping
   tfc_organization_name = local.tfc_org_name
   attribute_condition   = "assertion.sub.startsWith(\"organization:${local.tfc_org_name}:\")"
-}
-
-data "google_client_config" "default" {
 }
 
 resource "random_string" "suffix" {
@@ -294,15 +246,14 @@ resource "tfe_agent_token" "tfc_agent_token" {
 
 # Create the infrastructure for the agent to run
 module "tfc_agent_gke" {
-  source = "./modules/tfc-agent-gke"
+  source = "../tfc-agent-gke"
   count  = var.enable_tfc_cloud_agents == true ? 1 : 0
 
-  project_id             = module.tfc_cicd.project_id
-  project_number         = module.tfc_cicd.project_number
+  project_id             = var.project_id
   tfc_agent_token        = tfe_agent_token.tfc_agent_token[0].token
   create_service_account = false
-  service_account_email  = google_service_account.terraform-env-sa["bootstrap"].email
-  service_account_id     = google_service_account.terraform-env-sa["bootstrap"].id
+  service_account_email  = var.terraform_env_sa["bootstrap"]["email"]
+  service_account_id     = var.terraform_env_sa["bootstrap"]["id"]
 
   //If you are using Terraform Cloud Agents, un-comment this block after the first apply according README instructions
   # providers = {
@@ -311,9 +262,9 @@ module "tfc_agent_gke" {
 }
 
 resource "google_service_account_iam_member" "self_impersonate" {
-  for_each = local.granular_sa
+  for_each = var.terraform_env_sa
 
-  service_account_id = google_service_account.terraform-env-sa[each.key].id
+  service_account_id = each.value["id"]
   role               = "roles/iam.serviceAccountTokenCreator"
-  member             = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
+  member             = "serviceAccount:${each.value["email"]}"
 }
