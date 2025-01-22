@@ -36,9 +36,14 @@ output "terraform_env_sa" { // TODO output used here should only have email and 
   })
 }
 
-output "bootstrap_step_terraform_service_account_email" {
+output "bootstrap_seed_step_terraform_service_account_email" {
   description = "Bootstrap Step Terraform Account"
-  value       = google_service_account.terraform-env-sa["bootstrap"].email
+  value       = google_service_account.terraform-env-sa["seed"].email
+}
+
+output "bootstrap_cicd_step_terraform_service_account_email" {
+  description = "Bootstrap Step Terraform Account"
+  value       = google_service_account.terraform-env-sa["cicd"].email
 }
 
 output "projects_step_terraform_service_account_email" {

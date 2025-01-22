@@ -67,8 +67,8 @@ create_branches_and_push() {
     git push --set-upstream origin production
     echo "Branch (production) created and pushed for $repo_name"
 
-    # Check if the repo name contains "bootstrap" or "org"
-    if [[ $repo_name == *"gcp-bootstrap"* || $repo_name == *"gcp-org"* ]]; then
+    # Check if the repo name contains "seed", "cicd", or "org"
+    if [[ $repo_name == *"gcp-seed"* || $repo_name == *"gcp-cicd"* || $repo_name == *"gcp-org"* ]]; then
       echo "All branches created and pushed for $repo_name"
     else
       # Create development and nonproduction branches

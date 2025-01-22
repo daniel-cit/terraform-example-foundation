@@ -3,7 +3,7 @@
 locals {
   // Roles required to manage resources in the CI/CD project
   granular_sa_cicd_project = {
-    "bootstrap" = [
+    "cicd" = [
       "roles/storage.admin",
       "roles/compute.networkAdmin",
       "roles/cloudbuild.builds.editor",

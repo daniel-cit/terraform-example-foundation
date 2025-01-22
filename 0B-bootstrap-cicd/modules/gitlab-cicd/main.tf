@@ -16,17 +16,18 @@
 
 locals {
   wif_sa_cicd_project = {
-    "bootstrap" = [
+    "cicd" = [
       "roles/iam.workloadIdentityPoolAdmin",
     ],
   }
 
   gl_config = {
-    "bootstrap" = var.repos.bootstrap,
-    "org"       = var.repos.organization,
-    "env"       = var.repos.environments,
-    "net"       = var.repos.networks,
-    "proj"      = var.repos.projects,
+    "seed" = var.repos.seed,
+    "cicd" = var.repos.cicd,
+    "org"  = var.repos.organization,
+    "env"  = var.repos.environments,
+    "net"  = var.repos.networks,
+    "proj" = var.repos.projects,
   }
 
   gl_branch_protection_envs = {

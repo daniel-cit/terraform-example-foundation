@@ -25,8 +25,12 @@ locals {
   projects_gcs_bucket_tfstate_self_link = "${local.bucket_self_link_prefix}${var.projects_gcs_bucket_tfstate}"
 
   cb_config = {
-    "bootstrap" = {
-      source       = "gcp-bootstrap",
+    "seed" = {
+      source       = "gcp-seed",
+      state_bucket = local.default_state_bucket_self_link,
+    },
+        "cicd" = {
+      source       = "gcp-cicd",
       state_bucket = local.default_state_bucket_self_link,
     },
     "org" = {
@@ -51,7 +55,8 @@ locals {
   cloudbuilder_repo  = "tf-cloudbuilder"
   base_cloud_source_repos = [
     "gcp-policies",
-    "gcp-bootstrap",
+    "gcp-seed",
+    "gcp-cicd",
     local.cloudbuilder_repo,
   ]
   gar_repository           = split("/", module.tf_cloud_builder.artifact_repo)[length(split("/", module.tf_cloud_builder.artifact_repo)) - 1]

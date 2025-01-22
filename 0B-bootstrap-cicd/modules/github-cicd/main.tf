@@ -16,11 +16,12 @@
 
 locals {
   gh_config = {
-    "bootstrap" = var.repos.bootstrap,
-    "org"       = var.repos.organization,
-    "env"       = var.repos.environments,
-    "net"       = var.repos.networks,
-    "proj"      = var.repos.projects,
+    "seed" = var.repos.seed,
+    "cicd" = var.repos.cicd,
+    "org"  = var.repos.organization,
+    "env"  = var.repos.environments,
+    "net"  = var.repos.networks,
+    "proj" = var.repos.projects,
   }
 
   sa_mapping = {

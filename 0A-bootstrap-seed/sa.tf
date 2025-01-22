@@ -20,11 +20,12 @@ locals {
   parent_id   = var.parent_folder == "" ? var.org_id : var.parent_folder
 
   granular_sa = {
-    "bootstrap" = "Foundation Bootstrap SA. Managed by Terraform.",
-    "org"       = "Foundation Organization SA. Managed by Terraform.",
-    "env"       = "Foundation Environment SA. Managed by Terraform.",
-    "net"       = "Foundation Network SA. Managed by Terraform.",
-    "proj"      = "Foundation Projects SA. Managed by Terraform.",
+    "seed" = "Foundation Seed SA. Managed by Terraform.",
+    "cicd" = "Foundation CI/CD SA. Managed by Terraform.",
+    "org"  = "Foundation Organization SA. Managed by Terraform.",
+    "env"  = "Foundation Environment SA. Managed by Terraform.",
+    "net"  = "Foundation Network SA. Managed by Terraform.",
+    "proj" = "Foundation Projects SA. Managed by Terraform.",
   }
 
   common_roles = [
@@ -32,7 +33,12 @@ locals {
   ]
 
   granular_sa_org_level_roles = {
-    "bootstrap" = distinct(concat([
+    "seed" = distinct(concat([
+      "roles/resourcemanager.organizationAdmin",
+      "roles/accesscontextmanager.policyAdmin",
+      "roles/serviceusage.serviceUsageConsumer",
+    ], local.common_roles)),
+    "cicd" = distinct(concat([
       "roles/resourcemanager.organizationAdmin",
       "roles/accesscontextmanager.policyAdmin",
       "roles/serviceusage.serviceUsageConsumer",
@@ -67,7 +73,10 @@ locals {
   }
 
   granular_sa_parent_level_roles = {
-    "bootstrap" = [
+    "seed" = [
+      "roles/resourcemanager.folderAdmin",
+    ],
+    "cicd" = [
       "roles/resourcemanager.folderAdmin",
     ],
     "org" = [
@@ -94,7 +103,13 @@ locals {
 
   // Roles required to manage resources in the Seed project
   granular_sa_seed_project = {
-    "bootstrap" = [
+    "seed" = [
+      "roles/storage.admin",
+      "roles/iam.serviceAccountAdmin",
+      "roles/resourcemanager.projectDeleter",
+      "roles/cloudkms.admin",
+    ],
+    "cicd" = [
       "roles/storage.admin",
       "roles/iam.serviceAccountAdmin",
       "roles/resourcemanager.projectDeleter",
@@ -162,7 +177,7 @@ module "seed_project_iam_member" {
 // only member with the editor role.
 // This module will remove all editors from both projects.
 module "bootstrap_projects_remove_editor" {
-  source   = "./modules/parent-iam-remove-role"
+  source = "./modules/parent-iam-remove-role"
 
   parent_type = "project"
   parent_id   = module.seed_bootstrap.seed_project_id

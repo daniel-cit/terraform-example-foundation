@@ -18,8 +18,11 @@ locals {
   tfc_org_name = var.tfc_org_name
 
   tfc_projects = {
-    "bootstrap" = {
-      vcs_repo = var.vcs_repos.bootstrap,
+    "seed" = {
+      vcs_repo = var.vcs_repos.seed,
+    },
+    "cicd" = {
+      vcs_repo = var.vcs_repos.cicd,
     },
     "org" = {
       vcs_repo = var.vcs_repos.organization,
@@ -36,8 +39,11 @@ locals {
   }
 
   tfc_workspaces = {
-    "bootstrap" = {
-      "0-shared" = { vcs_branch = "production", directory = "/envs/shared" }
+    "seed" = {
+      "0-seed" = { vcs_branch = "production", directory = "/envs/shared" }
+    },
+    "cicd" = {
+      "0-cicd" = { vcs_branch = "production", directory = "/envs/shared" }
     },
     "org" = {
       "1-shared" = { vcs_branch = "production", directory = "/envs/shared" }
@@ -252,8 +258,8 @@ module "tfc_agent_gke" {
   project_id             = var.project_id
   tfc_agent_token        = tfe_agent_token.tfc_agent_token[0].token
   create_service_account = false
-  service_account_email  = var.terraform_env_sa["bootstrap"]["email"]
-  service_account_id     = var.terraform_env_sa["bootstrap"]["id"]
+  service_account_email  = var.terraform_env_sa["cicd"]["email"]
+  service_account_id     = var.terraform_env_sa["cicd"]["id"]
 
   //If you are using Terraform Cloud Agents, un-comment this block after the first apply according README instructions
   # providers = {
