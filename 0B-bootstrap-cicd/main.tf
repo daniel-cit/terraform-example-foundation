@@ -16,9 +16,10 @@ locals {
       "roles/resourcemanager.projectDeleter",
       "roles/dns.admin",
       "roles/iam.workloadIdentityPoolAdmin",
+      "roles/secretmanager.secretAccessor",
     ],
   }
-
+# TODO fix logic after cloud build module
   cicd_project_id = var.cicd_config.type == "CLOUDBUILD_CSR" ? module.cb_csr[0].cloudbuild_project_id : module.cicd_project[0].project_id
 
 }
@@ -27,7 +28,7 @@ module "cicd_project" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 17.0"
 
-  count   = var.cicd_config.type == "CLOUDBUILD_CSR" ? 0 : 1
+  count = var.cicd_config.type == "CLOUDBUILD_CSR" ? 0 : 1
 
   name              = "${local.project_prefix}-b-cicd"
   random_project_id = true
@@ -73,6 +74,28 @@ module "cb_csr" {
   bucket_force_destroy        = var.bucket_force_destroy
 }
 
+module "cb_gitlab" {
+  source = "./modules/cb-gitlab"
+  count  = var.cicd_config.type == "CLOUDBUILD_GITLAB" ? 1 : 0
+
+  org_id                      = local.org_id
+  billing_account             = local.billing_account
+  terraform_env_sa            = local.terraform_env_sa
+  bootstrap_folder            = local.bootstrap_folder
+  default_region              = local.default_region
+  gcs_bucket_tfstate          = local.gcs_bucket_tfstate
+  projects_gcs_bucket_tfstate = local.projects_gcs_bucket_tfstate
+  group_org_admins            = local.required_groups.group_org_admins
+  bucket_prefix               = local.bucket_prefix
+  project_prefix              = local.project_prefix
+  project_deletion_policy     = var.project_deletion_policy
+  bucket_force_destroy        = var.bucket_force_destroy
+
+  cicd_config     = var.cicd_config
+  pat_secret      = var.pat_secret.gitlab_read
+  read_pat_secret = var.pat_secret.gitlab
+  webhook_secret  = var.pat_secret.gitlab_webhook
+}
 module "github_actions_cicd" {
   source = "./modules/github-cicd"
   count  = var.cicd_config.type == "GITHUB_ACTIONS" ? 1 : 0
@@ -80,9 +103,8 @@ module "github_actions_cicd" {
   gcs_bucket_tfstate = local.gcs_bucket_tfstate
   project_id         = local.cicd_project_id
   terraform_env_sa   = local.terraform_env_sa
-  repos_owner        = var.cicd_config.repo_owner
-  repos              = var.cicd_config.repositories
-  token              = var.token.github
+  cicd_config        = var.cicd_config
+  pat_secret         = var.pat_secret.github
 
   depends_on = [module.cicd_project]
 }

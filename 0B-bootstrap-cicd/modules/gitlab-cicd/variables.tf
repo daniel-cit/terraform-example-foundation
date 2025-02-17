@@ -35,7 +35,7 @@ variable "repos_owner" {
 }
 
 variable "cicd_runner_repo" {
-    description = "The repository to host the code of docker image used for CI/CD."
+  description = "The repository to host the code of docker image used for CI/CD."
   type        = string
 }
 
@@ -57,13 +57,12 @@ variable "repos" {
   })
 }
 
-variable "token" {
+variable "pat_secret" {
   description = <<EOT
-  A GitLab personal access token or group access token.
+  A Secret hosting A GitLab personal access token or group access token.
   See:
       https://docs.gitlab.com/ee/user/group/settings/group_access_tokens.html
       https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
   EOT
   type        = string
-  sensitive   = true
 }

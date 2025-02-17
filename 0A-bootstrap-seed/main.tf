@@ -100,7 +100,8 @@ module "seed_bootstrap" {
     "billingbudgets.googleapis.com",
     "essentialcontacts.googleapis.com",
     "assuredworkloads.googleapis.com",
-    "cloudasset.googleapis.com"
+    "cloudasset.googleapis.com",
+    "secretmanager.googleapis.com"
   ]
 
   sa_org_iam_permissions = []

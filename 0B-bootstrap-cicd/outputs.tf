@@ -1,6 +1,6 @@
 output "csr_repos" {
   description = "List of Cloud Source Repos created by the module, linked to Cloud Build triggers."
-  value       = module.cb_csr[0].csr_repos
+  value       = var.cicd_config.type == "CLOUDBUILD_CSR" ? module.cb_csr[0].csr_repos : []
 }
 
 

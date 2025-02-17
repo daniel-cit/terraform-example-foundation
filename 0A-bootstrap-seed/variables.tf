@@ -102,6 +102,15 @@ variable "folder_deletion_protection" {
   default     = true
 }
 
+variable "secrets" {
+  description = "Secret Manager Secrets to create for future usage."
+  type = list(object({
+    id    = string
+    label = string
+  }))
+  default = []
+}
+
 /* ----------------------------------------
     Specific to Groups creation
    ---------------------------------------- */

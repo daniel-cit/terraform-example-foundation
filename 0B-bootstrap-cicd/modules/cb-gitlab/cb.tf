@@ -51,16 +51,14 @@ locals {
     },
   }
 
-  cloud_source_repos = [for v in local.cb_config : v.source]
-  cloudbuilder_repo  = "tf-cloudbuilder"
-  base_cloud_source_repos = [
-    "gcp-policies",
-    "gcp-seed",
-    "gcp-cicd",
-    local.cloudbuilder_repo,
-  ]
   gar_repository           = split("/", module.tf_cloud_builder.artifact_repo)[length(split("/", module.tf_cloud_builder.artifact_repo)) - 1]
   cloud_builder_trigger_id = element(split("/", module.tf_cloud_builder.cloudbuild_trigger_id), index(split("/", module.tf_cloud_builder.cloudbuild_trigger_id), "triggers") + 1, )
+
+  # GitLab repo url of form "gitlab.com/owner/name"
+  # repoURL              = endswith(var.repository_uri, ".git") ? var.repository_uri : "${var.repository_uri}.git" ## TODO do wee need to loop on all repos?
+  # repoURLWithoutSuffix = trimsuffix(local.repoURL, ".git")
+  # gl_repo_url_split    = split("/", local.repoURLWithoutSuffix)
+  # gl_name              = local.gl_repo_url_split[length(local.gl_repo_url_split) - 1]
 }
 
 resource "random_string" "suffix" {
@@ -90,7 +88,6 @@ module "tf_source" {
     "logging.googleapis.com",
     "iam.googleapis.com",
     "admin.googleapis.com",
-    "sourcerepo.googleapis.com",
     "workflows.googleapis.com",
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
@@ -103,8 +100,6 @@ module "tf_source" {
     "billingbudgets.googleapis.com",
     "dns.googleapis.com",
   ]
-
-  cloud_source_repos = distinct(concat(local.base_cloud_source_repos, local.cloud_source_repos))
 
   project_labels = {
     environment       = "bootstrap"
@@ -146,12 +141,34 @@ module "tf_private_pool" {
   }
 }
 
+module "git_repo_connection" {
+  source  = "terraform-google-modules/bootstrap/google//modules/cloudbuild_repo_connection"
+  version = "~> 11.0"
+
+  project_id = module.tf_source.cloudbuild_project_id
+  connection_config = {
+    connection_type                             = "GITLABv2"
+    gitlab_authorizer_credential_secret_id      = var.pat_secret
+    gitlab_read_authorizer_credential_secret_id = var.read_pat_secret
+    gitlab_webhook_secret_id                    = var.webhook_secret
+  }
+
+  cloud_build_repositories = merge({
+    cicd_runner = {
+      repository_name = "cicd-runner"
+      repository_url  = var.cicd_config.cicd_runner_repo
+    }
+  }, tomap(var.cicd_config.repositories))
+}
+
 module "tf_cloud_builder" {
   source  = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_builder"
   version = "~> 11.0"
 
   project_id                   = module.tf_source.cloudbuild_project_id
-  dockerfile_repo_uri          = module.tf_source.csr_repos[local.cloudbuilder_repo].url
+  dockerfile_repo_uri          = module.git_repo_connection.cloud_build_repositories_2nd_gen_repositories["cicd_runner"].id
+  dockerfile_repo_type         = "UNKNOWN" // "GITLAB" is not one of the options available so we need to use "UNKNOWN"
+  use_cloudbuildv2_repository  = true
   gar_repo_location            = var.default_region
   workflow_region              = var.default_region
   terraform_version            = local.terraform_version
@@ -161,16 +178,21 @@ module "tf_cloud_builder" {
   enable_worker_pool           = true
   worker_pool_id               = module.tf_private_pool.private_worker_pool_id
   bucket_name                  = "${var.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-tf-cloudbuilder-build-logs"
-  workflow_deletion_protection = false
+  workflow_deletion_protection = var.workflow_deletion_protection
 }
 
-module "bootstrap_csr_repo" {
+data "google_secret_manager_secret_version_access" "gitlab_api_access_token" {
+  secret = var.pat_secret
+}
+
+
+module "bootstrap_gitlab_repo" {
   source  = "terraform-google-modules/gcloud/google"
   version = "~> 3.1"
-  upgrade = false
 
+  upgrade               = false
   create_cmd_entrypoint = "${path.module}/scripts/push-to-repo.sh"
-  create_cmd_body       = "${module.tf_source.cloudbuild_project_id} ${split("/", module.tf_source.csr_repos[local.cloudbuilder_repo].id)[3]} ${path.module}/Dockerfile"
+  create_cmd_body       = "${data.google_secret_manager_secret_version_access.gitlab_api_access_token.secret_data} ${var.cicd_config.cicd_runner_repo} ${path.module}/Dockerfile"
 }
 
 resource "time_sleep" "cloud_builder" {
@@ -178,7 +200,7 @@ resource "time_sleep" "cloud_builder" {
 
   depends_on = [
     module.tf_cloud_builder,
-    module.bootstrap_csr_repo,
+    module.bootstrap_gitlab_repo,
   ]
 }
 
@@ -200,7 +222,7 @@ module "build_terraform_image" {
 
 module "tf_workspace" {
   source   = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_workspace"
-  version  = "~> 9.0"
+  version  = "~> 11.0"
   for_each = var.terraform_env_sa
 
   project_id                = module.tf_source.cloudbuild_project_id
@@ -213,7 +235,8 @@ module "tf_workspace" {
   artifacts_bucket_name     = "${var.bucket_prefix}-${module.tf_source.cloudbuild_project_id}-${local.cb_config[each.key].source}-build-artifacts"
   cloudbuild_plan_filename  = "cloudbuild-tf-plan.yaml"
   cloudbuild_apply_filename = "cloudbuild-tf-apply.yaml"
-  tf_repo_uri               = module.tf_source.csr_repos[local.cb_config[each.key].source].url
+  tf_repo_uri               = module.git_repo_connection.cloud_build_repositories_2nd_gen_repositories[each.key].id
+  tf_repo_type              = "CLOUDBUILD_V2_REPOSITORY"
   cloudbuild_sa             = var.terraform_env_sa[each.key].id
   create_cloudbuild_sa      = false
   diff_sa_project           = true
@@ -249,6 +272,7 @@ resource "google_artifact_registry_repository_iam_member" "terraform_sa_artifact
 }
 
 resource "google_sourcerepo_repository_iam_member" "member" {
+
   for_each = var.terraform_env_sa
 
   project    = module.tf_source.cloudbuild_project_id

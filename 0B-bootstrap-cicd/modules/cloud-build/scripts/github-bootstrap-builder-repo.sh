@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2022 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,15 +20,16 @@ if [ "$#" -lt 3 ]; then
     exit 1
 fi
 
-GITLAB_TOKEN=$1
+GITHUB_TOKEN=$1
 REPO_URL=$2
 DOCKERFILE_PATH=$3
 
 
 # extract portion after https:// from URL
-IFS="/"; mapfile -t -d / URL_PARTS < <(printf "%s" "$REPO_URL")
+read -ra URL_PARTS <<< "$(echo "$REPO_URL" | awk -F/ '{print $3, $4, $5}')"
+
 # construct the new authenticated URL
-AUTH_REPO_URL="https://gitlab-bot:${GITLAB_TOKEN}@gitlab.com/${URL_PARTS[3]}/${URL_PARTS[4]}" # fix url
+AUTH_REPO_URL="https://${GITHUB_TOKEN}:@${URL_PARTS[0]}/${URL_PARTS[1]}/${URL_PARTS[2]}"
 
 tmp_dir=$(mktemp -d)
 git clone "${AUTH_REPO_URL}" "${tmp_dir}"

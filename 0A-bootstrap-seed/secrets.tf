@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = ">= 1.3"
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 5.42"
-    }
-    google-beta = {
-      source  = "hashicorp/google-beta"
-      version = ">= 5.42"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = ">= 3.4.3"
-    }
+resource "google_secret_manager_secret" "infrastructure" {
+  for_each = { for secret in var.secrets : secret.id => secret.label }
+
+  project   = module.seed_bootstrap.seed_project_id
+  secret_id = "infra-${each.key}"
+
+  labels = {
+    description = each.value
+  }
+
+  replication {
+    auto {}
   }
 }

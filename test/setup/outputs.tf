@@ -121,7 +121,30 @@ variable "folder_deletion_protection" {
   default     = false
 }
 
-output "repository_type" {
-  description = "Type o Git repository to use in tests"
-  value       = "CLOUD_SOURCE_REPOSITORY"
+output "gitlab_webhook_secret_id" {
+  value = google_secret_manager_secret.gitlab_webhook.id
+}
+
+output "gitlab_pat_secret_name" {
+  value = "gitlab-pat-from-vm"
+}
+
+output "gitlab_project_number" {
+  value = module.gitlab_project.project_number
+}
+
+output "gitlab_url" {
+  value = "https://${google_compute_instance.default.network_interface[0].access_config[0].nat_ip}.nip.io"
+}
+
+output "gitlab_secret_project" {
+  value = module.gitlab_project.project_id
+}
+
+output "gitlab_instance_zone" {
+  value = google_compute_instance.default.zone
+}
+
+output "gitlab_instance_name" {
+  value = google_compute_instance.default.name
 }

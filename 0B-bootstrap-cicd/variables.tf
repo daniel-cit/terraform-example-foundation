@@ -39,23 +39,44 @@ variable "cicd_config" {
     cicd_runner_repo = optional(string, null)
     repo_owner       = optional(string, null)
     repositories = optional(object({
-      bootstrap    = string,
-      organization = string,
-      environments = string,
-      networks     = string,
-      projects     = string,
+      seed = object({
+        repository_name = optional(string, "gcp-seed")
+        repository_url  = string
+      }),
+      cicd = object({
+        repository_name = optional(string, "gcp-cicd")
+        repository_url  = string
+      }),
+      org = object({
+        repository_name = optional(string, "gcp-org")
+        repository_url  = string
+      }),
+      env = object({
+        repository_name = optional(string, "gcp-environments")
+        repository_url  = string
+      }),
+      net = object({
+        repository_name = optional(string, "gcp-networks")
+        repository_url  = string
+      }),
+      proj = object({
+        repository_name = optional(string, "gcp-projects")
+        repository_url  = string
+      }),
     }), null)
   })
   default = {}
 }
 
-variable "token" {
+variable "pat_secret" {
   description = "value"
   type = object({
-    github  = optional(string, null)
-    gitlab  = optional(string, null)
-    tfe     = optional(string, null)
-    tfe_vcs = optional(string, null)
+    github         = optional(string, null)
+    gitlab         = optional(string, null)
+    gitlab_read    = optional(string, null)
+    gitlab_webhook = optional(string, null)
+    tfe            = optional(string, null)
+    tfe_vcs        = optional(string, null)
   })
   default = {}
 }

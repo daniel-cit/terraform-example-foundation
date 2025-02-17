@@ -48,7 +48,7 @@ locals {
     "CICD_RUNNER_REPO" : var.cicd_runner_repo,
     "WIF_PROVIDER_NAME" : module.gitlab_oidc.provider_name,
     "TF_BACKEND" : var.gcs_bucket_tfstate,
-    "TF_VAR_token" : var.token,
+    "TF_VAR_token" : data.google_secret_manager_secret_version.gitlab_pat.secret_data,
   }
 
   vars_list = flatten([
@@ -72,6 +72,10 @@ locals {
 
   gl_vars = { for v in concat(local.sa_vars, local.vars_list) : "${v.config}.${v.name}" => v }
 
+}
+
+data "google_secret_manager_secret_version" "gitlab_pat" {
+  secret =  var.pat_secret
 }
 
 module "gitlab_oidc" {

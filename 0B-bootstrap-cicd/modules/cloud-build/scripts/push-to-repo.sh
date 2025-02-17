@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 set -ex
 
 if [ "$#" -lt 3 ]; then
@@ -20,20 +21,18 @@ if [ "$#" -lt 3 ]; then
     exit 1
 fi
 
-GITLAB_TOKEN=$1
-REPO_URL=$2
+CSR_PROJECT_ID=$1
+CSR_NAME=$2
 DOCKERFILE_PATH=$3
 
-
-# extract portion after https:// from URL
-IFS="/"; mapfile -t -d / URL_PARTS < <(printf "%s" "$REPO_URL")
-# construct the new authenticated URL
-AUTH_REPO_URL="https://gitlab-bot:${GITLAB_TOKEN}@gitlab.com/${URL_PARTS[3]}/${URL_PARTS[4]}" # fix url
-
+# create temp dir, cleanup at exit
 tmp_dir=$(mktemp -d)
-git clone "${AUTH_REPO_URL}" "${tmp_dir}"
+# # shellcheck disable=SC2064
+# trap "rm -rf $tmp_dir" EXIT
+gcloud source repos clone "${CSR_NAME}" "${tmp_dir}" --project "${CSR_PROJECT_ID}"
 cp "${DOCKERFILE_PATH}" "${tmp_dir}"
 pushd "${tmp_dir}"
+git config credential.helper gcloud.sh
 git config init.defaultBranch main
 git config user.email "terraform-robot@example.com"
 git config user.name "TF Robot"

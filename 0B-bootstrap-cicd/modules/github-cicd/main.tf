@@ -16,18 +16,18 @@
 
 locals {
   gh_config = {
-    "seed" = var.repos.seed,
-    "cicd" = var.repos.cicd,
-    "org"  = var.repos.organization,
-    "env"  = var.repos.environments,
-    "net"  = var.repos.networks,
-    "proj" = var.repos.projects,
+    "seed" = var.cicd_config.repositories.seed.repository_url,
+    "cicd" = var.cicd_config.repositories.cicd.repository_url,
+    "org"  = var.cicd_config.repositories.org.repository_url,
+    "env"  = var.cicd_config.repositories.env.repository_url,
+    "net"  = var.cicd_config.repositories.net.repository_url,
+    "proj" = var.cicd_config.repositories.proj.repository_url,
   }
 
   sa_mapping = {
     for k, v in local.gh_config : k => {
       sa_name   = var.terraform_env_sa[k].name
-      attribute = "attribute.repository/${var.repos_owner}/${v}"
+      attribute = "attribute.repository/${var.cicd_config.repo_owner}/${v}"
     }
   }
 
@@ -35,7 +35,7 @@ locals {
     "PROJECT_ID" : var.project_id,
     "WIF_PROVIDER_NAME" : module.gh_oidc.provider_name,
     "TF_BACKEND" : var.gcs_bucket_tfstate,
-    "TF_VAR_token" : var.token,
+    "TF_VAR_token" : data.google_secret_manager_secret_version.github_pat.secret_data,
   }
 
   secrets_list = flatten([
@@ -59,6 +59,10 @@ locals {
 
   gh_secrets = { for v in concat(local.sa_secrets, local.secrets_list) : "${v.config}.${v.secret_name}" => v }
 
+}
+
+data "google_secret_manager_secret_version" "github_pat" {
+  secret =  var.pat_secret
 }
 
 module "gh_oidc" {

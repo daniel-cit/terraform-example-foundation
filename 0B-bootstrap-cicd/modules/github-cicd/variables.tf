@@ -29,31 +29,45 @@ variable "gcs_bucket_tfstate" {
   type        = string
 }
 
-variable "repos_owner" {
-  description = "The owner of the repositories. An user or an organization."
-  type        = string
-}
-
-variable "repos" {
-  description = <<EOT
-  Configuration for the GitHub Repositories to be used to deploy the Terraform Example Foundation stages.
-  bootstrap: The repository to host the code of the bootstrap stage.
-  organization: The repository to host the code of the organization stage.
-  environments: The repository to host the code of the environments stage.
-  networks: The repository to host the code of the networks stage.
-  projects: The repository to host the code of the projects stage.
-  EOT
+variable "cicd_config" {
+  description = "value"
   type = object({
-    bootstrap    = string,
-    organization = string,
-    environments = string,
-    networks     = string,
-    projects     = string,
+    type             = optional(string, "CLOUDBUILD_CSR")
+    cicd_runner_repo = optional(string, null)
+    repo_owner       = optional(string, null)
+    repositories = optional(object({
+      seed = object({
+        repository_name = optional(string, "gcp-seed")
+        repository_url  = string
+      }),
+      cicd = object({
+        repository_name = optional(string, "gcp-cicd")
+        repository_url  = string
+      }),
+      org = object({
+        repository_name = optional(string, "gcp-org")
+        repository_url  = string
+      }),
+      env = object({
+        repository_name = optional(string, "gcp-environments")
+        repository_url  = string
+      }),
+      net = object({
+        repository_name = optional(string, "gcp-networks")
+        repository_url  = string
+      }),
+      proj = object({
+        repository_name = optional(string, "gcp-projects")
+        repository_url  = string
+      }),
+    }), null)
   })
+  default = {}
 }
 
-variable "token" {
-  description = "A fine-grained personal access token for the user or organization. Unwrapped form the token_secret. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-fine-grained-personal-access-token"
+
+variable "pat_secret" {
+  description = "A Secret with A fine-grained personal access token for the user or organization. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-fine-grained-personal-access-token"
   type        = string
   default     = null
 }

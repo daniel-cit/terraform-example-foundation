@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+data "google_secret_manager_secret_version" "github_pat" {
+  secret =  var.pat_secret.github
+}
+
 provider "github" {
   owner = var.cicd_config.repo_owner
-  token = var.token.github
+  token = data.google_secret_manager_secret_version.github_pat.secret_data
 }
 
 # provider "gitlab" { token = var.token.gitlab }
