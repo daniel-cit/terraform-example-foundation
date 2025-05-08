@@ -22,9 +22,24 @@ steps:
   - 'TF_VAR_folder_id=$_FOLDER_ID'
   - 'TF_VAR_billing_account=$_BILLING_ACCOUNT'
 
-- id: gitlab-vm
+- id: wait-startup-script
   name: "gcr.io/cloud-foundation-cicd/$_DOCKER_IMAGE_DEVELOPER_TOOLS:$_DOCKER_TAG_VERSION_DEVELOPER_TOOLS"
-  args: ["/bin/bash", "-c", "cft test run TestGitlabVM --stage verify --verbose --test-dir /workspace/test/integration"]
+  args:
+    ["/bin/bash", "-c", "cft test run TestValidateStartupScript --stage verify --verbose --test-dir /workspace/test/integration"]
+
+- id: bootstrap-gitlab-vm
+  name: "gcr.io/cloud-foundation-cicd/$_DOCKER_IMAGE_DEVELOPER_TOOLS:$_DOCKER_TAG_VERSION_DEVELOPER_TOOLS"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |-
+      gcloud storage cp gs://$(terraform -chdir=/workspace/test/setup output -raw gitlab_secret_project)-ssl-cert/gitlab.crt /usr/local/share/ca-certificates
+      update-ca-certificates
+      if (ls /etc/ssl/certs | grep gitlab.pem); then
+          cft test run TestBootstrapGitlabVM --stage verify --verbose  --test-dir /workspace/test/integration || exit 1
+      else
+          echo ERROR: Was not able to download certificate and update system bundle. && exit 1
+      fi
 
 - id: sleep
   name: 'gcr.io/cloud-foundation-cicd/$_DOCKER_IMAGE_DEVELOPER_TOOLS:$_DOCKER_TAG_VERSION_DEVELOPER_TOOLS'

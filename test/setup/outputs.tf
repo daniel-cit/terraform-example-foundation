@@ -148,3 +148,16 @@ output "gitlab_instance_zone" {
 output "gitlab_instance_name" {
   value = google_compute_instance.default.name
 }
+
+
+output "gitlab_internal_ip" {
+  value = google_compute_instance.default.network_interface[0].network_ip
+}
+
+output "gitlab_service_directory" {
+  value = google_service_directory_service.gitlab.id
+}
+
+output "worker_pool_id" {
+  value = google_cloudbuild_worker_pool.pool.id
+}

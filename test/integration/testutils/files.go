@@ -22,13 +22,13 @@ import (
 	"strings"
 )
 
-// Will walk directories searching for terraform.tfvars and replace the pattern with the replacement
-func ReplacePatternInTfVars(pattern string, replacement string, root string) error {
+// Will walk directories searching for tfvars filesand replace the pattern with the replacement
+func ReplacePatternInTfVars(tfvarsfile, pattern, replacement, root string) error {
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, fnErr error) error {
 		if fnErr != nil {
 			return fnErr
 		}
-		if !d.IsDir() && d.Name() == "terraform.tfvars" {
+		if !d.IsDir() && d.Name() == tfvarsfile {
 			return replaceInFile(path, pattern, replacement)
 		}
 		return nil
