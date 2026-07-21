@@ -60,6 +60,23 @@ variable "parent_folder" {
   default     = ""
 }
 
+variable "universe_prefix" {
+  description = "Universe_prefix is the universe short name prefix to prepend to the project ID (e.g., 'eu0'). A colon (:) is automatically appended to the project ID, and a hyphen (-) is used for the state bucket name."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.universe_prefix == "" || can(regex("^[a-z0-9]+$", var.universe_prefix))
+    error_message = "The universe_prefix variable must be empty or contain only lowercase alphanumeric characters."
+  }
+}
+
+variable "universe_domain" {
+  description = "The universe domain to use for Google Cloud APIs. This defines the API endpoint boundary for your deployment. The default is 'googleapis.com' for the standard public Google Cloud. Modify this value if you are deploying to isolated environments like Google Distributed Cloud (GDC), Trusted Partner Cloud (TPC), or other sovereign cloud environments."
+  type        = string
+  default     = "googleapis.com"
+}
+
 variable "org_policy_admin_role" {
   description = "Additional Org Policy Admin role for admin group. You can use this for testing purposes."
   type        = bool
@@ -169,5 +186,3 @@ variable "initial_group_config" {
   type        = string
   default     = "WITH_INITIAL_OWNER"
 }
-
-

@@ -69,6 +69,7 @@ locals {
     [for n in local.shared_vpc_project_numbers : "projects/${n}"],
     [for n in local.peering_projects_numbers : "projects/${n}"]
   ))
+  universe_prefix = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
 }
 
 data "terraform_remote_state" "bootstrap" {

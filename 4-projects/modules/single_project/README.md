@@ -22,6 +22,7 @@
 | secondary\_contact | The secondary email contact for the project | `string` | `""` | no |
 | shared\_vpc\_host\_project\_id | Shared VPC host project ID | `string` | `""` | no |
 | shared\_vpc\_subnets | List of the shared vpc subnets self links. | `list(string)` | `[]` | no |
+| universe\_prefix | The universe short name prefix to prepend to the project ID (e.g., 'eu0'). A colon (:) is automatically appended to the project ID, and a hyphen (-) is used for the state bucket name. | `string` | `""` | no |
 | vpc | The type of VPC to attach the project to. Possible options are none, or svpc. | `string` | `"none"` | no |
 | vpc\_service\_control\_attach\_dry\_run | Whether the project will be attached to a VPC Service Control Perimeter with an explicit dry run spec flag, which may use different values for the dry run perimeter compared to the ENFORCED perimeter. | `bool` | `false` | no |
 | vpc\_service\_control\_attach\_enabled | Whether the project will be attached to a VPC Service Control Perimeter in ENFORCED MODE. | `bool` | `false` | no |

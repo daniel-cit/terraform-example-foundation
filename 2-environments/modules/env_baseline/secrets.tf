@@ -27,6 +27,7 @@ module "env_secrets" {
   random_project_id_length    = 4
   default_service_account     = "deprivilege"
   name                        = "${local.project_prefix}-${var.environment_code}-secrets"
+  universe_prefix             = local.universe_prefix
   org_id                      = local.org_id
   billing_account             = local.billing_account
   folder_id                   = google_folder.env.id

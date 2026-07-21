@@ -52,6 +52,7 @@ module "project" {
   random_project_id_length = 4
   activate_apis            = distinct(concat(var.activate_apis, ["billingbudgets.googleapis.com"]))
   name                     = "${var.project_prefix}-${local.env_code}-${var.business_code}-${var.project_suffix}"
+  universe_prefix          = var.universe_prefix
   org_id                   = var.org_id
   billing_account          = var.billing_account
   folder_id                = var.folder_id

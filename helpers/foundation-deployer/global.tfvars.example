@@ -33,6 +33,11 @@ folder_deletion_protection = true
 // build type to use. One of "cb", "github", "gitlab"
 build_type = "cb"
 
+// Google universe configuration
+universe_prefix = ""
+universe_domain = "googleapis.com"
+
+
 // 0-bootstrap inputs
 // https://github.com/terraform-google-modules/terraform-example-foundation/blob/master/0-bootstrap/README.md#inputs
 
@@ -71,17 +76,17 @@ groups = {
   create_optional_groups = false # Change to true to create the optional_groups
   billing_project        = null  # Fill to create required or optional groups
   required_groups = {
-    group_org_admins           = "REPLACE_ME" # "gcp-organization-admins@example.com"
-    group_billing_admins       = "REPLACE_ME" # "gcp-billing-admins@example.com"
-    billing_data_users         = "REPLACE_ME" #"billing_data_users_local_test@example.com"
-    audit_data_users           = "REPLACE_ME" #"audit_data_users_local_test@example.com"
+    group_org_admins     = "REPLACE_ME" # "gcp-organization-admins@example.com"
+    group_billing_admins = "REPLACE_ME" # "gcp-billing-admins@example.com"
+    billing_data_users   = "REPLACE_ME" #"billing_data_users_local_test@example.com"
+    audit_data_users     = "REPLACE_ME" #"audit_data_users_local_test@example.com"
   }
   optional_groups = {
-    gcp_security_reviewer      = "" #"gcp_security_reviewer_local_test@example.com"
-    gcp_network_viewer         = "" #"gcp_network_viewer_local_test@example.com"
-    gcp_scc_admin              = "" #"gcp_scc_admin_local_test@example.com"
-    gcp_global_secrets_admin   = "" #"gcp_global_secrets_admin_local_test@example.com"
-    gcp_kms_admin              = "" #"gcp_kms_admin_local_test@example.com"
+    gcp_security_reviewer    = "" #"gcp_security_reviewer_local_test@example.com"
+    gcp_network_viewer       = "" #"gcp_network_viewer_local_test@example.com"
+    gcp_scc_admin            = "" #"gcp_scc_admin_local_test@example.com"
+    gcp_global_secrets_admin = "" #"gcp_global_secrets_admin_local_test@example.com"
+    gcp_kms_admin            = "" #"gcp_kms_admin_local_test@example.com"
   }
 }
 

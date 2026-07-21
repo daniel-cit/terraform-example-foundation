@@ -40,6 +40,7 @@ module "org_audit_logs" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-logging"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
@@ -74,6 +75,7 @@ module "org_billing_export" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-billing-export"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
@@ -109,6 +111,7 @@ module "common_kms" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-kms"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
@@ -145,6 +148,7 @@ module "org_secrets" {
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-secrets"
   org_id                   = local.org_id
+  universe_prefix          = local.universe_prefix
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
   deletion_policy          = var.project_deletion_policy
@@ -179,6 +183,7 @@ module "interconnect" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-net-interconnect"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.network.id
@@ -214,6 +219,7 @@ module "scc_notifications" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-scc"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
@@ -250,6 +256,7 @@ module "network_hub" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-net-hub"
+  universe_prefix          = local.universe_prefix
   org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.network.id
@@ -292,6 +299,7 @@ module "environment_network" {
   org_id          = local.org_id
   billing_account = local.billing_account
   project_prefix  = local.project_prefix
+  universe_prefix = local.universe_prefix
   folder_id       = google_folder.network.id
 
   project_deletion_policy = var.project_deletion_policy

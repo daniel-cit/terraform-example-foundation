@@ -25,6 +25,7 @@ locals {
   enforce_vpcsc                    = data.terraform_remote_state.org.outputs.enforce_vpcsc
   perimeter_name                   = data.terraform_remote_state.org.outputs.service_perimeter_name
   access_context_manager_policy_id = data.terraform_remote_state.org.outputs.access_context_manager_policy_id
+  universe_prefix                  = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
 }
 
 data "terraform_remote_state" "bootstrap" {
