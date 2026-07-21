@@ -18,6 +18,15 @@
   Audit Logs - IAM
 *****************************************/
 
+locals {
+  s_account_domain = local.universe_prefix != "" ? "${local.universe_prefix}-system.iam.gserviceaccount.com" : "iam.gserviceaccount.com"
+  api_s_account = format(
+    "service-org-%s@gcp-sa-cloudkms.%s",
+    local.org_id,
+    local.s_account_domain
+  )
+}
+
 resource "google_project_iam_member" "audit_log_logging_viewer" {
   project = module.org_audit_logs.project_id
   role    = "roles/logging.viewer"
@@ -87,7 +96,7 @@ resource "google_organization_iam_member" "kms_usage_tracking" {
 
   org_id = local.org_id
   role   = "roles/cloudkms.orgServiceAgent"
-  member = "serviceAccount:service-org-${local.org_id}@gcp-sa-cloudkms.iam.gserviceaccount.com"
+  member = "serviceAccount:${local.api_s_account}"
 }
 
 /******************************************
