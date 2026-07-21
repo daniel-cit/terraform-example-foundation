@@ -22,6 +22,7 @@ locals {
   folder_prefix   = data.terraform_remote_state.bootstrap.outputs.common_config.folder_prefix
   tags            = data.terraform_remote_state.org.outputs.tags
   required_groups = data.terraform_remote_state.bootstrap.outputs.required_groups
+  universe_prefix = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
 }
 
 data "terraform_remote_state" "bootstrap" {

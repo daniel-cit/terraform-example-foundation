@@ -210,6 +210,8 @@ type GlobalTFVars struct {
 	ProjectDeletionPolicy                 string          `hcl:"project_deletion_policy"`
 	BuildType                             string          `hcl:"build_type"`
 	GitRepos                              *GitRepos       `hcl:"git_repos"`
+	UniversePrefix                        *string         `hcl:"universe_prefix"`
+	UniverseDomain                        *string         `hcl:"universe_domain"`
 }
 
 // HasValidatorProj checks if a Validator Project was provided
@@ -261,6 +263,8 @@ type BootstrapTfvars struct {
 	ProjectDeletionPolicy        string       `hcl:"project_deletion_policy"`
 	GitHubRepos                  *GitHubRepos `hcl:"gh_repos"`
 	GitLabRepos                  *GitLabRepos `hcl:"gl_repos"`
+	UniversePrefix               *string      `hcl:"universe_prefix"`
+	UniverseDomain               *string      `hcl:"universe_domain"`
 }
 
 type OrgTfvars struct {

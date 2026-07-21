@@ -31,6 +31,7 @@ locals {
   bootstrap_folder_name                         = data.terraform_remote_state.bootstrap.outputs.common_config.bootstrap_folder_name
   cloud_build_private_worker_pool_id            = try(data.terraform_remote_state.bootstrap.outputs.cloud_build_private_worker_pool_id, "")
   required_groups                               = data.terraform_remote_state.bootstrap.outputs.required_groups
+  universe_prefix                               = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
 }
 
 data "terraform_remote_state" "bootstrap" {

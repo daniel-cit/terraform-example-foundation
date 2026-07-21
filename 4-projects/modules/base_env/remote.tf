@@ -32,6 +32,7 @@ locals {
   kms_project_number                  = data.terraform_remote_state.environments_env.outputs.env_kms_project_number
   cloudbuild_project_id               = try(data.terraform_remote_state.bootstrap.outputs.cloudbuild_project_id, "")
   default_region                      = data.terraform_remote_state.bootstrap.outputs.common_config.default_region
+  universe_prefix                     = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
 }
 
 data "terraform_remote_state" "bootstrap" {

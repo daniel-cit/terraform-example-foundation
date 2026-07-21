@@ -106,6 +106,8 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		InitialGroupConfig:           tfvars.InitialGroupConfig,
 		FolderDeletionProtection:     tfvars.FolderDeletionProtection,
 		ProjectDeletionPolicy:        tfvars.ProjectDeletionPolicy,
+		UniversePrefix:               tfvars.UniversePrefix,
+		UniverseDomain:               tfvars.UniverseDomain,
 	}
 
 	if tfvars.BuildType == BuildTypeGiHub {

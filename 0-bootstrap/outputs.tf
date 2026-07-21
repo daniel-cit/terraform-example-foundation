@@ -65,6 +65,8 @@ output "common_config" {
     default_region_gcs    = var.default_region_gcs,
     default_region_kms    = var.default_region_kms,
     project_prefix        = var.project_prefix,
+    universe_prefix       = var.universe_prefix
+    universe_domain       = var.universe_domain
     folder_prefix         = var.folder_prefix
     parent_id             = local.parent
     bootstrap_folder_name = google_folder.bootstrap.name

@@ -25,6 +25,7 @@ module "shared_vpc_host_project" {
   random_project_id           = true
   random_project_id_length    = 4
   name                        = format("%s-%s-svpc", var.project_prefix, var.env_code)
+  universe_prefix             = var.universe_prefix
   org_id                      = var.org_id
   billing_account             = var.billing_account
   folder_id                   = var.folder_id

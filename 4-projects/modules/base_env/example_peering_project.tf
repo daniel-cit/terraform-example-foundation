@@ -39,6 +39,7 @@ module "peering_project" {
   environment     = var.env
   project_budget  = var.project_budget
   project_prefix  = local.project_prefix
+  universe_prefix = local.universe_prefix
 
   project_deletion_policy = var.project_deletion_policy
 
