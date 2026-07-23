@@ -135,7 +135,11 @@ variable "workflow_deletion_protection" {
     Specific to Groups creation
    ---------------------------------------- */
 variable "groups" {
-  description = "Contain the details of the Groups to be created."
+  description = <<EOT
+  Contains the details of the IAM groups to be created or used for permissions.
+  The group identifiers inside 'required_groups' and 'optional_groups' accept either standard Google Group email addresses or principalSet URIs (e.g., 'principalSet://...').
+  Note: If providing principalSet URIs, ensure that 'create_required_groups' and 'create_optional_groups' are set to false, as principalSets are external identities and cannot be created as Google Groups.
+  EOT
   type = object({
     create_required_groups = optional(bool, false)
     create_optional_groups = optional(bool, false)
@@ -155,29 +159,43 @@ variable "groups" {
     }), {})
   })
 
+  # Prevent trying to create a principalSet as if it were a Google Group
   validation {
-    condition     = var.groups.create_required_groups || var.groups.create_optional_groups ? (var.groups.billing_project != null ? true : false) : true
+    condition = (
+      (var.groups.create_required_groups != true || !anytrue([
+        for v in values(var.groups.required_groups) : startswith(v, "principalSet://")
+      ]))
+      &&
+      (var.groups.create_optional_groups != true || !anytrue([
+        for v in values(var.groups.optional_groups != null ? var.groups.optional_groups : {}) : startswith(coalesce(v, ""), "principalSet://")
+      ]))
+    )
+    error_message = "You cannot set create_required_groups or create_optional_groups to true if any of the provided group variables contain a 'principalSet://' URI. principalSets are external identities and cannot be created as Google Groups."
+  }
+
+  validation {
+    condition     = var.groups.create_required_groups || var.groups.create_optional_groups ? var.groups.billing_project != null : true
     error_message = "A billing_project must be passed to use the automatic group creation."
   }
 
   validation {
     condition     = var.groups.required_groups.group_org_admins != ""
-    error_message = "The group group_org_admins is invalid, it must be a valid email"
+    error_message = "The group_org_admins is invalid, it must be a valid email or principalSet URI."
   }
 
   validation {
     condition     = var.groups.required_groups.group_billing_admins != ""
-    error_message = "The group group_billing_admins is invalid, it must be a valid email"
+    error_message = "The group_billing_admins is invalid, it must be a valid email or principalSet URI."
   }
 
   validation {
     condition     = var.groups.required_groups.billing_data_users != ""
-    error_message = "The group billing_data_users is invalid, it must be a valid email"
+    error_message = "The billing_data_users is invalid, it must be a valid email or principalSet URI."
   }
 
   validation {
     condition     = var.groups.required_groups.audit_data_users != ""
-    error_message = "The group audit_data_users is invalid, it must be a valid email"
+    error_message = "The audit_data_users is invalid, it must be a valid email or principalSet URI."
   }
 }
 

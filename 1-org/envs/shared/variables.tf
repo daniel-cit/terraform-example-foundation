@@ -147,13 +147,14 @@ variable "project_budget" {
 
 variable "gcp_groups" {
   description = <<EOT
-  Groups to grant specific roles in the Organization.
-  platform_viewer: Google Workspace or Cloud Identity group that have the ability to view resource information across the Google Cloud organization.
-  security_reviewer: Google Workspace or Cloud Identity group that members are part of the security team responsible for reviewing cloud security
-  network_viewer: Google Workspace or Cloud Identity group that members are part of the networking team and review network configurations.
-  scc_admin: Google Workspace or Cloud Identity group that can administer Security Command Center.
-  audit_viewer: Google Workspace or Cloud Identity group that members are part of an audit team and view audit logs in the logging project.
-  global_secrets_admin: Google Workspace or Cloud Identity group that members are responsible for putting secrets into Secrets Management.
+  Identifiers (Google Workspace/Cloud Identity group emails or principalSet URIs) to grant specific roles in the Organization. The 'group:' prefix is added automatically for emails, while 'principalSet://' is passed as-is.
+  platform_viewer: Group or principalSet that has the ability to view resource information across the Google Cloud organization.
+  security_reviewer: Group or principalSet whose members are part of the security team responsible for reviewing cloud security.
+  network_viewer: Group or principalSet whose members are part of the networking team and review network configurations.
+  scc_admin: Group or principalSet that can administer Security Command Center.
+  audit_viewer: Group or principalSet whose members are part of an audit team and view audit logs in the logging project.
+  global_secrets_admin: Group or principalSet whose members are responsible for putting secrets into Secrets Management.
+  kms_admin: Group or principalSet that can administer Cloud Key Management Service (KMS).
   EOT
   type = object({
     audit_viewer         = optional(string, null)
