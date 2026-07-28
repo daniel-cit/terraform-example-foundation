@@ -27,6 +27,7 @@ module "gce_instance" {
   project_suffix      = "sample-svpc"
   region              = coalesce(var.instance_region, local.default_region)
   remote_state_bucket = var.remote_state_bucket
+  universe_domain     = var.universe_domain
 }
 
 module "peering_gce_instance" {
@@ -37,6 +38,7 @@ module "peering_gce_instance" {
   project_suffix      = "sample-peering"
   region              = coalesce(var.instance_region, local.default_region)
   remote_state_bucket = var.remote_state_bucket
+  universe_domain     = var.universe_domain
 }
 
 module "confidential_space" {
@@ -48,4 +50,5 @@ module "confidential_space" {
   project_suffix            = "conf-space"
   region                    = coalesce(var.instance_region, local.default_region)
   remote_state_bucket       = var.remote_state_bucket
+  universe_domain           = var.universe_domain
 }

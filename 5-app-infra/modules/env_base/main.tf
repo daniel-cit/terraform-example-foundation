@@ -45,8 +45,9 @@ data "terraform_remote_state" "projects_env" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/projects/${var.business_unit}/${var.environment}"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/projects/${var.business_unit}/${var.environment}"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -89,4 +90,3 @@ module "compute_instance" {
   instance_template     = module.instance_template.self_link
   resource_manager_tags = local.resource_manager_tags
 }
-

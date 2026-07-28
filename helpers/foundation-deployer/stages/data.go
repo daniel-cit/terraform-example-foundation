@@ -332,6 +332,10 @@ type AppInfraCommonTfvars struct {
 	ImageDigest       string `hcl:"confidential_image_digest"`
 }
 
+type UniverseTfvars struct {
+	UniverseDomain    *string `hcl:"universe_domain"`
+}
+
 func GetBootstrapStepOutputs(t testing.TB, foundationPath string, buildType string) BootstrapOutputs {
 	options := &terraform.Options{
 		TerraformDir: filepath.Join(foundationPath, "0-bootstrap"),

@@ -39,8 +39,9 @@ data "terraform_remote_state" "bootstrap" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/bootstrap/state"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/bootstrap/state"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -48,8 +49,9 @@ data "terraform_remote_state" "network_env" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/networks/${var.env}"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/networks/${var.env}"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -57,8 +59,9 @@ data "terraform_remote_state" "environments_env" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/environments/${var.env}"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/environments/${var.env}"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -66,7 +69,8 @@ data "terraform_remote_state" "business_unit_shared" {
   backend = "gcs"
 
   config = {
-    bucket = local.projects_backend_bucket
-    prefix = "terraform/projects/${var.business_unit}/shared"
+    bucket                  = local.projects_backend_bucket
+    prefix                  = "terraform/projects/${var.business_unit}/shared"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }

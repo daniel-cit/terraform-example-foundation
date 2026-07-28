@@ -63,5 +63,6 @@ module "base_env" {
   subnet_secondary_ranges              = local.subnet_secondary_ranges
   private_service_connect_ip           = "10.17.0.7"
   remote_state_bucket                  = var.remote_state_bucket
+  universe_domain                      = var.universe_domain
   tfc_org_name                         = var.tfc_org_name
 }
