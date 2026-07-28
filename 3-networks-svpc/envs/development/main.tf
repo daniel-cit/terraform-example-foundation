@@ -59,4 +59,5 @@ module "base_env" {
   private_service_connect_ip  = "10.17.0.6"
   remote_state_bucket         = var.remote_state_bucket
   tfc_org_name                = var.tfc_org_name
+  universe_domain             = var.universe_domain
 }

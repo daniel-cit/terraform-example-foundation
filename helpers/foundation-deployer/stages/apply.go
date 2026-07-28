@@ -171,6 +171,9 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 	defaultRegion := terraform.OutputMap(t, options, "common_config")["default_region"]
 	backendBucket := terraform.Output(t, options, "gcs_bucket_tfstate")
 	backendBucketProjects := terraform.Output(t, options, "projects_gcs_bucket_tfstate")
+	UniverseDomain := terraform.OutputMap(t, options, "common_config")["universe_domain"]
+	customEndpoint := utils.BuildCustomEndpoint(UniverseDomain)
+	var backend_file string
 
 	// replace backend and terraform init migrate
 	err = s.RunStep("gcp-bootstrap.migrate-state", func() error {
@@ -179,7 +182,12 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		if err != nil {
 			return err
 		}
-		err = utils.ReplaceStringInFile(filepath.Join(options.TerraformDir, "backend.tf"), "UPDATE_ME", backendBucket)
+		backend_file = filepath.Join(options.TerraformDir, "backend.tf")
+		err = utils.ReplaceStringInFile(backend_file, "UPDATE_ME", backendBucket)
+		if err != nil {
+			return err
+		}
+		err = utils.ReplaceStringInFile(backend_file, "# UPDATE_ENDPOINT", customEndpoint)
 		if err != nil {
 			return err
 		}
@@ -190,7 +198,7 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 		return err
 	}
 
-	// replace all backend files
+	// replace all backend files and Custom Endpoints
 	err = s.RunStep("gcp-bootstrap.replace-backend-files", func() error {
 		files, err := utils.FindFiles(c.FoundationPath, "backend.tf")
 		if err != nil {
@@ -205,6 +213,23 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 			if err != nil {
 				return err
 			}
+			err = utils.ReplaceStringInFile(file, "# UPDATE_ENDPOINT", customEndpoint)
+			if err != nil {
+				return err
+			}
+			if customEndpoint != "" && backend_file != file{ //skip bootstrap folder
+				autoTfvarsPath := filepath.Join(filepath.Dir(file), "universe.auto.tfvars")
+				UniverseTfvars := UniverseTfvars{
+					UniverseDomain: &UniverseDomain,
+				}
+				err = utils.WriteTfvars(autoTfvarsPath, UniverseTfvars)
+				if err != nil {
+					return err
+
+				}
+
+			}
+
 		}
 		return nil
 	})
@@ -702,9 +727,15 @@ func DeployExampleAppStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, out
 	if err != nil {
 		return err
 	}
-	// update backend bucket
+	customEndpoint := utils.BuildCustomEndpoint(*tfvars.UniverseDomain)
+	// update backend bucket and Custom Endpoint
 	for _, e := range []string{"production", "nonproduction", "development"} {
-		err = utils.ReplaceStringInFile(filepath.Join(c.FoundationPath, AppInfraStep, "business_unit_1", e, "backend.tf"), "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
+		backendFile := filepath.Join(c.FoundationPath, AppInfraStep, "business_unit_1", e, "backend.tf")
+		err = utils.ReplaceStringInFile(backendFile, "UPDATE_APP_INFRA_BUCKET", outputs.StateBucket)
+		if err != nil {
+			return err
+		}
+		err = utils.ReplaceStringInFile(backendFile, "# UPDATE_ENDPOINT", customEndpoint)
 		if err != nil {
 			return err
 		}

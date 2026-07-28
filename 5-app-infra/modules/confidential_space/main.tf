@@ -45,8 +45,9 @@ data "terraform_remote_state" "projects_env" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/projects/${var.business_unit}/${var.environment}"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/projects/${var.business_unit}/${var.environment}"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -54,8 +55,9 @@ data "terraform_remote_state" "business_unit_shared" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/projects/${var.business_unit}/shared"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/projects/${var.business_unit}/shared"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
