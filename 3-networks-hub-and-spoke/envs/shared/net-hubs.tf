@@ -240,11 +240,11 @@ module "shared_vpc" {
   ]
   secondary_ranges = {}
 
-  egress_policies = distinct(concat(
+  egress_policies_map = merge(
     local.dedicated_interconnect_egress_policy,
-    var.egress_policies
-  ))
+    var.egress_policies_map
+  )
 
-  ingress_policies = var.ingress_policies
+  ingress_policies_map = var.ingress_policies_map
 
 }

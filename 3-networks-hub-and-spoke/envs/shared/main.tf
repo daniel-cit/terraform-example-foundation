@@ -20,8 +20,9 @@ locals {
   bgp_asn_number     = var.enable_partner_interconnect ? "16550" : "64514"
   dns_bgp_asn_number = var.enable_partner_interconnect ? "16550" : var.bgp_asn_dns
 
-  dedicated_interconnect_egress_policy = var.enable_dedicated_interconnect ? [
-    {
+  dedicated_interconnect_egress_policy = var.enable_dedicated_interconnect ? {
+    dedicated_interconnect_egress_policy = {
+
       "from" = {
         "identity_type" = ""
         "identities"    = ["serviceAccount:${local.networks_service_account}"]
@@ -34,6 +35,8 @@ locals {
           }
         }
       }
-    },
-  ] : []
+    }
+
+  } : {}
+
 }

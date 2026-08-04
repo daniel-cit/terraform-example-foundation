@@ -164,6 +164,7 @@ module "shared_vpc" {
   access_context_manager_policy_id = var.access_context_manager_policy_id
   restricted_services              = local.restricted_services
   restricted_services_dry_run      = local.restricted_services_dry_run
+  allow_additional_member_types    = var.allow_additional_member_types
   members = distinct(concat([
     "serviceAccount:${local.networks_service_account}",
     "serviceAccount:${local.projects_service_account}",
@@ -176,8 +177,8 @@ module "shared_vpc" {
   ], var.perimeter_additional_members))
   private_service_cidr         = var.private_service_cidr
   private_service_connect_ip   = var.private_service_connect_ip
-  ingress_policies             = var.ingress_policies
-  egress_policies              = var.egress_policies
+  ingress_policies_map         = var.ingress_policies_map
+  egress_policies_map          = var.egress_policies_map
   bgp_asn_subnet               = local.bgp_asn_number
   default_region1              = var.default_region1
   default_region2              = var.default_region2

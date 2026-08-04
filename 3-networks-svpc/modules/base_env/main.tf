@@ -15,8 +15,9 @@
  */
 
 locals {
-  dedicated_interconnect_egress_policy = var.enable_dedicated_interconnect ? [
-    {
+  dedicated_interconnect_egress_policy = var.enable_dedicated_interconnect ? {
+    dedicated_interconnect_egress_policy = {
+
       "from" = {
         "identity_type" = ""
         "identities"    = ["serviceAccount:${local.networks_service_account}"]
@@ -29,8 +30,9 @@ locals {
           }
         }
       }
-    },
-  ] : []
+    }
+
+  } : {}
 
   bgp_asn_number = var.enable_partner_interconnect ? "16550" : "64514"
 
@@ -177,6 +179,7 @@ module "shared_vpc" {
   access_context_manager_policy_id = var.access_context_manager_policy_id
   restricted_services              = local.restricted_services
   restricted_services_dry_run      = local.restricted_services_dry_run
+  allow_additional_member_types    = var.allow_additional_member_types
   members = distinct(concat([
     "serviceAccount:${local.networks_service_account}",
     "serviceAccount:${local.projects_service_account}",
@@ -187,22 +190,22 @@ module "shared_vpc" {
     "serviceAccount:${local.projects_service_account}",
     "serviceAccount:${local.organization_service_account}",
   ], var.perimeter_additional_members))
-  private_service_cidr       = var.private_service_cidr
-  private_service_connect_ip = var.private_service_connect_ip
-  bgp_asn_subnet             = local.bgp_asn_number
-  default_region1            = var.default_region1
-  default_region2            = var.default_region2
-  domain                     = var.domain
-  ingress_policies           = var.ingress_policies
-  ingress_policies_dry_run   = var.ingress_policies_dry_run
-  egress_policies = distinct(concat(
+  private_service_cidr         = var.private_service_cidr
+  private_service_connect_ip   = var.private_service_connect_ip
+  bgp_asn_subnet               = local.bgp_asn_number
+  default_region1              = var.default_region1
+  default_region2              = var.default_region2
+  domain                       = var.domain
+  ingress_policies_map         = var.ingress_policies_map
+  ingress_policies_dry_run_map = var.ingress_policies_dry_run_map
+  egress_policies_map = merge(
     local.dedicated_interconnect_egress_policy,
-    var.egress_policies
-  ))
-  egress_policies_dry_run = distinct(concat(
+    var.egress_policies_map
+  )
+  egress_policies_dry_run_map = merge(
     local.dedicated_interconnect_egress_policy,
-    var.egress_policies_dry_run
-  ))
+    var.egress_policies_dry_run_map
+  )
   target_name_server_addresses = var.target_name_server_addresses
 
 
@@ -257,4 +260,3 @@ module "shared_vpc" {
     "sb-${var.environment_code}-svpc-${var.default_region1}" = var.subnet_secondary_ranges[var.default_region1]
   }
 }
-

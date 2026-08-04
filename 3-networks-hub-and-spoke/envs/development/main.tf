@@ -44,23 +44,27 @@ locals {
 module "base_env" {
   source = "../../modules/base_env"
 
-  env                               = local.env
-  environment_code                  = local.environment_code
-  access_context_manager_policy_id  = var.access_context_manager_policy_id
-  perimeter_additional_members      = var.perimeter_additional_members
-  default_region1                   = local.default_region1
-  default_region2                   = local.default_region2
-  domain                            = var.domain
-  ingress_policies                  = var.ingress_policies
-  egress_policies                   = var.egress_policies
-  enable_partner_interconnect       = false
-  enable_hub_and_spoke_transitivity = var.enable_hub_and_spoke_transitivity
-  private_service_cidr              = local.private_service_cidr
-  subnet_primary_ranges             = local.subnet_primary_ranges
-  subnet_proxy_ranges               = local.subnet_proxy_ranges
-  subnet_secondary_ranges           = local.subnet_secondary_ranges
-  private_service_connect_ip        = "10.17.0.6"
-  remote_state_bucket               = var.remote_state_bucket
-  universe_domain                   = var.universe_domain
-  tfc_org_name                      = var.tfc_org_name
+  env                                  = local.env
+  environment_code                     = local.environment_code
+  access_context_manager_policy_id     = var.access_context_manager_policy_id
+  allow_additional_member_types        = var.allow_additional_member_types
+  perimeter_additional_members         = var.perimeter_additional_members
+  perimeter_additional_members_dry_run = var.perimeter_additional_members_dry_run
+  default_region1                      = local.default_region1
+  default_region2                      = local.default_region2
+  domain                               = var.domain
+  ingress_policies_map                 = var.ingress_policies_map
+  ingress_policies_dry_run_map         = var.ingress_policies_dry_run_map
+  egress_policies_map                  = var.egress_policies_map
+  egress_policies_dry_run_map          = var.egress_policies_dry_run_map
+  enable_partner_interconnect          = false
+  enable_hub_and_spoke_transitivity    = var.enable_hub_and_spoke_transitivity
+  private_service_cidr                 = local.private_service_cidr
+  subnet_primary_ranges                = local.subnet_primary_ranges
+  subnet_proxy_ranges                  = local.subnet_proxy_ranges
+  subnet_secondary_ranges              = local.subnet_secondary_ranges
+  private_service_connect_ip           = "10.17.0.6"
+  remote_state_bucket                  = var.remote_state_bucket
+  universe_domain                      = var.universe_domain
+  tfc_org_name                         = var.tfc_org_name
 }
