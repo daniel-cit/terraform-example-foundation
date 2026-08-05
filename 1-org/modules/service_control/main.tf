@@ -32,7 +32,7 @@ module "access_level" {
   description = "${local.prefix} Access Level for use in an enforced perimeter"
   policy      = var.access_context_manager_policy_id
   name        = local.access_level_name
-  members     = var.members
+  members     = var.allow_additional_member_types ? [] : var.members
 }
 
 module "access_level_dry_run" {
@@ -44,7 +44,7 @@ module "access_level_dry_run" {
   description = "${local.prefix} Access Level for testing with a dry run perimeter"
   policy      = var.access_context_manager_policy_id
   name        = local.access_level_name_dry_run
-  members     = var.members_dry_run
+  members     = var.allow_additional_member_types ? [] : var.members_dry_run
 }
 
 module "regular_service_perimeter" {
@@ -61,7 +61,7 @@ module "regular_service_perimeter" {
   access_levels           = var.enforce_vpcsc ? [module.access_level.name] : []
   restricted_services     = var.enforce_vpcsc ? var.restricted_services : []
   vpc_accessible_services = var.enforce_vpcsc ? ["*"] : []
-  ingress_policies_map    = var.enforce_vpcsc ? var.ingress_policies_map : {}
+  ingress_policies_map    = var.enforce_vpcsc ? merge(var.ingress_policies_map, local.member_policies_map) : {}
   egress_policies_map     = var.enforce_vpcsc ? var.egress_policies_map : {}
 
   # configurations for a perimeter in dry run mode.
@@ -70,7 +70,7 @@ module "regular_service_perimeter" {
   access_levels_dry_run           = !var.enforce_vpcsc && length(module.access_level_dry_run) > 0 ? [module.access_level_dry_run[0].name] : []
   restricted_services_dry_run     = !var.enforce_vpcsc ? var.restricted_services_dry_run : []
   vpc_accessible_services_dry_run = !var.enforce_vpcsc ? ["*"] : []
-  ingress_policies_dry_run_map    = !var.enforce_vpcsc ? var.ingress_policies_dry_run_map : {}
+  ingress_policies_dry_run_map    = !var.enforce_vpcsc ? merge(var.ingress_policies_dry_run_map, local.member_policies_dry_run_map) : {}
   egress_policies_dry_run_map     = !var.enforce_vpcsc ? var.egress_policies_dry_run_map : {}
 }
 

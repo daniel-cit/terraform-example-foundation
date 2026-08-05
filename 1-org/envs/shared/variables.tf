@@ -323,6 +323,12 @@ variable "egress_policies_map" {
   default = {}
 }
 
+variable "allow_additional_member_types" {
+  description = "Allows use of additional member types: `group`, `principal`, and `principalSet` as members of the perimeter. If true the members will be added in a ingress rules instead of in the access level."
+  type        = bool
+  default     = false
+}
+
 variable "perimeter_additional_members" {
   description = "The list of additional members to be added to the enforced perimeter access level members list. To be able to see the resources protected by the VPC Service Controls in the perimeter, add your user in this list. Entries must be in the standard GCP form: `user:email@example.com` or `serviceAccount:my-service-account@example.com`."
   type        = list(string)

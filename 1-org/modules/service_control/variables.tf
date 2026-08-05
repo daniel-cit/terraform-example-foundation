@@ -29,6 +29,11 @@ variable "members_dry_run" {
   description = "An allowed list of members (users, service accounts) for an access level in a dry run perimeter. The signed-in identity originating the request must be a part of one of the provided members. If not specified, a request may come from any user (logged in/not logged in, etc.). Formats: user:{emailid}, serviceAccount:{emailid}"
 }
 
+variable "allow_additional_member_types" {
+  description = "Allows use of additional member types: `group`, `principal`, and `principalSet` as members of the perimeter. If true the members will be added in a ingress rules instead of in the access level."
+  type        = bool
+  default     = false
+}
 
 variable "restricted_services" {
   type        = list(string)

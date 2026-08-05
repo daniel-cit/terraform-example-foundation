@@ -214,6 +214,7 @@ type GlobalTFVars struct {
 	GitRepos                              *GitRepos       `hcl:"git_repos"`
 	UniversePrefix                        *string         `hcl:"universe_prefix"`
 	UniverseDomain                        *string         `hcl:"universe_domain"`
+	AllowAdditionalMemberTypes            *bool           `hcl:"allow_additional_member_types"`
 }
 
 // HasValidatorProj checks if a Validator Project was provided
@@ -289,6 +290,7 @@ type OrgTfvars struct {
 	GcpGroups                             GcpGroups `hcl:"gcp_groups"`
 	FolderDeletionProtection              *bool     `hcl:"folder_deletion_protection"`
 	ProjectDeletionPolicy                 string    `hcl:"project_deletion_policy"`
+	AllowAdditionalMemberTypes            *bool     `hcl:"allow_additional_member_types"`
 }
 
 type EnvsTfvars struct {
@@ -334,7 +336,7 @@ type AppInfraCommonTfvars struct {
 }
 
 type UniverseTfvars struct {
-	UniverseDomain    *string `hcl:"universe_domain"`
+	UniverseDomain *string `hcl:"universe_domain"`
 }
 
 func GetBootstrapStepOutputs(t testing.TB, foundationPath string, buildType string) BootstrapOutputs {

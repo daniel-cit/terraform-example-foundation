@@ -36,6 +36,7 @@ build_type = "cb"
 // Google universe configuration
 universe_prefix = ""
 universe_domain = "googleapis.com"
+allow_additional_member_types = false
 
 
 // 0-bootstrap inputs
