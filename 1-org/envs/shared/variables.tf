@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+variable "access_context_manager_policy_id" {
+  description = "The id of the default Access Context Manager policy. Can be obtained by running `gcloud access-context-manager policies list --organization YOUR_ORGANIZATION_ID --format=\"value(name)\"`."
+  type        = string
+  default     = ""
+}
+
 variable "enable_hub_and_spoke" {
   description = "Enable Hub-and-Spoke architecture."
   type        = bool
@@ -198,4 +204,207 @@ variable "folder_deletion_protection" {
   description = "Prevent Terraform from destroying or recreating the folder."
   type        = string
   default     = true
+}
+
+variable "custom_restricted_services" {
+  description = "List of custom services to be protected by the VPC-SC perimeter. If empty, all supported services (https://cloud.google.com/vpc-service-controls/docs/supported-products) will be protected."
+  type        = list(string)
+  default     = []
+}
+
+variable "custom_restricted_services_dry_run" {
+  description = "List of custom services to be protected by the VPC-SC perimeter. If empty, all supported services (https://cloud.google.com/vpc-service-controls/docs/supported-products) will be protected."
+  type        = list(string)
+  default     = []
+}
+
+variable "ingress_policies_dry_run_map" {
+  description = "Map of additional ingress policies for the dry-run perimeter. Map key is the Terraform state key."
+  type = map(object({
+    title = optional(string, null)
+    from = object({
+      sources = optional(object({
+        resources     = optional(list(string), [])
+        access_levels = optional(list(string), [])
+      }), {}),
+      identity_type = optional(string, null)
+      identities    = optional(list(string), null)
+    })
+    to = object({
+      operations = optional(map(object({
+        methods     = optional(list(string), [])
+        permissions = optional(list(string), [])
+      })), {}),
+      roles     = optional(list(string), null)
+      resources = optional(list(string), ["*"])
+    })
+  }))
+  default = {}
+}
+
+variable "egress_policies_dry_run_map" {
+  description = "Map of additional egress policies for the dry-run perimeter. Map key is the Terraform state key."
+  type = map(object({
+    title = optional(string, null)
+    from = object({
+      sources = optional(object({
+        resources     = optional(list(string), [])
+        access_levels = optional(list(string), [])
+      }), {}),
+      identity_type = optional(string, null)
+      identities    = optional(list(string), null)
+    })
+    to = object({
+      operations = optional(map(object({
+        methods     = optional(list(string), [])
+        permissions = optional(list(string), [])
+      })), {}),
+      roles              = optional(list(string), null)
+      resources          = optional(list(string), ["*"])
+      external_resources = optional(list(string), [])
+    })
+  }))
+  default = {}
+}
+
+variable "ingress_policies_map" {
+  description = "Map of additional ingress policies for the enforced perimeter. Map key is the Terraform state key."
+  type = map(object({
+    title = optional(string, null)
+    from = object({
+      sources = optional(object({
+        resources     = optional(list(string), [])
+        access_levels = optional(list(string), [])
+      }), {}),
+      identity_type = optional(string, null)
+      identities    = optional(list(string), null)
+    })
+    to = object({
+      operations = optional(map(object({
+        methods     = optional(list(string), [])
+        permissions = optional(list(string), [])
+      })), {}),
+      roles     = optional(list(string), null)
+      resources = optional(list(string), ["*"])
+    })
+  }))
+  default = {}
+}
+
+variable "egress_policies_map" {
+  description = "Map of additional egress policies for the enforced perimeter. Map key is the Terraform state key."
+  type = map(object({
+    title = optional(string, null)
+    from = object({
+      sources = optional(object({
+        resources     = optional(list(string), [])
+        access_levels = optional(list(string), [])
+      }), {}),
+      identity_type = optional(string, null)
+      identities    = optional(list(string), null)
+    })
+    to = object({
+      operations = optional(map(object({
+        methods     = optional(list(string), [])
+        permissions = optional(list(string), [])
+      })), {}),
+      roles              = optional(list(string), null)
+      resources          = optional(list(string), ["*"])
+      external_resources = optional(list(string), [])
+    })
+  }))
+  default = {}
+}
+
+variable "perimeter_additional_members" {
+  description = "The list of additional members to be added to the enforced perimeter access level members list. To be able to see the resources protected by the VPC Service Controls in the perimeter, add your user in this list. Entries must be in the standard GCP form: `user:email@example.com` or `serviceAccount:my-service-account@example.com`."
+  type        = list(string)
+  default     = []
+}
+
+variable "perimeter_additional_members_dry_run" {
+  description = "The list of additional members to be added to the dry-run perimeter access level members list. To be able to see the resources protected by the VPC Service Controls in the perimeter, add your user in this list. Entries must be in the standard GCP form: `user:email@example.com` or `serviceAccount:my-service-account@example.com`."
+  type        = list(string)
+  default     = []
+}
+
+variable "resources" {
+  description = "A list of GCP resources that are inside of the service perimeter. Currently only projects and VPC networks are allowed."
+  type        = list(string)
+  default     = []
+}
+
+variable "resources_dry_run" {
+  description = "A list of GCP resources that are inside of the service perimeter. Currently only projects and VPC networks are allowed. If set, a dry-run policy will be set."
+  type        = list(string)
+  default     = []
+}
+
+variable "required_egress_rules_app_infra" {
+  description = "Required egress rule app infra enforced mode."
+  type        = bool
+  default     = false
+}
+
+variable "required_egress_rules_app_infra_dry_run" {
+  description = "Required egress rule app infra dry run mode."
+  type        = bool
+  default     = false
+}
+
+variable "required_ingress_rules_app_infra" {
+  description = "Required ingress rule app infra enforced mode."
+  type        = bool
+  default     = false
+}
+
+variable "required_ingress_rules_app_infra_dry_run" {
+  description = "Required ingress rule app infra dry run mode."
+  type        = bool
+  default     = false
+}
+
+variable "envs" {
+  type = map(bool)
+  default = {
+    development   = true
+    nonproduction = true
+    production    = true
+  }
+}
+
+variable "logs_export_sleep_duration" {
+  description = "The duration to wait for logs export resources to initialize (e.g., 30s, 2m)."
+  type        = string
+  default     = "30s"
+}
+
+variable "projects_sleep_duration" {
+  description = "The duration to wait for core project resources (audit logs, billing, networking, KMS, etc.) to initialize."
+  type        = string
+  default     = "30s"
+}
+
+variable "kms_iam_sleep_duration" {
+  description = "The duration to wait for KMS and Cloud Function IAM bindings to propagate (e.g., 60s, 2m)."
+  type        = string
+  default     = "60s"
+}
+
+variable "bucket_sleep_duration" {
+  description = "The duration to wait for the Cloud Function source bucket to initialize (e.g., 30s, 2m)."
+  type        = string
+  default     = "30s"
+}
+
+variable "sa_iam_membership_sleep_duration" {
+  description = "The duration to wait for Service Account IAM membership propagation (e.g., 30s)."
+  type        = string
+  default     = "30s"
+}
+
+variable "vpc_sc_propagation_sleep_duration" {
+  description = "The duration to wait for VPC Service Controls propagation (e.g., 60s, 2m)."
+  type        = string
+  default     = "60s"
 }

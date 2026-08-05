@@ -554,12 +554,11 @@ we recommend that you request 50 additional projects for the **projects step ser
    chmod 755 ./tf-wrapper.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `production.auto.example.tfvars` to `production.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `production.auto.example.tfvars` to `production.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update the file `production.auto.tfvars` with the values for the `target_name_server_addresses`.
@@ -662,16 +661,7 @@ git commit -m 'Initialize networks repo - production'
 git push --set-upstream origin production
 ```
 
-1. Open a merge request in GitLab https://gitlab.com/GITLAB-OWNER/GITLAB-NETWORKS-REPO/-/merge_requests?scope=all&state=opened from the `production` branch to the `plan` branch and review the output.
-
-> NOTE: Development and Non-production branches depends on the production branch to be deployed first, for the `3-networks-dual-svpc`.
-
-1. Push your plan branch.
-
-   ```bash
-   git checkout plan --set-upstream origin plan
-   git push
-   ```
+> NOTE: Development and Non-production branches depends on the production branch to be deployed first, for the `3-networks-svpc`.
 
 1. Open a pull request in GitHub https://github.com/GITHUB-OWNER/GITHUB-NETWORKS-REPO/pull/new/plan from the `production` branch to the `development` branch and review the output.
 1. The Pull request will trigger a GitHub Action that will run Terraform `init`/`plan`/`validate` in the `development` environment.
@@ -751,12 +741,11 @@ git push --set-upstream origin production
    chmod 755 ./tf-wrapper.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `shared.auto.example.tfvars` to `shared.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `shared.auto.example.tfvars` to `shared.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv shared.auto.example.tfvars shared.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update `common.auto.tfvars` file with values from your GCP environment.
@@ -867,8 +856,7 @@ git push --set-upstream origin production
    git clone git@github.com:<GITHUB-OWNER>/<GITHUB-PROJECTS-REPO>.git gcp-projects
    ```
 
-1. Navigate into the repo. All subsequent
-   steps assume you are running them from the `gcp-projects` directory.
+1. Navigate into the repo. All subsequent steps assume you are running them from the `gcp-projects` directory.
    If you run them from another directory, adjust your copy paths accordingly.
 
    ```bash
