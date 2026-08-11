@@ -30,10 +30,11 @@ const (
 	DefaultBuild      = "cb"
 	GitHubBuild       = "github"
 	GitLabBuild       = "gitlab"
+	LocalBuild        = "local"
 )
 
 // Allowed build types.
-var AllowedBuildTypes = []string{"cb", "github", "gitlab", "terraform_cloud"}
+var AllowedBuildTypes = []string{"cb", "github", "gitlab", "terraform_cloud", "local"}
 
 // CopyFile copies a single file from the src path to the dest path
 func CopyFile(src string, dest string) error {

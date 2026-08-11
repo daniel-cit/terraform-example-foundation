@@ -223,27 +223,22 @@ func destroyStage(t testing.TB, sc StageConf, s steps.Steps, c CommonConf, envVa
 }
 
 func destroyEnv(t testing.TB, options *terraform.Options, serviceAccount string) error {
-	var err error
 
 	if serviceAccount != "" {
-		err = os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount)
-		if err != nil {
+		if err := os.Setenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccount); err != nil {
 			return err
 		}
 	}
 
-	_, err = terraform.InitE(t, options)
-	if err != nil {
+	if _, err := terraform.InitE(t, options); err != nil {
 		return err
 	}
-	_, err = terraform.DestroyE(t, options)
-	if err != nil {
+	if _, err := terraform.DestroyE(t, options); err != nil {
 		return err
 	}
 
 	if serviceAccount != "" {
-		err = os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT")
-		if err != nil {
+		if err := os.Unsetenv("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT"); err != nil {
 			return err
 		}
 	}

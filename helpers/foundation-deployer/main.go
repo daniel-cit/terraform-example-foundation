@@ -360,7 +360,7 @@ func main() {
 		os.Exit(3)
 	}
 
-	if conf.BuildType == stages.BuildTypeCBCSR {
+	if conf.BuildType == stages.BuildTypeCBCSR || conf.BuildType == stages.BuildTypeLocal {
 		// 5-app-infra
 		msg.PrintStageMsg("Deploying 5-app-infra stage")
 		io := stages.GetInfraPipelineOutputs(t, conf.CheckoutPath, "bu1-example-app")
