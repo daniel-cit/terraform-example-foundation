@@ -77,6 +77,23 @@ variable "universe_domain" {
   default     = "googleapis.com"
 }
 
+variable "available_universe_services" {
+  description = "A general configuration object to toggle available services in the universe. All services default to true if omitted."
+  type = object({
+    billing_budget     = optional(bool, true)
+    security_center    = optional(bool, true)
+    service_networking = optional(bool, true)
+    storage_api        = optional(bool, true)
+    admin              = optional(bool, true)
+    appengine          = optional(bool, true)
+    assured_workloads  = optional(bool, true)
+    cloud_build        = optional(bool, true)
+    cloud_asset        = optional(bool, true)
+    secret_manager     = optional(bool, true)
+  })
+  default = {}
+}
+
 variable "org_policy_admin_role" {
   description = "Additional Org Policy Admin role for admin group. You can use this for testing purposes."
   type        = bool

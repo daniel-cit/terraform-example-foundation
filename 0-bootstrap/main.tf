@@ -44,8 +44,9 @@ resource "google_folder" "bootstrap" {
 }
 
 module "seed_bootstrap" {
-  source  = "terraform-google-modules/bootstrap/google"
-  version = "~> 12.0"
+  # source  = "terraform-google-modules/bootstrap/google"
+  # version = "~> 12.0"
+  source = "git::https://github.com/daniel-cit/terraform-google-bootstrap.git?ref=add-support-for-google-universess"
 
   org_id                         = var.org_id
   folder_id                      = google_folder.bootstrap.id
@@ -62,6 +63,7 @@ module "seed_bootstrap" {
   parent_folder                  = var.parent_folder == "" ? "" : local.parent
   org_admins_org_iam_permissions = local.org_admins_org_iam_permissions
   project_prefix                 = var.project_prefix
+  universe_prefix                = var.universe_prefix
   encrypt_gcs_bucket_tfstate     = true
   key_rotation_period            = "7776000s"
   kms_prevent_destroy            = !var.bucket_tfstate_kms_force_destroy
@@ -78,29 +80,30 @@ module "seed_bootstrap" {
     vpc               = "none"
   }
 
-  activate_apis = [
+  activate_apis = compact([
     "serviceusage.googleapis.com",
-    "servicenetworking.googleapis.com",
+    var.available_services.service_networking ? "servicenetworking.googleapis.com" : "",
     "cloudkms.googleapis.com",
     "compute.googleapis.com",
     "logging.googleapis.com",
     "bigquery.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "cloudbilling.googleapis.com",
-    "cloudbuild.googleapis.com",
+    var.available_services.cloud_build ? "cloudbuild.googleapis.com" : "",
     "iam.googleapis.com",
-    "admin.googleapis.com",
-    "appengine.googleapis.com",
-    "storage-api.googleapis.com",
+    "storage.googleapis.com",
+    var.available_services.admin ? "admin.googleapis.com" : "",
+    var.available_services.appengine ? "appengine.googleapis.com" : "",
+    var.available_services.storage_api ? "storage-api.googleapis.com" : "",
     "monitoring.googleapis.com",
     "pubsub.googleapis.com",
-    "securitycenter.googleapis.com",
+    var.available_services.security_center ? "securitycenter.googleapis.com" : "",
     "accesscontextmanager.googleapis.com",
-    "billingbudgets.googleapis.com",
+    var.available_services.billing_budget ? "billingbudgets.googleapis.com" : "",
     "essentialcontacts.googleapis.com",
-    "assuredworkloads.googleapis.com",
-    "cloudasset.googleapis.com"
-  ]
+    var.available_services.assured_workloads ? "assuredworkloads.googleapis.com" : "",
+    var.available_services.cloud_asset ? "cloudasset.googleapis.com" : "",
+  ])
 
   sa_org_iam_permissions = []
 
