@@ -355,6 +355,7 @@ func DeployOrgStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, outputs Bo
 		AccessContextManagerPolicyID:          AccessContextManagerPolicyID,
 		PerimeterAdditionalMembers:            tfvars.PerimeterAdditionalMembers,
 		DomainsToAllow:                        tfvars.DomainsToAllow,
+		PrincipalSetOrgIds:                    tfvars.PrincipalSetOrgIds,
 		EssentialContactsDomains:              tfvars.EssentialContactsDomains,
 		SccNotificationName:                   tfvars.SccNotificationName,
 		RemoteStateBucket:                     outputs.RemoteStateBucket,

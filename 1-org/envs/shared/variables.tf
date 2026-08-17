@@ -39,8 +39,15 @@ variable "enable_kms_key_usage_tracking" {
 }
 
 variable "domains_to_allow" {
-  description = "The list of domains to allow users from in IAM. Used by Domain Restricted Sharing Organization Policy. Must include the domain of the organization you are deploying the foundation. To add other domains you must also grant access to these domains to the Terraform Service Account used in the deploy."
+  description = "The list of domains to allow users from in IAM. Used by Domain Restricted Sharing Organization Policy. Must include the domain of the organization you are deploying the foundation. To add other domains you must also grant access to these domains to the Terraform Service Account used in the deploy. At least one valid value for 'domains_to_allow' or 'principal_set_org_ids' must be provided"
   type        = list(string)
+  default     = []
+}
+
+variable "principal_set_org_ids" {
+  description = "The list of GCP Organization IDs to allow via Organization Principal Sets (e.g., ['123456789012']). At least one valid value for 'principal_set_org_ids' or 'domains_to_allow' must be provided. See https://docs.cloud.google.com/organization-policy/restrict-domains#retrieving_organization_id"
+  type        = list(string)
+  default     = []
 }
 
 variable "scc_notification_name" {

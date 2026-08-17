@@ -200,7 +200,8 @@ type GlobalTFVars struct {
 	DefaultRegionKMS                      string                     `hcl:"default_region_kms"`
 	ParentFolder                          *string                    `hcl:"parent_folder"`
 	Domain                                string                     `hcl:"domain"`
-	DomainsToAllow                        []string                   `hcl:"domains_to_allow"`
+	DomainsToAllow                        *[]string                  `hcl:"domains_to_allow"`
+	PrincipalSetOrgIds                    *[]string                  `hcl:"principal_set_org_ids"`
 	RequiredEgressRulesAppInfraDryRun     *bool                      `hcl:"required_egress_rules_app_infra_dry_run"`
 	RequiredIngressRulesAppInfraDryRun    *bool                      `hcl:"required_ingress_rules_app_infra_dry_run"`
 	EssentialContactsDomains              []string                   `hcl:"essential_contacts_domains_to_allow"`
@@ -294,7 +295,8 @@ type BootstrapTfvars struct {
 type OrgTfvars struct {
 	AccessContextManagerPolicyID          string    `hcl:"access_context_manager_policy_id"`
 	PerimeterAdditionalMembers            []string  `hcl:"perimeter_additional_members"`
-	DomainsToAllow                        []string  `hcl:"domains_to_allow"`
+	DomainsToAllow                        *[]string `hcl:"domains_to_allow"`
+	PrincipalSetOrgIds                    *[]string `hcl:"principal_set_org_ids"`
 	EssentialContactsDomains              []string  `hcl:"essential_contacts_domains_to_allow"`
 	RequiredEgressRulesAppInfraDryRun     *bool     `hcl:"required_egress_rules_app_infra_dry_run"`
 	RequiredIngressRulesAppInfraDryRun    *bool     `hcl:"required_ingress_rules_app_infra_dry_run"`

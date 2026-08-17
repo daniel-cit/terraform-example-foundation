@@ -103,14 +103,24 @@ module "org_domain_restricted_sharing" {
   source  = "terraform-google-modules/org-policy/google//modules/domain_restricted_sharing"
   version = "~> 7.0"
 
-  organization_id  = local.organization_id
-  folder_id        = local.folder_id
-  policy_for       = local.policy_for
-  domains_to_allow = var.domains_to_allow
+  organization_id       = local.organization_id
+  folder_id             = local.folder_id
+  policy_for            = local.policy_for
+  domains_to_allow      = var.domains_to_allow
+  principal_set_org_ids = var.principal_set_org_ids
 
   depends_on = [
     time_sleep.wait_logs_export
   ]
+}
+
+resource "null_resource" "input_validation" {
+  lifecycle {
+    precondition {
+      condition     = length(var.domains_to_allow) > 0 || length(var.principal_set_org_ids) > 0
+      error_message = "Error: You must provide at least one domain in 'domains_to_allow' or at least one Org ID in 'principal_set_org_ids'."
+    }
+  }
 }
 
 /******************************************

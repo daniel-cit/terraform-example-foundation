@@ -33,6 +33,7 @@ locals {
   cloudbuild_project_id               = try(data.terraform_remote_state.bootstrap.outputs.cloudbuild_project_id, "")
   default_region                      = data.terraform_remote_state.bootstrap.outputs.common_config.default_region
   universe_prefix                     = data.terraform_remote_state.bootstrap.outputs.common_config.universe_prefix
+  available_universe_services         = data.terraform_remote_state.bootstrap.outputs.common_config.available_universe_services
 }
 
 data "terraform_remote_state" "bootstrap" {

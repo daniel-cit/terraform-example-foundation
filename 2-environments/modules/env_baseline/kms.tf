@@ -51,8 +51,8 @@ module "env_kms" {
     vpc               = "none"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.kms_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.kms_alert_spent_percents
-  budget_amount               = var.project_budget.kms_budget_amount
-  budget_alert_spend_basis    = var.project_budget.kms_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.kms_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.kms_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.kms_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.kms_budget_alert_spend_basis : null
 }

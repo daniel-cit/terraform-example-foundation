@@ -53,8 +53,8 @@ module "shared_vpc_host_project" {
     env_code          = var.env_code
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.shared_network_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.shared_network_alert_spent_percents
-  budget_amount               = var.project_budget.shared_network_budget_amount
-  budget_alert_spend_basis    = var.project_budget.shared_network_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = var.available_universe_services.billing_budget ? var.project_budget.shared_network_alert_pubsub_topic : null
+  budget_alert_spent_percents = var.available_universe_services.billing_budget ? var.project_budget.shared_network_alert_spent_percents : null
+  budget_amount               = var.available_universe_services.billing_budget ? var.project_budget.shared_network_budget_amount : null
+  budget_alert_spend_basis    = var.available_universe_services.billing_budget ? var.project_budget.shared_network_budget_alert_spend_basis : null
 }

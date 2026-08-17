@@ -277,7 +277,7 @@ The following steps introduce the steps to deploy with Cloud Build Alternatively
 
    cd 0-bootstrap
    ```
-//TODO add replace of universe_domain maybe replace with a script that does all this stuff
+//TODO add replace of universe_domain maybe replace with a script that does all this stuff "universe-config.sh"
 1. Re-run `terraform init`. When you're prompted, agree to copy Terraform state to Cloud Storage.
 
    ```bash

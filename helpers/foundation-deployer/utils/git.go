@@ -60,7 +60,7 @@ func GetRepoOnly(t testing.TB, path string, logger *logger.Logger) GitRepo {
 	}
 }
 
-// GitInit initialize a directory as a local git repository. If path does not exist it will be created. 
+// GitInit initialize a directory as a local git repository. If path does not exist it will be created.
 func GitInit(t testing.TB, path string, logger *logger.Logger) (GitRepo, error) {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {

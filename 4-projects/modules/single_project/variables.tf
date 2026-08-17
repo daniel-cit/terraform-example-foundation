@@ -50,6 +50,12 @@ variable "universe_prefix" {
   }
 }
 
+variable "billing_budget_available" {
+  description = "Indicate that billing budget API is available."
+  type        = bool
+  default     = true
+}
+
 variable "billing_code" {
   description = "The code that's used to provide chargeback information"
   type        = string

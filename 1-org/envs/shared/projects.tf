@@ -57,10 +57,10 @@ module "org_audit_logs" {
     env_code          = "c"
     vpc               = "none"
   }
-  budget_alert_pubsub_topic   = var.project_budget.org_audit_logs_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.org_audit_logs_alert_spent_percents
-  budget_amount               = var.project_budget.org_audit_logs_budget_amount
-  budget_alert_spend_basis    = var.project_budget.org_audit_logs_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.org_audit_logs_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.org_audit_logs_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.org_audit_logs_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.org_audit_logs_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -93,10 +93,10 @@ module "org_billing_export" {
     vpc               = "none"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.org_billing_export_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.org_billing_export_alert_spent_percents
-  budget_amount               = var.project_budget.org_billing_export_budget_amount
-  budget_alert_spend_basis    = var.project_budget.org_billing_export_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.org_billing_export_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.org_billing_export_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.org_billing_export_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.org_billing_export_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -129,10 +129,10 @@ module "common_kms" {
     vpc               = "none"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.common_kms_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.common_kms_alert_spent_percents
-  budget_amount               = var.project_budget.common_kms_budget_amount
-  budget_alert_spend_basis    = var.project_budget.common_kms_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.common_kms_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.common_kms_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.common_kms_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.common_kms_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -147,8 +147,8 @@ module "org_secrets" {
   random_project_id_length = 4
   default_service_account  = "deprivilege"
   name                     = "${local.project_prefix}-c-secrets"
-  org_id                   = local.org_id
   universe_prefix          = local.universe_prefix
+  org_id                   = local.org_id
   billing_account          = local.billing_account
   folder_id                = google_folder.common.id
   deletion_policy          = var.project_deletion_policy
@@ -165,10 +165,10 @@ module "org_secrets" {
     env_code          = "c"
     vpc               = "none"
   }
-  budget_alert_pubsub_topic   = var.project_budget.org_secrets_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.org_secrets_alert_spent_percents
-  budget_amount               = var.project_budget.org_secrets_budget_amount
-  budget_alert_spend_basis    = var.project_budget.org_secrets_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.org_secrets_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.org_secrets_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.org_secrets_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.org_secrets_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -201,10 +201,10 @@ module "interconnect" {
     vpc               = "none"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.interconnect_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.interconnect_alert_spent_percents
-  budget_amount               = var.project_budget.interconnect_budget_amount
-  budget_alert_spend_basis    = var.project_budget.interconnect_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.interconnect_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.interconnect_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.interconnect_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.interconnect_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -237,10 +237,10 @@ module "scc_notifications" {
     vpc               = "none"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.scc_notifications_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.scc_notifications_alert_spent_percents
-  budget_amount               = var.project_budget.scc_notifications_budget_amount
-  budget_alert_spend_basis    = var.project_budget.scc_notifications_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.scc_notifications_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.scc_notifications_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.scc_notifications_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.scc_notifications_budget_alert_spend_basis : null
 }
 
 /******************************************
@@ -282,10 +282,10 @@ module "network_hub" {
     vpc               = "svpc"
   }
 
-  budget_alert_pubsub_topic   = var.project_budget.net_hub_alert_pubsub_topic
-  budget_alert_spent_percents = var.project_budget.net_hub_alert_spent_percents
-  budget_amount               = var.project_budget.net_hub_budget_amount
-  budget_alert_spend_basis    = var.project_budget.net_hub_budget_alert_spend_basis
+  budget_alert_pubsub_topic   = local.available_universe_services.billing_budget ? var.project_budget.net_hub_alert_pubsub_topic : null
+  budget_alert_spent_percents = local.available_universe_services.billing_budget ? var.project_budget.net_hub_alert_spent_percents : null
+  budget_amount               = local.available_universe_services.billing_budget ? var.project_budget.net_hub_budget_amount : null
+  budget_alert_spend_basis    = local.available_universe_services.billing_budget ? var.project_budget.net_hub_budget_alert_spend_basis : null
 }
 
 /************************************************************
@@ -296,11 +296,12 @@ module "environment_network" {
   source   = "../../modules/network"
   for_each = local.environments
 
-  org_id          = local.org_id
-  billing_account = local.billing_account
-  project_prefix  = local.project_prefix
-  universe_prefix = local.universe_prefix
-  folder_id       = google_folder.network.id
+  org_id                      = local.org_id
+  billing_account             = local.billing_account
+  project_prefix              = local.project_prefix
+  universe_prefix             = local.universe_prefix
+  folder_id                   = google_folder.network.id
+  available_universe_services = local.available_universe_services
 
   project_deletion_policy = var.project_deletion_policy
 
