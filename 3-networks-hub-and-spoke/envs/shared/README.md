@@ -39,7 +39,10 @@ The purpose of this step is to set up the global [DNS Hub](https://cloud.google.
 | Name | Description |
 |------|-------------|
 | dns\_policy | The name of the DNS policy being created |
+| ncc\_hub\_uri | The NCC Hub ID |
+| ncc\_spoke\_group | The NCC group to be used by spokes |
 | network\_name | The name of the Shared VPC being created |
+| network\_self\_link | The URI of the Shared VPC being created |
 | shared\_vpc\_host\_project\_id | The host project ID |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

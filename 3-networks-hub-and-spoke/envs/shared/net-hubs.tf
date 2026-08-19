@@ -25,6 +25,28 @@ locals {
     (local.default_region2) = "10.27.0.0/23"
   }
 
+  group_configuration = var.enable_hub_and_spoke_transitivity ? {
+    topology = "MESH",
+    group    = "default"
+    center   = null,
+    edge     = null,
+    default = [
+      local.net_hub_project_id,
+      local.development_net_project_id,
+      local.nonproduction_net_project_id,
+      local.production_net_project_id
+    ]
+    } : {
+    topology = "STAR",
+    group    = "center"
+    center   = [local.net_hub_project_id],
+    edge = [
+      local.development_net_project_id,
+      local.nonproduction_net_project_id,
+      local.production_net_project_id
+    ],
+    default = null
+  }
 }
 
 /******************************************
@@ -32,26 +54,54 @@ locals {
 *****************************************/
 
 module "shared_vpc" {
-  source = "../../modules/shared_vpc"
+  source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
 
-  project_id                    = local.net_hub_project_id
-  project_number                = local.net_hub_project_number
-  environment_code              = local.environment_code
-  private_service_connect_ip    = "10.17.0.5"
-  bgp_asn_subnet                = local.bgp_asn_number
-  default_region1               = local.default_region1
-  default_region2               = local.default_region2
-  domain                        = var.domain
-  dns_enable_inbound_forwarding = var.hub_dns_enable_inbound_forwarding
-  dns_enable_logging            = var.hub_dns_enable_logging
-  firewall_enable_logging       = var.hub_firewall_enable_logging
-  nat_enabled                   = var.hub_nat_enabled
-  nat_bgp_asn                   = var.hub_nat_bgp_asn
-  nat_num_addresses_region1     = var.hub_nat_num_addresses_region1
-  nat_num_addresses_region2     = var.hub_nat_num_addresses_region2
-  windows_activation_enabled    = var.hub_windows_activation_enabled
-  target_name_server_addresses  = var.target_name_server_addresses
-  mode                          = "hub"
+  project_id                 = local.net_hub_project_id
+  vpc_name                   = "${local.environment_code}-svpc-hub"
+  shared_vpc_host            = true
+  resource_code              = local.environment_code
+  private_service_connect_ip = "10.17.0.5"
+  firewall_enable_logging    = var.hub_firewall_enable_logging
+  windows_activation_enabled = var.hub_windows_activation_enabled
+
+
+  ncc_hub_config = {
+    create_hub   = true
+    name         = "ncc-hub-${local.env}"
+    description  = "NCC Hub for ${local.env}"
+    hub_labels   = { environment = local.env }
+    spoke_labels = { type = "hub_vpc" }
+
+    preset_topology              = local.group_configuration["topology"]
+    spoke_group                  = local.group_configuration["group"]
+    auto_accept_projects_center  = local.group_configuration["center"]
+    auto_accept_projects_edge    = local.group_configuration["edge"]
+    auto_accept_projects_default = local.group_configuration["default"]
+  }
+
+  nat_config = {
+    enabled = var.hub_nat_enabled
+    bgp_asn = local.bgp_asn_number
+    regions = [
+      {
+        name          = local.default_region1
+        num_addresses = var.hub_nat_num_addresses_region1
+      },
+      {
+        name          = local.default_region2
+        num_addresses = var.hub_nat_num_addresses_region2
+      }
+    ]
+  }
+
+  dns_config = {
+    type                         = "hub"
+    enable_logging               = var.hub_dns_enable_logging
+    enable_inbound_forwarding    = var.hub_dns_enable_inbound_forwarding
+    onprem_forwarding            = true
+    domain                       = var.domain
+    target_name_server_addresses = var.target_name_server_addresses
+  }
 
   subnets = [
     {
