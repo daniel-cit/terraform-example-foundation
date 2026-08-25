@@ -34,6 +34,7 @@ module "ncc_project" {
 
   activate_apis = [
     "compute.googleapis.com",
+    "dns.googleapis.com",
     "networkconnectivity.googleapis.com"
   ]
 
@@ -46,18 +47,14 @@ module "ncc_project" {
   business_code     = var.business_code
 }
 
-// module NCC spoke
-// it needs the hub uri and the spoke group
-
-
 module "sample_ncc_vpc" {
   source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
 
   project_id      = module.ncc_project.project_id
-  vpc_name        = "${var.environment_code}-sample-spoke"
+  vpc_name        = "sample-spoke"
   shared_vpc_host = false
 
-  resource_code              = var.environment_code
+  resource_code              = var.business_code
   private_service_connect_ip = var.ncc_private_service_connect_ip
 
   ncc_hub_config = {

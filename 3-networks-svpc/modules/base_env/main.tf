@@ -79,7 +79,7 @@ module "shared_vpc" {
     domain                       = var.domain
     target_name_server_addresses = var.target_name_server_addresses
     dns_hub_project_id           = var.environment_code == "p" ? null : local.dns_project_id
-    dns_hub_network_name         = var.environment_code == "p" ? null : data.google_compute_network.vpc_dns_hub[0].self_link
+    dns_hub_network_name         = var.environment_code == "p" ? null : regex("networks/(.+)", data.google_compute_network.vpc_dns_hub[0].self_link)[0]
   }
 
   subnets = [
@@ -110,22 +110,24 @@ module "shared_vpc" {
       description                      = "Second ${var.env} subnet example."
     },
     {
-      subnet_name      = "sb-${var.environment_code}-svpc-${var.default_region1}-proxy"
-      subnet_ip        = var.subnet_proxy_ranges[var.default_region1]
-      subnet_region    = var.default_region1
-      subnet_flow_logs = false
-      description      = "First ${var.env} proxy-only subnet example."
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-${var.environment_code}-svpc-${var.default_region1}-proxy"
+      subnet_ip             = var.subnet_proxy_ranges[var.default_region1]
+      subnet_region         = var.default_region1
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "First ${var.env} proxy-only subnet example."
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     },
     {
-      subnet_name      = "sb-${var.environment_code}-svpc-${var.default_region2}-proxy"
-      subnet_ip        = var.subnet_proxy_ranges[var.default_region2]
-      subnet_region    = var.default_region2
-      subnet_flow_logs = false
-      description      = "Second ${var.env} proxy-only subnet example."
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-${var.environment_code}-svpc-${var.default_region2}-proxy"
+      subnet_ip             = var.subnet_proxy_ranges[var.default_region2]
+      subnet_region         = var.default_region2
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "Second ${var.env} proxy-only subnet example."
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     }
   ]
   secondary_ranges = {

@@ -31,7 +31,7 @@ module "shared_vpc" {
   source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
 
   project_id      = local.shared_vpc_project_id
-  vpc_name        = "${var.environment_code}-svpc-spoke"
+  vpc_name        = "svpc-spoke"
   shared_vpc_host = true
 
   resource_code = var.environment_code
@@ -50,7 +50,7 @@ module "shared_vpc" {
     domain               = var.domain
     onprem_forwarding    = true
     dns_hub_project_id   = local.net_hub_project_id
-    dns_hub_network_name = local.net_hub_network_self_link
+    dns_hub_network_name = regex("networks/(.+)", local.net_hub_network_self_link)[0]
   }
 
   subnets = [
@@ -81,22 +81,24 @@ module "shared_vpc" {
       description                      = "Second ${var.env} subnet example."
     },
     {
-      subnet_name      = "sb-${var.environment_code}-svpc-${var.default_region1}-proxy"
-      subnet_ip        = var.subnet_proxy_ranges[var.default_region1]
-      subnet_region    = var.default_region1
-      subnet_flow_logs = false
-      description      = "First ${var.env} proxy-only subnet example."
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-${var.environment_code}-svpc-${var.default_region1}-proxy"
+      subnet_ip             = var.subnet_proxy_ranges[var.default_region1]
+      subnet_region         = var.default_region1
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "First ${var.env} proxy-only subnet example."
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     },
     {
-      subnet_name      = "sb-${var.environment_code}-svpc-${var.default_region2}-proxy"
-      subnet_ip        = var.subnet_proxy_ranges[var.default_region2]
-      subnet_region    = var.default_region2
-      subnet_flow_logs = false
-      description      = "Second ${var.env} proxy-only subnet example."
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-${var.environment_code}-svpc-${var.default_region2}-proxy"
+      subnet_ip             = var.subnet_proxy_ranges[var.default_region2]
+      subnet_region         = var.default_region2
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "Second ${var.env} proxy-only subnet example."
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     }
   ]
   secondary_ranges = {

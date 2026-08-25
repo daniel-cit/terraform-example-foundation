@@ -34,7 +34,7 @@ module "shared_vpc" {
   source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
 
   project_id                 = local.net_hub_project_id
-  vpc_name                   = "${local.environment_code}-svpc-hub"
+  vpc_name                   = "svpc-hub"
   shared_vpc_host            = true
   resource_code              = local.environment_code
   private_service_connect_ip = "10.17.0.5"

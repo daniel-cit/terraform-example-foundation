@@ -95,7 +95,8 @@ locals {
       "roles/compute.networkAdmin",
       "roles/compute.xpnAdmin",
       "roles/iam.serviceAccountAdmin",
-      "roles/networkconnectivity.hubUser"
+      "roles/networkconnectivity.hubUser",
+      "roles/networkconnectivity.groupUser"
     ],
   }
 
