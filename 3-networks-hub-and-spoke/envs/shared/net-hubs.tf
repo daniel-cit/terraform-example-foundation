@@ -24,29 +24,6 @@ locals {
     (local.default_region1) = "10.26.0.0/23"
     (local.default_region2) = "10.27.0.0/23"
   }
-
-  group_configuration = var.enable_hub_and_spoke_transitivity ? {
-    topology = "MESH",
-    group    = "default"
-    center   = null,
-    edge     = null,
-    default = [
-      local.net_hub_project_id,
-      local.development_net_project_id,
-      local.nonproduction_net_project_id,
-      local.production_net_project_id
-    ]
-    } : {
-    topology = "STAR",
-    group    = "center"
-    center   = [local.net_hub_project_id],
-    edge = [
-      local.development_net_project_id,
-      local.nonproduction_net_project_id,
-      local.production_net_project_id
-    ],
-    default = null
-  }
 }
 
 /******************************************
@@ -65,19 +42,42 @@ module "shared_vpc" {
   windows_activation_enabled = var.hub_windows_activation_enabled
 
 
-  ncc_hub_config = {
-    create_hub   = true
-    name         = "ncc-hub-${local.env}"
-    description  = "NCC Hub for ${local.env}"
-    hub_labels   = { environment = local.env }
-    spoke_labels = { type = "hub_vpc" }
+  ncc_hub_config = merge(
+    {
+      create_hub   = true
+      name         = "ncc-hub-${local.env}"
+      description  = "NCC Hub for ${local.env}"
+      hub_labels   = { environment = local.env }
+      spoke_labels = { type = "hub_vpc" }
+    },
 
-    preset_topology              = local.group_configuration["topology"]
-    spoke_group                  = local.group_configuration["group"]
-    auto_accept_projects_center  = local.group_configuration["center"]
-    auto_accept_projects_edge    = local.group_configuration["edge"]
-    auto_accept_projects_default = local.group_configuration["default"]
-  }
+    var.enable_hub_and_spoke_transitivity ? {
+      preset_topology = "MESH"
+      spoke_group     = "default"
+    } :
+    {
+      preset_topology = "STAR"
+      spoke_group     = "center"
+    },
+    var.enable_hub_and_spoke_transitivity ? {
+      auto_accept_projects_center = []
+      auto_accept_projects_edge   = []
+      auto_accept_projects_default = [
+        local.net_hub_project_id,
+        local.development_net_project_id,
+        local.nonproduction_net_project_id,
+        local.production_net_project_id
+      ]
+      } : {
+      auto_accept_projects_center = [local.net_hub_project_id]
+      auto_accept_projects_edge = [
+        local.development_net_project_id,
+        local.nonproduction_net_project_id,
+        local.production_net_project_id
+      ]
+      auto_accept_projects_default = []
+    }
+  )
 
   nat_config = {
     enabled = var.hub_nat_enabled
@@ -131,22 +131,24 @@ module "shared_vpc" {
       description                      = "Network hub subnet for ${local.default_region2}"
     },
     {
-      subnet_name      = "sb-c-svpc-hub-${local.default_region1}-proxy"
-      subnet_ip        = local.subnet_proxy_ranges[local.default_region1]
-      subnet_region    = local.default_region1
-      subnet_flow_logs = false
-      description      = "Network hub proxy-only subnet for ${local.default_region1}"
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-c-svpc-hub-${local.default_region1}-proxy"
+      subnet_ip             = local.subnet_proxy_ranges[local.default_region1]
+      subnet_region         = local.default_region1
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "Network hub proxy-only subnet for ${local.default_region1}"
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     },
     {
-      subnet_name      = "sb-c-svpc-hub-${local.default_region2}-proxy"
-      subnet_ip        = local.subnet_proxy_ranges[local.default_region2]
-      subnet_region    = local.default_region2
-      subnet_flow_logs = false
-      description      = "Network hub proxy-only subnet for ${local.default_region2}"
-      role             = "ACTIVE"
-      purpose          = "REGIONAL_MANAGED_PROXY"
+      subnet_name           = "sb-c-svpc-hub-${local.default_region2}-proxy"
+      subnet_ip             = local.subnet_proxy_ranges[local.default_region2]
+      subnet_region         = local.default_region2
+      subnet_private_access = "false"
+      subnet_flow_logs      = false
+      description           = "Network hub proxy-only subnet for ${local.default_region2}"
+      role                  = "ACTIVE"
+      purpose               = "REGIONAL_MANAGED_PROXY"
     }
   ]
   secondary_ranges = {}
