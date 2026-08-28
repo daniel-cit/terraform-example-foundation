@@ -48,7 +48,8 @@ module "ncc_project" {
 }
 
 module "sample_ncc_vpc" {
-  source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
+  source  = "terraform-google-modules/network/google//modules/foundation/network"
+  version = "~> 18.2"
 
   project_id      = module.ncc_project.project_id
   vpc_name        = "sample-spoke"
