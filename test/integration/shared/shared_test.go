@@ -85,7 +85,7 @@ func TestShared(t *testing.T) {
 				// Resource issue: https://github.com/hashicorp/terraform-provider-google/issues/16804
 				// shared.DefaultVerify(assert)
 
-				dnsFwZoneName := "fz-dns-hub"
+				dnsFwZoneName := "fz-c-dns-hub"
 
 				projectID := shared.GetStringOutput("shared_vpc_host_project_id")
 				networkName := shared.GetStringOutput("network_name")
