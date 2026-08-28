@@ -123,7 +123,7 @@ func TestShared(t *testing.T) {
 					assert.Equal(subnet.cidrRange, sharedSubnet.Get("ipCidrRange").String(), fmt.Sprintf("IP CIDR range %s should be", subnet.cidrRange))
 				}
 
-				if isHubAndSpokeMode(t) { // TODO check NCC Hub Creation
+				if isHubAndSpokeMode(t) {
 					nccHubURI := shared.GetStringOutput("ncc_hub_uri")
 					op := gcloud.Runf(t, "network-connectivity hubs describe %s --project %s", nccHubURI, projectID)
 					presetTopology := op.Get("presetTopology").String()
@@ -134,7 +134,6 @@ func TestShared(t *testing.T) {
 
 					groups := gcloud.Runf(t, "network-connectivity hubs groups list --hub %s --project %s", nccHubURI, projectID).Array()
 					assert.Equal(2, len(groups), "should have two group")
-					//filter center group loop checking the name
 					hasCenter := false
 					hasEdge := false
 					for _, group := range groups {
