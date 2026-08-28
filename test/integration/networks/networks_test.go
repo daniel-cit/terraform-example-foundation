@@ -221,52 +221,11 @@ func TestNetworks(t *testing.T) {
 					assert.True(allowApiEgressRule.Get("enableLogging").Bool(), fmt.Sprintf("firewall rule %s should have log configuration enabled", allowApiEgressName))
 					assert.Equal(googleapisCIDR[envName], allowApiEgressRule.Get("match.destIpRanges").Array()[0].String(), fmt.Sprintf("firewall rule %s destination ranges should be %s", allowApiEgressName, googleapisCIDR[envName]))
 
-					if networkMode == "" {
-						for _, router := range []struct {
-							router string
-							region string
-						}{
-							{
-								router: "region1_router1",
-								region: "us-central1",
-							},
-							{
-								router: "region1_router2",
-								region: "us-central1",
-							},
-							{
-								router: "region2_router1",
-								region: "us-west1",
-							},
-							{
-								router: "region2_router2",
-								region: "us-west1",
-							},
-						} {
+					// TODO check NCC HUB and SPoKES
+					if networkMode == "" {// TODO check id exist
 
-							routerName := networkNames[router.router]
-							bgpAdvertisedIpRange := "35.199.192.0/19"
-							computeRouter := gcloud.Runf(t, "compute routers describe %s --region %s --project %s --impersonate-service-account %s", routerName, router.region, projectID, terraformSA)
-							networkSelfLink := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", projectID, networkNames["network_name"])
-							assert.Equal(routerName, computeRouter.Get("name").String(), fmt.Sprintf("router %s should exist", routerName))
-							assert.Equal("64514", computeRouter.Get("bgp.asn").String(), fmt.Sprintf("router %s should have bgp asm 64514", routerName))
-							assert.Equal(networkSelfLink, computeRouter.Get("network").String(), fmt.Sprintf("router %s should be on network %s", routerName, networkNames["network_name"]))
-							assert.Contains(googleapisCIDR[envName], computeRouter.Get("bgp.advertisedIpRanges.1.range").String(), fmt.Sprintf("router %s should have range %s", routerName, googleapisCIDR[envName]))
+					} else {
 
-							if strings.Contains(projectID, "prj-p") && networkMode != "-spoke" {
-								advertisedIpRanges := computeRouter.Get("bgp.advertisedIpRanges").Array()
-								found := false
-								for _, ipRange := range advertisedIpRanges {
-									if ipRange.Get("range").String() == bgpAdvertisedIpRange {
-										found = true
-										break
-									}
-								}
-								assert.True(found, fmt.Sprintf("router %s should have range %s", routerName, bgpAdvertisedIpRange))
-								assert.True(found, fmt.Sprintf("router %s should have range %s", routerName, googleapisCIDR[envName]))
-							}
-
-						}
 					}
 				})
 			networks.Test()

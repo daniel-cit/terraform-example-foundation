@@ -16,6 +16,9 @@
 
 locals {
 
+  dns_forward_source_range   = "35.199.192.0/19"
+  private_service_connect_ip = "10.17.0.5"
+
   subnet_primary_ranges = {
     (local.default_region1) = "10.8.0.0/18"
     (local.default_region2) = "10.9.0.0/18"
@@ -37,18 +40,19 @@ module "shared_vpc" {
   vpc_name                   = "svpc-hub"
   shared_vpc_host            = true
   resource_code              = local.environment_code
-  private_service_connect_ip = "10.17.0.5"
+  private_service_connect_ip = local.private_service_connect_ip
   firewall_enable_logging    = var.hub_firewall_enable_logging
   windows_activation_enabled = var.hub_windows_activation_enabled
 
 
   ncc_hub_config = merge(
     {
-      create_hub   = true
-      name         = "ncc-hub-${local.env}"
-      description  = "NCC Hub for ${local.env}"
-      hub_labels   = { environment = local.env }
-      spoke_labels = { type = "hub_vpc" }
+      create_hub                  = true
+      name                        = "ncc-hub-${local.env}"
+      description                 = "NCC Hub for ${local.env}"
+      hub_labels                  = { environment = local.env }
+      spoke_labels                = { type = "hub_vpc" }
+      spoke_include_export_ranges = [local.dns_forward_source_range, "${local.private_service_connect_ip}/32"]
     },
 
     var.enable_hub_and_spoke_transitivity ? {

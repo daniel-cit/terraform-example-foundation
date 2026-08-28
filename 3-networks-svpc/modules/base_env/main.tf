@@ -15,8 +15,9 @@
  */
 
 locals {
-  bgp_asn_number = var.enable_partner_interconnect ? "16550" : "64514"
-  spoke_group    = "default"
+  bgp_asn_number           = var.enable_partner_interconnect ? "16550" : "64514"
+  spoke_group              = "default"
+  dns_forward_source_range = "35.199.192.0/19"
 }
 
 data "google_compute_network" "vpc_dns_hub" {
@@ -33,9 +34,9 @@ module "shared_vpc" {
   source = "git::https://github.com/daniel-cit/terraform-google-network.git//modules/foundation/network?ref=ncc-and-peering-changes"
 
   project_id                 = local.shared_vpc_project_id
-  vpc_name                   = "${local.environment_code}-svpc"
+  vpc_name                   = "${var.environment_code}-svpc"
   shared_vpc_host            = true
-  resource_code              = local.environment_code
+  resource_code              = var.environment_code
   private_service_cidr       = var.private_service_cidr
   private_service_connect_ip = var.private_service_connect_ip
   firewall_enable_logging    = true
@@ -43,11 +44,13 @@ module "shared_vpc" {
 
 
   ncc_hub_config = {
-    create_hub   = true
-    name         = "ncc-hub-${local.env}"
-    description  = "NCC Hub for ${local.env}"
-    hub_labels   = { environment = local.env }
-    spoke_labels = { type = "hub_vpc" }
+    create_hub                  = true
+    name                        = "ncc-hub-${var.env}"
+    description                 = "NCC Hub for ${var.env}"
+    hub_labels                  = { environment = var.env }
+    spoke_labels                = { type = "hub_vpc" }
+    spoke_include_export_ranges = [local.dns_forward_source_range, "${var.private_service_connect_ip}/32"]
+
 
     preset_topology              = "MESH"
     spoke_group                  = "default"
@@ -61,26 +64,30 @@ module "shared_vpc" {
     bgp_asn = local.bgp_asn_number
     regions = [
       {
-        name          = local.default_region1
+        name          = var.default_region1
         num_addresses = 2
       },
       {
-        name          = local.default_region2
+        name          = var.default_region2
         num_addresses = 2
       }
     ]
   }
 
-  dns_config = {
-    type                         = var.environment_code == "p" ? "hub" : "spoke"
-    enable_logging               = true
-    enable_inbound_forwarding    = var.environment_code == "p"
-    onprem_forwarding            = true
-    domain                       = var.domain
-    target_name_server_addresses = var.target_name_server_addresses
-    dns_hub_project_id           = var.environment_code == "p" ? null : local.dns_project_id
-    dns_hub_network_name         = var.environment_code == "p" ? null : regex("networks/(.+)", data.google_compute_network.vpc_dns_hub[0].self_link)[0]
-  }
+  dns_config = merge(
+    {
+      type                         = var.environment_code == "p" ? "hub" : "spoke"
+      enable_logging               = true
+      enable_inbound_forwarding    = var.environment_code == "p"
+      onprem_forwarding            = true
+      domain                       = var.domain
+      target_name_server_addresses = var.target_name_server_addresses
+    },
+    var.environment_code == "p" ? {} : {
+      dns_hub_project_id   = local.dns_project_id
+      dns_hub_network_name = regex("networks/(.+)", data.google_compute_network.vpc_dns_hub[0].self_link)[0]
+    }
+  )
 
   subnets = [
     {
