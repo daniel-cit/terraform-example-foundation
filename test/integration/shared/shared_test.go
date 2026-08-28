@@ -16,6 +16,7 @@ package shared
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -121,7 +122,42 @@ func TestShared(t *testing.T) {
 					assert.Equal(subnet.name, sharedSubnet.Get("name").String(), fmt.Sprintf("subnet %s should exist", subnet.name))
 					assert.Equal(subnet.cidrRange, sharedSubnet.Get("ipCidrRange").String(), fmt.Sprintf("IP CIDR range %s should be", subnet.cidrRange))
 				}
-				// TODO check NCC HUB Creation
+
+				if isHubAndSpokeMode(t) { // TODO check NCC Hub Creation
+					nccHubURI := shared.GetStringOutput("ncc_hub_uri")
+					op := gcloud.Runf(t, "network-connectivity hubs describe %s --project %s", nccHubURI, projectID)
+					presetTopology := op.Get("presetTopology").String()
+					assert.Equal("STAR", presetTopology, "should have star topology")
+					nccSpokeStateCount := op.Get("spokeSummary.spokeStateCounts").Array()
+					assert.Equal(1, len(nccSpokeStateCount), "should have spokes in one State")
+					assert.Equal("ACTIVE", nccSpokeStateCount[0].Get("state").String(), "should have only active spokes")
+
+					groups := gcloud.Runf(t, "network-connectivity hubs groups list --hub %s --project %s", nccHubURI, projectID).Array()
+					assert.Equal(2, len(groups), "should have two group")
+					//filter center group loop checking the name
+					hasCenter := false
+					hasEdge := false
+					for _, group := range groups {
+						assert.Equal("ACTIVE", group.Get("state").String(), "should have active group")
+
+						n := strings.Split(group.Get("name").String(), "/")
+						gName := n[len(n)-1]
+						if gName == "center" {
+							hasCenter = true
+							assert.Equal(projectID, group.Get("autoAccept.autoAcceptProjects.0").String(), "%s should be on auto accept", projectID)
+							fullGroupName := fmt.Sprintf("%s/groups/%s", nccHubURI, "center")
+							assert.Equal(fullGroupName, group.Get("name").String(), "should have center group")
+						}
+						if gName == "edge" {
+							hasEdge = true
+							assert.Equal(3, len(group.Get("autoAccept.autoAcceptProjects").Array()), "should have 3 projects on auto accept")
+							fullGroupName := fmt.Sprintf("%s/groups/%s", nccHubURI, "edge")
+							assert.Equal(fullGroupName, group.Get("name").String(), "should have edge group")
+						}
+					}
+					assert.True(hasCenter, "must have a center group")
+					assert.True(hasEdge, "must have a edge group")
+				}
 			}
 		})
 	shared.Test()

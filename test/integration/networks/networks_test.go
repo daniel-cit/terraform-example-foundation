@@ -221,11 +221,20 @@ func TestNetworks(t *testing.T) {
 					assert.True(allowApiEgressRule.Get("enableLogging").Bool(), fmt.Sprintf("firewall rule %s should have log configuration enabled", allowApiEgressName))
 					assert.Equal(googleapisCIDR[envName], allowApiEgressRule.Get("match.destIpRanges").Array()[0].String(), fmt.Sprintf("firewall rule %s destination ranges should be %s", allowApiEgressName, googleapisCIDR[envName]))
 
-					// TODO check NCC HUB and SPoKES
-					if networkMode == "" {// TODO check id exist
-
-					} else {
-
+					if networkMode == "" { // Env Hubs
+						nccHubURI := networks.GetStringOutput("ncc_hub_uri")
+						op := gcloud.Runf(t, "network-connectivity hubs describe %s --project %s", nccHubURI, projectID)
+						presetTopology := op.Get("presetTopology").String()
+						assert.Equal("MESH", presetTopology, "should have mesh topology")
+						nccSpokeStateCount := op.Get("spokeSummary.spokeStateCounts").Array()
+						assert.Equal(1, len(nccSpokeStateCount), "should have spokes in one State")
+						assert.Equal("ACTIVE", nccSpokeStateCount[0].Get("state").String(), "should have only active spokes")
+						groups := gcloud.Runf(t, "network-connectivity hubs groups list --hub %s --project %s", nccHubURI, projectID).Array()
+						assert.Equal(1, len(groups), "should have one group")
+						assert.Equal("ACTIVE", groups[0].Get("state").String(), "should have active group")
+						assert.Contains(projectID, groups[0].Get("autoAccept.autoAcceptProjects").Array(), "%s should be on auto accept", projectID)
+						fullGroupName := fmt.Sprintf("%s/groups/%s", nccHubURI, "default")
+						assert.Equal(fullGroupName, groups[0].Get("name").String(), "should have default group")
 					}
 				})
 			networks.Test()
