@@ -55,7 +55,7 @@ resource "google_storage_bucket" "cloudbuild_bucket" {
 
 module "tf_workspace" {
   source  = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_workspace"
-  version = "~> 12.0"
+  version = "~> 13.0"
 
   for_each = toset(var.app_infra_repos)
 
@@ -135,4 +135,3 @@ resource "google_sourcerepo_repository_iam_member" "member" {
   role       = "roles/viewer"
   member     = "serviceAccount:${local.workspace_sa_email[each.key]}"
 }
-
