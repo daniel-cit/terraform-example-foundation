@@ -148,6 +148,50 @@ Set the variables in **terraform.tfvars** (`groups` block) to use the specific g
      gcloud services enable servicenetworking.googleapis.com
      ```
 
+### Validate IAM permissions (`iam-validate`)
+
+Before running `terraform plan` or `apply`, you can verify that the principal authenticated with [Application Default Credentials (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials) has the IAM permissions required for bootstrap. The standalone CLI at [`helpers/foundation-deployer/cmd/iam-validate`](../helpers/foundation-deployer/cmd/iam-validate) uses the same `TestIamPermissions` checks as the [foundation-deployer](../helpers/foundation-deployer/README.md) `-v` flag.
+
+The tool checks permissions on:
+
+- **Organization** (`organizations/<ORG_ID>`)
+- **Parent folder** (`folders/<FOLDER_ID>`), when `parent_folder` or `parent_folder_id` is set
+- **Billing account** (`billingAccounts/<BILLING_ACCOUNT_ID>`)
+
+**Prerequisites:** [Go](https://go.dev/dl/) installed, ADC configured (for example `gcloud auth application-default login`), and the APIs listed in the previous section enabled.
+
+Create a minimal `.tfvars` file with only the values needed for this check (you do not need the full `terraform.tfvars` for bootstrap):
+
+```hcl
+org_id               = "YOUR_ORG_ID"
+billing_account      = "XXXXXX-XXXXXX-XXXXXX"
+parent_folder_id     = "YOUR_FOLDER_ID"  # or parent_folder
+foundation_code_path = "/absolute/path/to/terraform-example-foundation"
+```
+
+`foundation_code_path` is used to locate the bundled permissions list at `helpers/foundation-deployer/examples/iam/default-permissions.yaml`. Alternatively, pass an absolute path with `-permissions_yaml`.
+
+From the repository root:
+
+```bash
+cd helpers/foundation-deployer
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars
+```
+
+Verbose output (allowed and missing permissions):
+
+```bash
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars -v
+```
+
+Custom permissions list:
+
+```bash
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars -permissions_yaml /absolute/path/to/permissions.yaml
+```
+
+If any required permission is missing, the command exits with a non-zero status and prints the missing permissions for the current ADC principal.
+
 ### Optional - Automatic creation of Google Cloud Identity groups
 
 In the foundation, Google Cloud Identity groups are used for [authentication and access management](https://cloud.google.com/architecture/security-foundations/authentication-authorization) .
