@@ -57,7 +57,7 @@ func getNetworkResourceNames(envCode string, networkMode string, firewallMode st
 		"dns_policy_name":       fmt.Sprintf("dp-%s-svpc-default-policy", envCode),
 		"subnet_name1":          fmt.Sprintf("sb-%s-svpc-us-central1", envCode),
 		"subnet_name2":          fmt.Sprintf("sb-%s-svpc-us-west1", envCode),
-		"firewall_policy":       fmt.Sprintf("fp-%s-%s-firewalls", envCode, firewallMode),
+		"firewall_policy":       fmt.Sprintf("fp-%s-firewalls", envCode),
 		"fw_deny_all_egress":    fmt.Sprintf("fw-%s-svpc-65530-e-d-all-all-all", envCode),
 		"fw_allow_api_egress":   fmt.Sprintf("fw-%s-svpc-1000-e-a-allow-google-apis-all-tcp-443", envCode),
 	}

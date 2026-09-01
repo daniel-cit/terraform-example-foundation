@@ -79,7 +79,7 @@ module "shared_vpc" {
     {
       type                         = var.environment_code == "p" ? "hub" : "spoke"
       enable_logging               = true
-      enable_inbound_forwarding    = var.environment_code == "p"
+      enable_inbound_forwarding    = true
       onprem_forwarding            = true
       domain                       = var.domain
       target_name_server_addresses = var.target_name_server_addresses
