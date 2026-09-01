@@ -17,7 +17,7 @@
 
 module "private_service_connect" {
   source  = "terraform-google-modules/network/google//modules/private-service-connect"
-  version = "~> 18.0"
+  version = "~> 18.2"
 
   project_id                 = var.project_id
   dns_code                   = "dz-${var.environment_code}-svpc"
@@ -25,4 +25,8 @@ module "private_service_connect" {
   private_service_connect_ip = var.private_service_connect_ip
   forwarding_rule_target     = "vpc-sc"
   service_directory_region   = var.default_region1
+  universe_domain            = var.universe_domain
+  pkg_dev_domain             = var.pkg_dev_domain
+  enable_gcr_dns             = var.enable_gcr_dns
+
 }

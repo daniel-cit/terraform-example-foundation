@@ -36,6 +36,8 @@ build_type = "cb"
 // Google universe configuration
 universe_prefix = ""
 universe_domain = "googleapis.com"
+pkg_dev_domain  = "pkg.dev"
+enable_gcr_dns  = true
 available_universe_services = {
   billing_budget     = "true"
   security_center    = "true"

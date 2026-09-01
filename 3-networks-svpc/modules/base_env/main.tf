@@ -35,6 +35,9 @@ module "shared_vpc" {
   default_region2              = var.default_region2
   domain                       = var.domain
   target_name_server_addresses = var.target_name_server_addresses
+  universe_domain              = var.universe_domain
+  pkg_dev_domain               = var.pkg_dev_domain
+  enable_gcr_dns               = var.enable_gcr_dns
 
 
 

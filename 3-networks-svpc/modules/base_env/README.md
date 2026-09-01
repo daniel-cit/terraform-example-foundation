@@ -7,9 +7,11 @@
 | default\_region2 | Second subnet region. The shared vpc modules only configures two regions. | `string` | n/a | yes |
 | domain | The DNS name of peering managed zone, for instance 'example.com.'. Must end with a period. | `string` | n/a | yes |
 | enable\_dedicated\_interconnect | Enable Dedicated Interconnect in the environment. | `bool` | `false` | no |
+| enable\_gcr\_dns | Enable DNS zone creation for legacy gcr.io. Set to false for GDC/TPC environments where Container Registry is not available. | `bool` | `true` | no |
 | enable\_partner\_interconnect | Enable Partner Interconnect in the environment. | `bool` | `false` | no |
 | env | The environment to prepare (ex. development) | `string` | n/a | yes |
 | environment\_code | A short form of the folder level resources (environment) within the Google Cloud organization (ex. d). | `string` | n/a | yes |
+| pkg\_dev\_domain | Domain for Artifact Registry. Change if using a custom universe\_domain. | `string` | `"pkg.dev"` | no |
 | private\_service\_cidr | CIDR range for private service networking. Used for Cloud SQL and other managed services in the Shared Vpc. | `string` | n/a | yes |
 | private\_service\_connect\_ip | The base subnet internal IP to be used as the private service connect endpoint in the Shared VPC | `string` | n/a | yes |
 | remote\_state\_bucket | Backend bucket to load Terraform Remote State Data from previous steps. | `string` | n/a | yes |

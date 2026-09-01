@@ -234,6 +234,8 @@ type GlobalTFVars struct {
 	GitRepos                              *GitRepos                  `hcl:"git_repos"`
 	UniversePrefix                        *string                    `hcl:"universe_prefix"`
 	UniverseDomain                        *string                    `hcl:"universe_domain"`
+	PkgDevDomain                          *string                    `hcl:"pkg_dev_domain"`
+	EnableGcrDns                          *bool                      `hcl:"enable_gcr_dns"`
 	AllowAdditionalMemberTypes            *bool                      `hcl:"allow_additional_member_types"`
 	AvailableUniverseServices             *AvailableUniverseServices `hcl:"available_universe_services"`
 }
@@ -360,6 +362,8 @@ type AppInfraCommonTfvars struct {
 
 type UniverseTfvars struct {
 	UniverseDomain *string `hcl:"universe_domain"`
+	PkgDevDomain   *string `hcl:"pkg_dev_domain"`
+	EnableGcrDns   *bool   `hcl:"enable_gcr_dns"`
 }
 
 func GetBootstrapStepOutputs(t testing.TB, foundationPath string, buildType string) BootstrapOutputs {

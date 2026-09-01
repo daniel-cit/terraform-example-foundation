@@ -67,6 +67,8 @@ output "common_config" {
     project_prefix              = var.project_prefix,
     universe_prefix             = var.universe_prefix
     universe_domain             = var.universe_domain
+    pkg_dev_domain              = var.pkg_dev_domain
+    enable_gcr_dns              = var.enable_gcr_dns
     available_universe_services = var.available_universe_services
     folder_prefix               = var.folder_prefix
     parent_id                   = local.parent

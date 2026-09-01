@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
@@ -172,6 +173,12 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 	backendBucket := terraform.Output(t, options, "gcs_bucket_tfstate")
 	backendBucketProjects := terraform.Output(t, options, "projects_gcs_bucket_tfstate")
 	UniverseDomain := terraform.OutputMap(t, options, "common_config")["universe_domain"]
+	PkgDevDomain := terraform.OutputMap(t, options, "common_config")["pkg_dev_domain"]
+	EnableGcrDnsStr := terraform.OutputMap(t, options, "common_config")["enable_gcr_dns"]
+	EnableGcrDns, err := strconv.ParseBool(EnableGcrDnsStr)
+	if err != nil {
+		return err
+	}
 	customEndpoint := utils.BuildCustomEndpoint(UniverseDomain)
 	var backend_file string
 
@@ -221,6 +228,8 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 				autoTfvarsPath := filepath.Join(filepath.Dir(file), "universe.auto.tfvars")
 				UniverseTfvars := UniverseTfvars{
 					UniverseDomain: &UniverseDomain,
+					PkgDevDomain:   &PkgDevDomain,
+					EnableGcrDns:   &EnableGcrDns,
 				}
 				err = utils.WriteTfvars(autoTfvarsPath, UniverseTfvars)
 				if err != nil {

@@ -60,4 +60,6 @@ module "base_env" {
   remote_state_bucket         = var.remote_state_bucket
   tfc_org_name                = var.tfc_org_name
   universe_domain             = var.universe_domain
+  pkg_dev_domain              = var.pkg_dev_domain
+  enable_gcr_dns              = var.enable_gcr_dns
 }

@@ -44,9 +44,8 @@ resource "google_folder" "bootstrap" {
 }
 
 module "seed_bootstrap" {
-  # source  = "terraform-google-modules/bootstrap/google"
-  # version = "~> 12.0"
-  source = "git::https://github.com/daniel-cit/terraform-google-bootstrap.git?ref=add-support-for-google-universes"
+  source  = "terraform-google-modules/bootstrap/google"
+  version = "~> 13.0"
 
   org_id                         = var.org_id
   folder_id                      = google_folder.bootstrap.id

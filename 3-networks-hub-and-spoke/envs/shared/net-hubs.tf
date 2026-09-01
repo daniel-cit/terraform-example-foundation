@@ -52,6 +52,9 @@ module "shared_vpc" {
   windows_activation_enabled    = var.hub_windows_activation_enabled
   target_name_server_addresses  = var.target_name_server_addresses
   mode                          = "hub"
+  universe_domain               = var.universe_domain
+  pkg_dev_domain                = var.pkg_dev_domain
+  enable_gcr_dns                = var.enable_gcr_dns
 
   subnets = [
     {
