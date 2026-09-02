@@ -51,6 +51,7 @@ module "shared_vpc" {
     domain                    = var.domain
     enable_logging            = true
     enable_inbound_forwarding = true
+    onprem_forwarding         = true
     dns_hub_project_id        = local.net_hub_project_id
     dns_hub_network_name      = regex("networks/(.+)", local.net_hub_network_self_link)[0]
   }

@@ -78,10 +78,10 @@ module "shared_vpc" {
   dns_config = merge(
     {
       type                         = var.environment_code == "p" ? "hub" : "spoke"
+      domain                       = var.domain
       enable_logging               = true
       enable_inbound_forwarding    = true
       onprem_forwarding            = true
-      domain                       = var.domain
       target_name_server_addresses = var.target_name_server_addresses
     },
     var.environment_code == "p" ? {} : {
