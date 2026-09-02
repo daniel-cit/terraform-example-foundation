@@ -49,7 +49,7 @@ func getNetworkResourceNames(envCode string, networkMode string, firewallMode st
 	return map[string]string{
 		"network_name":          fmt.Sprintf("vpc-%s-svpc%s", envCode, networkMode),
 		"global_address":        fmt.Sprintf("ga-%s-svpc%s-vpc-peering-internal", envCode, networkMode),
-		"dns_zone_forward":      "fz-dns-hub",
+		"dns_zone_forward":      fmt.Sprintf("fz-%s-dns-hub", envCode),
 		"dns_zone_googleapis":   fmt.Sprintf("dz-%s-svpc-apis", envCode),
 		"dns_zone_gcr":          fmt.Sprintf("dz-%s-svpc-gcr", envCode),
 		"dns_zone_pkg_dev":      fmt.Sprintf("dz-%s-svpc-pkg-dev", envCode),
