@@ -228,7 +228,7 @@ func TestNetworks(t *testing.T) {
 						groups := gcloud.Runf(t, "network-connectivity hubs groups list --hub %s --project %s", nccHubURI, projectID).Array()
 						assert.Equal(1, len(groups), "should have one group")
 						assert.Equal("ACTIVE", groups[0].Get("state").String(), "should have active group")
-						assert.Contains(projectID, groups[0].Get("autoAccept.autoAcceptProjects").Array(), "%s should be on auto accept", projectID)
+						assert.Equal(projectID, groups[0].Get("autoAccept.autoAcceptProjects.0").String(), "%s should be on auto accept", projectID)
 						fullGroupName := fmt.Sprintf("%s/groups/%s", nccHubURI, "default")
 						assert.Equal(fullGroupName, groups[0].Get("name").String(), "should have default group")
 					}
