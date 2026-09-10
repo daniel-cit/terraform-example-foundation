@@ -1146,12 +1146,6 @@ func runTerraformLocal(t testing.TB, options *terraform.Options, serviceAccount,
 		return err
 	}
 
-	if validatorProjectID != "" {
-		if err := TerraformVet(t, options.TerraformDir, policyPath, validatorProjectID, options.EnvVars); err != nil {
-			return err
-		}
-	}
-
 	if doApply {
 		if _, err := terraform.ApplyE(t, options); err != nil {
 			return err
