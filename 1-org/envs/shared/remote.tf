@@ -89,8 +89,9 @@ data "terraform_remote_state" "projects_env" {
   for_each = (var.required_egress_rules_app_infra_dry_run && var.required_ingress_rules_app_infra_dry_run) || (var.required_egress_rules_app_infra && var.required_ingress_rules_app_infra) ? var.envs : {}
 
   config = {
-    bucket = local.projects_gcs_bucket_tfstate
-    prefix = "terraform/projects/business_unit_1/${each.key}"
+    bucket                  = local.projects_gcs_bucket_tfstate
+    prefix                  = "terraform/projects/business_unit_1/${each.key}"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 
@@ -100,7 +101,8 @@ data "terraform_remote_state" "projects_app_infra" {
   count = (var.required_egress_rules_app_infra_dry_run && var.required_ingress_rules_app_infra_dry_run) || (var.required_egress_rules_app_infra && var.required_ingress_rules_app_infra) ? 1 : 0
 
   config = {
-    bucket = local.projects_gcs_bucket_tfstate
-    prefix = "terraform/projects/business_unit_1/shared"
+    bucket                  = local.projects_gcs_bucket_tfstate
+    prefix                  = "terraform/projects/business_unit_1/shared"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }

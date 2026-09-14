@@ -50,8 +50,9 @@ data "terraform_remote_state" "org_env" {
   backend = "gcs"
 
   config = {
-    bucket = var.remote_state_bucket
-    prefix = "terraform/org/state"
+    bucket                  = var.remote_state_bucket
+    prefix                  = "terraform/org/state"
+    storage_custom_endpoint = var.universe_domain != "googleapis.com" ? "https://storage.${var.universe_domain}/storage/v1/" : null
   }
 }
 

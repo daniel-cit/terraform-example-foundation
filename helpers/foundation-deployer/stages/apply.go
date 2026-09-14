@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/mitchellh/go-testing-interface"
@@ -228,8 +229,10 @@ func DeployBootstrapStage(t testing.TB, s steps.Steps, tfvars GlobalTFVars, c Co
 				autoTfvarsPath := filepath.Join(filepath.Dir(file), "universe.auto.tfvars")
 				UniverseTfvars := UniverseTfvars{
 					UniverseDomain: &UniverseDomain,
-					PkgDevDomain:   &PkgDevDomain,
-					EnableGcrDns:   &EnableGcrDns,
+				}
+				if strings.Contains(file,"network") {
+					UniverseTfvars.PkgDevDomain = &PkgDevDomain
+					UniverseTfvars.EnableGcrDns = &EnableGcrDns
 				}
 				err = utils.WriteTfvars(autoTfvarsPath, UniverseTfvars)
 				if err != nil {
@@ -1115,12 +1118,13 @@ func applyEnvironment(t testing.TB, sc StageConf, c CommonConf, environment stri
 		}
 		return applyLocal(t, options, sc.StageSA, c.PolicyPath, c.ValidatorProject)
 	}
-
-	if err := sc.GitConf.CheckoutBranch(environment); err != nil {
+	// remote execution has shared on the same branch as production
+	aBranch := executionEnv(environment)
+	if err := sc.GitConf.CheckoutBranch(aBranch); err != nil {
 		return err
 	}
 
-	if err := sc.GitConf.PushBranch(environment, "origin"); err != nil {
+	if err := sc.GitConf.PushBranch(aBranch, "origin"); err != nil {
 		return err
 	}
 

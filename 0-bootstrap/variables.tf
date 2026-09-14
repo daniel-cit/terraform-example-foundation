@@ -202,11 +202,11 @@ variable "groups" {
   validation {
     condition = (
       (var.groups.create_required_groups != true || !anytrue([
-        for v in values(var.groups.required_groups) : startswith(v, "principalSet://")
+        for v in values(var.groups.required_groups) : try(startswith(v, "principalSet://"), false)
       ]))
       &&
       (var.groups.create_optional_groups != true || !anytrue([
-        for v in values(var.groups.optional_groups != null ? var.groups.optional_groups : {}) : startswith(coalesce(v, ""), "principalSet://")
+        for v in values(var.groups.optional_groups != null ? var.groups.optional_groups : {}) : try(startswith(v, "principalSet://"), false)
       ]))
     )
     error_message = "You cannot set create_required_groups or create_optional_groups to true if any of the provided group variables contain a 'principalSet://' URI. principalSets are external identities and cannot be created as Google Groups."

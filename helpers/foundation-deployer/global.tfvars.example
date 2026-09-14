@@ -49,6 +49,7 @@ available_universe_services = {
   cloud_build        = "true"
   cloud_asset        = "true"
   secret_manager     = "true"
+  multi_region       = "true"
 }
 
 // 0-bootstrap inputs
