@@ -157,16 +157,20 @@ func ValidateBasicFields(t testing.TB, g GlobalTFVars) {
 	}
 
 	// Check IAM permissions for the current principal (ADC) using TestIamPermissions and print any missing permissions.
-	err := utils.ValidateIAMPermissions(utils.IAMValidateParams{
-		OrgID:              g.OrgID,
-		FoundationCodePath: g.FoundationCodePath,
-		ParentFolder:       g.ParentFolder,
-		BillingAccount:     g.BillingAccount,
-		UniverseDomain:     *g.UniverseDomain,
-	}, false)
-	if err != nil {
-		fmt.Printf("# Error validating IAM permissions: %v\n", err)
+	// Skip if not in the default universe
+	if g.IsDefaultUniverse() {
+		err := utils.ValidateIAMPermissions(utils.IAMValidateParams{
+			OrgID:              g.OrgID,
+			FoundationCodePath: g.FoundationCodePath,
+			ParentFolder:       g.ParentFolder,
+			BillingAccount:     g.BillingAccount,
+			UniverseDomain:     *g.UniverseDomain,
+		}, false)
+		if err != nil {
+			fmt.Printf("# Error validating IAM permissions: %v\n", err)
+		}
 	}
+
 }
 
 // ValidateDestroyFlags checks if the flags to allow the destruction of the infrastructure are enabled

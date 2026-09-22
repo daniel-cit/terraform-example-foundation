@@ -52,6 +52,7 @@ const (
 	BuildTypeLocal            = "local"
 	CloudBuildProjectIdOutput = "cloudbuild_project_id"
 	CICDProjectIdOutput       = "cicd_project_id"
+	DefaultUniverseDomain     = "googleapis.com"
 )
 
 type CommonConf struct {
@@ -243,6 +244,12 @@ type GlobalTFVars struct {
 // HasValidatorProj checks if a Validator Project was provided
 func (g GlobalTFVars) HasValidatorProj() bool {
 	return g.ValidatorProjectID != nil && *g.ValidatorProjectID != "" && *g.ValidatorProjectID != "EXISTING_PROJECT_ID"
+}
+func (g GlobalTFVars) IsDefaultUniverse() bool {
+	if g.UniverseDomain == nil || *g.UniverseDomain == "" {
+		return true
+	}
+	return *g.UniverseDomain == DefaultUniverseDomain
 }
 
 // HasGroupsCreation checks if Groups creation is enabled
