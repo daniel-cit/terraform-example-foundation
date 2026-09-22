@@ -162,6 +162,7 @@ func ValidateBasicFields(t testing.TB, g GlobalTFVars) {
 		FoundationCodePath: g.FoundationCodePath,
 		ParentFolder:       g.ParentFolder,
 		BillingAccount:     g.BillingAccount,
+		UniverseDomain:     *g.UniverseDomain,
 	}, false)
 	if err != nil {
 		fmt.Printf("# Error validating IAM permissions: %v\n", err)
